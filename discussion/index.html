@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Discussion Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --paper:#F7F7F2; --grid:rgba(36,86,166,.07); --surface:#FFFFFF; --ink:#20283A;
+    --ink-soft:#5A6478; --accent:#2456A6; --accent-ink:#FFFFFF; --line:#DDDDD3;
+    --gold:#B98A12; --chip:#EEEEE6; --extract-bg:#F1F3F8; --shadow:0 2px 10px rgba(32,40,58,.08);
+    --plum:#7C3F73; --teal:#1F7A6D;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; color:var(--ink); font:400 17px/1.55 "Source Sans 3",system-ui,sans-serif;
+    background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:28px 28px; min-height:100vh;
+  }
+  a{color:var(--accent)}
+  .wrap{max-width:760px;margin:0 auto;padding:28px 20px 80px}
+  header{margin-bottom:22px;position:relative;padding-right:106px}
+  .kgg-logo{position:absolute;top:0;right:0;height:88px;width:auto;background:#fff;border-radius:12px;padding:4px 8px;box-shadow:var(--shadow)}
+  @media (max-width:520px){header{padding-right:76px}.kgg-logo{height:62px}}
+  .eyebrow{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(32px,7vw,46px)/1.05 "Bricolage Grotesque","Source Sans 3",sans-serif;margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0;max-width:60ch}
+  h2{font:800 26px/1.15 "Bricolage Grotesque",sans-serif;margin:0;text-wrap:balance}
+  h3{font:700 15px "Bricolage Grotesque",sans-serif;margin:18px 0 6px;color:var(--accent);letter-spacing:.02em}
+
+  .howto{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:20px 24px;margin:22px 0}
+  .howto p{margin:0 0 8px}
+  .howto p:last-child{margin:0}
+  .timing{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:14px}
+  .t{background:var(--extract-bg);border-radius:10px;padding:10px 12px}
+  .t b{display:block;font:700 15px "Bricolage Grotesque",sans-serif;color:var(--accent)}
+  .t span{font-size:13px;color:var(--ink-soft)}
+
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 26px;padding:0;list-style:none}
+  .toc a{font:600 13.5px "Source Sans 3",sans-serif;text-decoration:none;background:var(--chip);color:var(--ink);border-radius:999px;padding:7px 13px}
+  .toc a:hover{background:var(--accent);color:var(--accent-ink)}
+
+  section.ex{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:24px 24px 22px;margin-bottom:18px;border-top:4px solid var(--accent)}
+  section.ex.business{border-top-color:var(--plum)}
+  .exhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 16px}
+  .course{font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+  .open{font:600 14px "Source Sans 3",sans-serif;white-space:nowrap}
+  .frame{margin:10px 0 0;color:var(--ink-soft)}
+  ul.prompts{margin:6px 0 0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+  ul.prompts li{position:relative;padding:12px 16px 12px 44px;background:var(--extract-bg);border-radius:10px;font-size:17px}
+  ul.prompts li::before{content:"?";position:absolute;left:14px;top:9px;font:800 20px "Bricolage Grotesque",sans-serif;color:var(--accent)}
+  details{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:0 14px}
+  details summary{cursor:pointer;font:700 15px "Bricolage Grotesque",sans-serif;padding:11px 0;color:var(--ink)}
+  details[open] summary{border-bottom:1px solid var(--line)}
+  details ul{margin:10px 0 12px;padding-left:20px;color:var(--ink-soft);font-size:15.5px}
+  details li{margin-bottom:5px}
+
+  .closing{background:var(--extract-bg);border-left:3px solid var(--gold);border-radius:0 12px 12px 0;padding:18px 20px;margin-top:26px}
+  .closing h2{font-size:22px;margin-bottom:8px}
+  .closing p{margin:0 0 8px}
+  ol.cards{margin:8px 0 0;padding-left:22px}
+  ol.cards li{margin-bottom:6px}
+  footer{margin-top:30px;font-size:13.5px;color:var(--ink-soft)}
+  @media print{
+    body{background:#fff}
+    section.ex,.howto{box-shadow:none;break-inside:avoid}
+    details{display:block} details summary{display:none} details ul{display:block}
+    .toc,.open{display:none}
+  }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Knowledge Checks</a></li><li aria-current="page">Discussion Guide</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="kgg-logo" src="../assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Facilitator guide · All courses</div>
+    <h1>Discussion Guide</h1>
+    <p class="sub">Questions to run after each knowledge check or exercise, with notes on what to listen for. The checks test recall. The discussion is where the ideas attach to the participants' own work.</p>
+  </header>
+
+  <div class="howto">
+    <p><strong>How to use it.</strong> Run the check or exercise first, then pick two or three prompts from its section. Give the room a minute of silence before anyone answers. Open "What to listen for" only on the facilitator's screen.</p>
+    <p>Prompts are written for the participants. The notes are written for you.</p>
+    <div class="timing">
+      <div class="t"><b>1 min</b><span>silent thinking</span></div>
+      <div class="t"><b>5 min</b><span>pairs or tables</span></div>
+      <div class="t"><b>8 min</b><span>whole room</span></div>
+      <div class="t"><b>1 min</b><span>one sentence each to close</span></div>
+    </div>
+  </div>
+
+  <ul class="toc">
+    <li><a href="#week-01">Forms, Sets &amp; Worlds</a></li>
+    <li><a href="#cq-forge">The CQ Forge</a></li>
+    <li><a href="#domain-detective">Domain Detective</a></li>
+    <li><a href="#ontology-builder">Ontology Builder</a></li>
+    <li><a href="#ask-the-graph">Ask the Graph</a></li>
+    <li><a href="#closing">Closing</a></li>
+  </ul>
+
+  <section class="ex" id="week-01">
+    <div class="exhead">
+      <div><div class="course">Knowledge Graph Foundations · Week 1</div><h2>Forms, Sets &amp; Worlds</h2></div>
+      <a class="open" href="../knowledge-graph-foundations/week-01-knowledge-check.html">Open the check →</a>
+    </div>
+    <p class="frame">Plato's forms, sets and hierarchy, classes and instances, and the difference between an open world and a closed one.</p>
+    <h3>Prompts</h3>
+    <ul class="prompts">
+      <li>Name one thing in your work that is clearly a class and one that is clearly an instance. Now name one you are not sure about. What makes it hard?</li>
+      <li>Where does your organisation treat missing data as "false"? Where does it treat it as "unknown"? Has that ever caused a wrong decision?</li>
+      <li>A subclass inherits everything from its parent. Name a case where that inheritance would be wrong for you, and what that says about the hierarchy.</li>
+      <li>If two teams disagree about whether something is a kind of Customer, who decides, and where is the decision written down?</li>
+    </ul>
+    <details>
+      <summary>What to listen for</summary>
+      <ul>
+        <li>Confusion between a class and a role. "Supplier" is often a role a Company plays, not a kind of Company. Ask: can the same thing stop being one without ceasing to exist?</li>
+        <li>Closed-world assumptions hidden in reports. A dashboard that shows "no incidents" when the feed was down is a closed-world reading of open-world data.</li>
+        <li>Hierarchies built for convenience rather than truth. If inheritance breaks, the parent is usually wrong, not the child.</li>
+        <li>Nobody can name the owner of a definition. That is the gap an ontology is meant to fill.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section class="ex" id="cq-forge">
+    <div class="exhead">
+      <div><div class="course">Knowledge Graph Foundations · Exercise</div><h2>The CQ Forge</h2></div>
+      <a class="open" href="../knowledge-graph-foundations/competency-questions-exercise.html">Open the exercise →</a>
+    </div>
+    <p class="frame">Competency questions: the questions a knowledge graph must be able to answer, and how a good one decomposes into classes, properties, controlled values and rules.</p>
+    <h3>Prompts</h3>
+    <ul class="prompts">
+      <li>Write down the last question you asked that took more than a day to answer because the data lived in several places. Is it a strong competency question as written? Fix it.</li>
+      <li>Which shape was that question: a lookup, a traversal, an aggregation or an inference? Which shape does your organisation ask most, and which does it most struggle to answer?</li>
+      <li>Take one strong question from the table. Which concepts and relations would have to exist for a graph to answer it? Which of those exist in your systems today?</li>
+      <li>A question nobody asks is not worth modelling for. How would you find out which questions people actually ask?</li>
+    </ul>
+    <details>
+      <summary>What to listen for</summary>
+      <ul>
+        <li>Questions that are really reports. "Show me all orders" is a lookup with no decision behind it. Push for the decision the answer would change.</li>
+        <li>Vague quantifiers: "important customers", "recent issues". Each one hides a controlled value or a rule that someone must define.</li>
+        <li>Inference questions disguised as lookups. "Which suppliers are at risk?" needs a rule for risk before it needs any data.</li>
+        <li>The group realising the same question is asked in three departments with three different meanings. Link this to Domain Detective.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section class="ex business" id="domain-detective">
+    <div class="exhead">
+      <div><div class="course">Business course · Exercise 1</div><h2>Domain Detective</h2></div>
+      <a class="open" href="../business-course/guess-the-domain/">Open the exercise →</a>
+    </div>
+    <p class="frame">Ten words that appear in every domain, and the domain-specific words that finally settle which world you are in. The label did not carry the meaning. The schema did.</p>
+    <h3>Prompts</h3>
+    <ul class="prompts">
+      <li>Which of the shared words does your organisation use in more than one sense? Claim, Settlement, Discharge, Capacity, Record. What has gone wrong because of it?</li>
+      <li>Pick one shared word. Write its definition for your team in one sentence. Now write it for a neighbouring team. Where do they differ?</li>
+      <li>How many words did the room need before someone guessed? What was the word that gave it away, and why did that word carry more information than the rest?</li>
+      <li>Who in your organisation owns the definition of a term when two departments disagree? If the answer is "nobody", what happens instead?</li>
+    </ul>
+    <details>
+      <summary>What to listen for</summary>
+      <ul>
+        <li>Stories about integration projects that failed on vocabulary rather than technology. Two systems with a "settlement date" that could not be compared.</li>
+        <li>The instinct to solve it by picking one definition for everyone. Sometimes right, often not. An ontology can hold both meanings as two concepts with two labels.</li>
+        <li>Participants noticing that the general words were true but useless. This is the case for specialisation: description lives in the specific tiers.</li>
+        <li>Anyone claiming their domain has no ambiguous terms. Ask them to define "customer".</li>
+      </ul>
+    </details>
+  </section>
+
+  <section class="ex business" id="ontology-builder">
+    <div class="exhead">
+      <div><div class="course">Business course · Exercise 2</div><h2>Ontology Builder</h2></div>
+      <a class="open" href="../business-course/ontology-builder/">Open the exercise →</a>
+    </div>
+    <p class="frame">A blueprint of concepts, hierarchy, relations and attributes, then data that the blueprint checks. Participants built their own, from a blank page.</p>
+    <h3>Prompts</h3>
+    <ul class="prompts">
+      <li>What did you try to state that the builder refused? Was the builder right, or was your blueprint missing something?</li>
+      <li>Look at your blueprint view and your data view side by side. Which one changes daily in your organisation, and which one should change rarely? Who should be allowed to change each?</li>
+      <li>How many concepts did you need before your world felt described? What would you cut? An ontology earns its keep by staying small.</li>
+      <li>Where did you put an attribute that someone else in the room made a concept, or the reverse? Argue both sides.</li>
+      <li>Your second instance connected to your first through a relation you had defined earlier. What would it take to make that fact true in your real systems?</li>
+    </ul>
+    <details>
+      <summary>What to listen for</summary>
+      <ul>
+        <li>Frustration at the refusal. Good. That is a schema doing its job, and the same friction is what keeps bad data out of a real graph.</li>
+        <li>Blueprint changes described as routine. If the T-Box changes as often as the A-Box, the model is not settled and every report built on it is at risk.</li>
+        <li>Attribute-versus-concept arguments. The useful test: does it need its own identity and relations? A colour is an attribute. A supplier is a concept.</li>
+        <li>People discovering that their ontology looks like their org chart. Ask whether the world is really shaped like the reporting lines.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section class="ex business" id="ask-the-graph">
+    <div class="exhead">
+      <div><div class="course">Business course · Exercise 3</div><h2>Ask the Graph</h2></div>
+      <a class="open" href="../business-course/ask-the-graph/">Open the exercise →</a>
+    </div>
+    <p class="frame">One query language, SPARQL, pointed at the data, then at the blueprint, then at both in one query. Everything was a standard, and the graph came out of the builder unchanged.</p>
+    <h3>Prompts</h3>
+    <ul class="prompts">
+      <li>The query that listed your classes had the same shape as the query that listed your customers. What does it change, for an AI system or an analyst, that the rules are readable the same way as the facts?</li>
+      <li>"For every fact, which rule allowed it?" put data and blueprint in one row. Where in your organisation today would you have to open two systems, or ask two people, to get that row?</li>
+      <li>The page ran standard SPARQL on a file you exported from another tool, in a browser, with no vendor involved. What would you now ask a vendor before signing, and what answer would end the conversation?</li>
+      <li>The "Which kinds have no data yet?" question found classes nobody had used. Is that a modelling error, a data gap, or a plan? Who decides?</li>
+    </ul>
+    <details>
+      <summary>What to listen for</summary>
+      <ul>
+        <li>The moment someone says the ontology "is just more data". That is the lesson landing. Ask what it means for governance if the schema is versioned and queried like a table.</li>
+        <li>Lock-in stories: a platform that could not export its own model, a query language nobody else speaks. Contrast with the file that moved between the builder and this page untouched.</li>
+        <li>Discomfort with the empty classes. Modelling ahead of data is normal; the point is that the graph can tell you where it happened.</li>
+        <li>Anyone equating "graph database" with the standards. Be precise: property-graph products are a separate family with their own ISO query language, GQL; the W3C stack is the one with open vocabulary standards and vendor-neutral files.</li>
+      </ul>
+    </details>
+  </section>
+
+  <div class="closing" id="closing">
+    <h2>Closing the session</h2>
+    <p>Each participant writes three lines and reads them aloud. No discussion, just the reading.</p>
+    <ol class="cards">
+      <li><strong>One concept</strong> my organisation needs to define and does not.</li>
+      <li><strong>One relation</strong> between two things we talk about but never record.</li>
+      <li><strong>One question</strong> we would ask tomorrow if the graph could answer it.</li>
+    </ol>
+    <p style="margin-top:12px">Collect the lines. They are the seed of a real competency-question list and a real T-Box, written by the people who will use it.</p>
+  </div>
+
+  <footer>Part of the <a href="../">Knowledge Checks</a> collection. Prints cleanly with the facilitator notes expanded.</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ontology Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --paper:#F7F7F2; --grid:rgba(36,86,166,.07); --surface:#FFFFFF; --ink:#20283A;
+    --ink-soft:#5A6478; --accent:#2456A6; --accent-ink:#FFFFFF; --line:#DDDDD3;
+    --ok:#2F7D4F; --ok-bg:#EAF3ED; --miss:#B23B26; --miss-bg:#F7ECE8;
+    --gold:#B98A12; --chip:#EEEEE6; --extract-bg:#F1F3F8; --shadow:0 2px 10px rgba(32,40,58,.08);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; color:var(--ink); font:400 17px/1.55 "Source Sans 3",system-ui,sans-serif;
+    background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:28px 28px; min-height:100vh;
+  }
+  .wrap{max-width:660px;margin:0 auto;padding:28px 20px 80px}
+  header{margin-bottom:20px;position:relative;padding-right:96px}
+  .logo{position:absolute;top:0;right:0;height:64px;width:auto;background:#fff;border-radius:10px;padding:3px 6px}
+  .eyebrow{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(30px,6vw,42px)/1.08 "Bricolage Grotesque","Source Sans 3",sans-serif;margin:.35em 0 .2em;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0}
+  .progress{display:flex;gap:5px;margin:22px 0 26px}
+  .seg{flex:1;height:7px;border-radius:4px;background:var(--chip);transition:background .3s}
+  .seg.ok{background:var(--ok)} .seg.miss{background:var(--miss)} .seg.now{background:var(--accent)}
+  .scorebar{display:flex;justify-content:space-between;align-items:baseline;font:600 13px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  .scorebar b{color:var(--gold);font-size:15px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:26px 24px;position:relative}
+  .partchip{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:6px 12px;margin-bottom:14px}
+  .qnum{font:800 15px "Bricolage Grotesque",sans-serif;color:var(--ink-soft);margin-bottom:4px}
+  .qtext{font:600 21px/1.35 "Source Sans 3",sans-serif;margin:0 0 18px;text-wrap:balance}
+  .answers{display:flex;flex-direction:column;gap:10px}
+  button.ans{
+    text-align:left;font:400 16.5px/1.4 "Source Sans 3",sans-serif;color:var(--ink);
+    background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:13px 16px;
+    cursor:pointer;transition:border-color .15s,transform .1s,background .15s;display:flex;gap:12px;align-items:baseline;
+  }
+  button.ans:hover:not(:disabled){border-color:var(--accent);transform:translateX(3px)}
+  button.ans:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  button.ans:disabled{cursor:default}
+  button.ans .key{font:600 13px "IBM Plex Mono",monospace;color:var(--accent);flex-shrink:0}
+  button.ans.right{background:var(--ok-bg);border-color:var(--ok)}
+  button.ans.wrong{background:var(--miss-bg);border-color:var(--miss)}
+  button.ans.dim{opacity:.45}
+  .match{display:flex;flex-direction:column;gap:14px}
+  .mrow{display:flex;flex-direction:column;gap:8px}
+  .mbox{font:600 15px "IBM Plex Mono",monospace}
+  .mchips{display:flex;gap:8px;flex-wrap:wrap}
+  button.chip{
+    font:400 14.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--chip);
+    border:1.5px solid transparent;border-radius:999px;padding:8px 14px;cursor:pointer;transition:all .15s;
+  }
+  button.chip:hover:not(:disabled){border-color:var(--accent)}
+  button.chip:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  button.chip.sel{background:var(--accent);color:var(--accent-ink)}
+  button.chip.right{background:var(--ok-bg);color:var(--ink);border-color:var(--ok)}
+  button.chip.wrong{background:var(--miss-bg);color:var(--ink);border-color:var(--miss)}
+  button.chip:disabled{cursor:default;opacity:.85}
+  .verdict{display:flex;align-items:center;gap:10px;font:700 18px "Bricolage Grotesque",sans-serif;margin:18px 0 0}
+  .verdict.ok{color:var(--ok)} .verdict.miss{color:var(--miss)}
+  .explain{margin:8px 0 0;color:var(--ink-soft)}
+  .extract{
+    margin-top:14px;background:var(--extract-bg);border-left:3px solid var(--accent);
+    border-radius:0 10px 10px 0;padding:14px 16px;font-size:15.5px;color:var(--ink);
+  }
+  .extract .lab{font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px}
+  .extract em{color:var(--ink-soft);font-style:normal;font-size:14px;display:block;margin-top:8px}
+  .nav{display:flex;justify-content:flex-end;margin-top:20px}
+  button.next{
+    font:700 16px "Bricolage Grotesque",sans-serif;color:var(--accent-ink);background:var(--accent);
+    border:none;border-radius:10px;padding:13px 26px;cursor:pointer;transition:transform .12s,opacity .15s;
+  }
+  button.next:hover{transform:translateY(-1px)}
+  button.next:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+  .final{text-align:center;padding:40px 24px}
+  .final .big{font:800 clamp(56px,14vw,88px)/1 "Bricolage Grotesque",sans-serif;color:var(--gold)}
+  .final .of{font:600 15px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  .final h2{font:800 30px/1.15 "Bricolage Grotesque",sans-serif;margin:14px 0 6px;text-wrap:balance}
+  .final .blurb{color:var(--ink-soft);max-width:44ch;margin:0 auto}
+  .review{text-align:left;margin-top:30px;border-top:1px solid var(--line);padding-top:22px}
+  .review h3{font:600 13px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 14px}
+  .review .item{margin-bottom:18px}
+  .review .item p{margin:0 0 6px;font-weight:600}
+  .restart{margin-top:28px}
+  canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:9}
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none!important;animation:none!important}
+  }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Knowledge Checks</a></li><li aria-current="page">Ontology Foundations</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="logo" src="data:image/webp;base64,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" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Knowledge Graph Academy · Week 4 Knowledge Check</div>
+    <h1>Ontology Foundations</h1>
+    <p class="sub">12 questions · about 5 minutes.</p>
+  </header>
+  <div class="scorebar"><span id="where"></span><span>score <b id="score">0</b>/12</span></div>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+  <div class="card" id="card"></div>
+</div>
+<canvas id="confetti"></canvas>
+
+<script>
+const QUIZ = [
+{part:"Competency questions", q:"“What are the upcoming concerts for jazz in my town?” Which four ingredients does the Module 4 analysis pull out of this competency question?", a:[
+ "A subject, a predicate, an object and a literal",
+ "Time, instances, a genre concept and a geolocation",
+ "A class, a property, a domain and a range",
+ "A prefix, a URI, a label and a comment"], c:1,
+ ok:"“Upcoming” is time, “concerts” are instances, “jazz” is a genre concept, and “my town” is a geolocation. Each one becomes something your ontology must be able to hold.",
+ ex:"Analysing CQs. “What are the upcoming concerts for jazz in my town?” → time · instances · genre concept · geolocation."},
+{part:"Competency questions", q:"Why analyse your competency questions before writing the ontology?", a:[
+ "Because SPARQL requires it",
+ "Because they reveal a lot about the shape of your ontology",
+ "Because each CQ becomes one class",
+ "Because they replace the drawing"], c:1,
+ ok:"The CQs were prepared in Module 2. Taken apart, they show which classes, relations and attributes the ontology needs, and they are checked against the drawing.",
+ ex:"Competency Questions. In Module 2 you prepared your CQs. They reveal a lot about the shape of your ontology. Let’s learn how to analyse them. Activity 1: return to your competency questions, compare the analysis with your drawing. Are you missing elements? Would you change something?"},
+{part:"Design heuristics", q:"Heuristic 1 says classes in the TBox should be <i>rigid</i>. Which pair shows a rigid class and a role that is not one?", a:[
+ "Concert (class) and Event (role)",
+ "Person (class) and Employee (role)",
+ "Genre (class) and Jazz (role)",
+ "Venue (class) and Geolocation (role)"], c:1,
+ ok:"A person stays a person; being an employee is a role that starts and ends. Rigid things earn a class; roles are better carried some other way.",
+ ex:"Ontology Design Heuristics. 1: Classes defined in the TBox should be rigid, e.g. Person as a class versus Employee (a role)."},
+{part:"Design heuristics", q:"When is class B a sub class of class A, according to heuristic 2?", a:[
+ "When B has fewer instances than A",
+ "When B inherits the properties of A and expands it with new ones",
+ "When B is written after A in the file",
+ "When A and B share a label"], c:1,
+ ok:"NewsArticle takes everything a CreativeWork has and adds its own. That is the test for rdfs:subClassOf.",
+ ex:"2: Class B may inherit properties of class A and expands it with new ones, then class B is a sub class of class A. e.g. https://schema.org/NewsArticle."},
+{part:"Design heuristics", q:"Heuristic 3 says classes drive attributes and relations. What does that mean for deciding what is a class?", a:[
+ "Anything with a label is a class",
+ "A class is something that carries its own properties, as CreativeWork does",
+ "Only top concepts of a taxonomy become classes",
+ "Properties come first and classes are added afterwards"], c:1,
+ ok:"Ask what attributes and relations hang off it. If nothing does, it may be a concept or an instance rather than a class.",
+ ex:"3: Classes drive attributes and relations (properties), e.g. schema.org/CreativeWork. Classroom discussion: use the heuristics to analyse what should be a class and part of the TBox. How is each class driving attributes and relations? Do you have sub classes?"},
+{part:"Find the TBox", match:true, q:"Match each Module 4 activity to what you do in it. (All three right = the point)",
+ rows:["Activity 1","Activity 2","Activity 3"], opts:["analyse one CQ into its parts and compare with your drawing","highlight the classes and the TBox in your SKOS taxonomy","write your ontology drawing in Turtle with RDF, RDFS and OWL"], key:[0,1,2],
+ ok:"From questions, to finding the classes, to writing them down as a standard file.",
+ ex:"Activity 1: Analyse your CQs, pick one CQ and analyse its parts. Activity 2: Find the TBox: take a second look at your SKOS taxonomy, highlight (with colour) the classes and what belongs to the TBox. Activity 3: Write your ontology using the Turtle syntax and the W3C standards RDF, RDFS, OWL; submit your file with the extension .ttl."},
+{part:"RDF, RDFS, OWL", match:true, q:"Match each term to the standard it comes from. (All three right = the point)",
+ rows:["rdf:type","rdfs:subClassOf","owl:ObjectProperty"], opts:["RDF: says an instance belongs to a class","RDFS: says one class is a sub class of another","OWL: declares a relation between two things"], key:[0,1,2],
+ ok:"Three prefixes, three layers. RDF types things, RDFS arranges classes, OWL declares the properties themselves.",
+ ex:"rdf:type – <some instance> rdf:type <classA>. rdfs:subClassOf – <classB> rdfs:subClassOf <classA>. owl:Class – <classA> rdf:type owl:Class. owl:ObjectProperty – <relation> rdf:type owl:ObjectProperty. owl:DatatypeProperty – <attribute> rdf:type owl:DatatypeProperty."},
+{part:"RDF, RDFS, OWL", q:"In the music ontology, <code>ex:date</code> is declared as <code>owl:DatatypeProperty</code> and <code>ex:willBeHeldAt</code> as <code>owl:ObjectProperty</code>. What is the difference?", a:[
+ "A datatype property links to a literal value; an object property links to another resource",
+ "A datatype property is optional; an object property is required",
+ "Datatype properties belong to RDFS; object properties belong to OWL",
+ "There is no difference; the names are interchangeable"], c:0,
+ ok:"A date is a value, so it is an attribute. A venue is a thing with its own URI, so the relation to it is an object property.",
+ ex:"ex:willBeHeldAt rdf:type owl:ObjectProperty . ex:playsMusicOf rdf:type owl:ObjectProperty . ex:date rdf:type owl:DatatypeProperty . Last week: the object of a triple can either be a URI or a Literal."},
+{part:"Domain and range", q:"<code>ex:playsMusicOf rdfs:domain ex:concert ; rdfs:range ex:genre .</code> What does this say?", a:[
+ "Every concert must list a genre",
+ "The subject of playsMusicOf is a concert and its object is a genre",
+ "Genre is a sub class of concert",
+ "playsMusicOf is a datatype property"], c:1,
+ ok:"Domain is the class of the subject, range the class of the object. The property runs from a concert to a genre.",
+ ex:"RDFS: Domain and Range. ex:willBeHeldAt rdfs:domain ex:event . ex:willBeHeldAt rdfs:range ex:geolocation . ex:playsMusicOf rdfs:domain ex:concert . ex:playsMusicOf rdfs:range ex:genre . ex:date rdfs:domain ex:event . ex:date rdfs:range xsd:dateTime ."},
+{part:"Labels and comments", q:"What do <code>rdfs:label</code> and <code>rdfs:comment</code> add to <code>ex:event</code>?", a:[
+ "A URI and a namespace",
+ "A human-readable name and an explanation of what the class covers",
+ "A domain and a range",
+ "A link to Wikidata"], c:1,
+ ok:"The label is what people see; the comment says what an event is and how to use the class. Written for readers, as skos:definition was in Module 3.",
+ ex:"RDFS: Label and Comment. ex:event rdfs:label “Event”@en ; rdfs:comment “An event happening at a certain time and location, such as a concert, lecture, or festival. Ticketing information may be added via the offers property. Repeated events may be structured as separate Event objects.”@en ."},
+{part:"The ontology itself", q:"<code>ex:musicOntology rdf:type owl:Ontology .</code> and <code>ex:concert rdfs:isDefinedBy ex:musicOntology .</code> What do these two lines do?", a:[
+ "Declare the ontology as a resource of its own, and record that concert is defined in it",
+ "Import the OWL standard",
+ "Make concert the top concept of the ontology",
+ "Turn the ontology into a SKOS concept scheme"], c:0,
+ ok:"The ontology gets a URI, a label and a comment, and each class points back at it. The ontology-level counterpart of skos:inScheme.",
+ ex:"owl:Ontology and rdfs:isDefinedBy. ex:musicOntology rdf:type owl:Ontology ; rdfs:label “The Music ontology”@en ; rdfs:comment “The ontology definition for events, instruments, venues, and musicians that define the way in which this information is captured.”@en . ex:concert rdfs:isDefinedBy ex:musicOntology ."},
+{part:"Turtle", q:"In Turtle, <code>ex:concert rdf:type owl:Class ; rdfs:subClassOf ex:event .</code> uses a semicolon. What does the semicolon do?", a:[
+ "Ends the statement",
+ "Repeats the subject, so the next predicate and object are about ex:concert too",
+ "Repeats the predicate with a new object",
+ "Starts a comment"], c:1,
+ ok:"A semicolon keeps the subject; a comma keeps the subject and the predicate; a full stop ends the statement.",
+ ex:"Turtle syntax for repeated subjects and objects: <A> <B> <C> ; <D> <E> . is the same as <A> <B> <C> . <A> <D> <E> . And <A> <B> <C> , <E> . is the same as <A> <B> <C> . <A> <B> <E> ."}
+];
+const RANKS = [
+ [11,"Rigid class","Every class earns its place and every property has a domain and a range."],
+ [8,"Sub class of expert","The hierarchy holds and the properties are declared. Skim the extracts below for the rest."],
+ [5,"Drawing stage","The ideas are there; the Turtle needs another pass. The extracts below are your reading list."],
+ [0,"Role, not class","Not yet rigid. Revisit the Module 4 materials and try again."]
+];
+const shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+let i=0, score=0, results=[];
+const card=document.getElementById("card"), prog=document.getElementById("progress");
+QUIZ.forEach(()=>{const s=document.createElement("div");s.className="seg";prog.appendChild(s)});
+const segs=[...prog.children];
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+
+function render(){
+  segs.forEach((s,k)=>{s.className="seg"+(results[k]===true?" ok":results[k]===false?" miss":k===i?" now":"")});
+  document.getElementById("score").textContent=score;
+  document.getElementById("where").textContent=(i+1)+" / "+QUIZ.length+" · "+QUIZ[i].part;
+  const Q=QUIZ[i];
+  let h=`<div class="partchip">${esc(Q.part)}</div><div class="qnum">Question ${i+1}</div><p class="qtext">${Q.q}</p>`;
+  if(Q.match){
+    h+=`<div class="match">`+Q.rows.map((r,ri)=>
+      `<div class="mrow"><span class="mbox">${r}</span><div class="mchips">`+
+      shuf(Q.opts.map((o,oi)=>({o,oi}))).map(({o,oi})=>`<button class="chip" data-r="${ri}" data-o="${oi}">${o}</button>`).join("")+
+      `</div></div>`).join("")+`</div>`;
+  } else {
+    h+=`<div class="answers">`+shuf(Q.a.map((a,k)=>({a,k}))).map(({a,k},pos)=>
+      `<button class="ans" data-k="${k}"><span class="key">${"ABCD"[pos]}</span><span>${a}</span></button>`).join("")+`</div>`;
+  }
+  h+=`<div id="fb"></div>`;
+  card.innerHTML=h;
+  if(Q.match){
+    const picks=[null,null,null];
+    card.querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{
+      const r=+ch.dataset.r;
+      card.querySelectorAll(`.chip[data-r="${r}"]`).forEach(c=>c.classList.remove("sel"));
+      ch.classList.add("sel"); picks[r]=+ch.dataset.o;
+      if(picks.every(p=>p!==null)) settleMatch(Q,picks);
+    }));
+  } else {
+    card.querySelectorAll(".ans").forEach(b=>b.addEventListener("click",()=>settle(Q,+b.dataset.k)));
+  }
+}
+function feedback(Q,good){
+  const fb=document.getElementById("fb");
+  fb.innerHTML=
+   `<div class="verdict ${good?"ok":"miss"}">${good?"✓ Correct!":"✗ Not quite."}</div>`+
+   `<p class="explain">${Q.ok}</p>`+
+   (good?"":`<div class="extract"><span class="lab">📖 From the Module 4 materials</span>${Q.ex}${Q.src?`<em>— ${Q.src}</em>`:""}</div>`)+
+   `<div class="nav"><button class="next">${i<QUIZ.length-1?"Next question →":"See my standing →"}</button></div>`;
+  fb.querySelector(".next").addEventListener("click",()=>{i++; i<QUIZ.length?render():finish()});
+  fb.querySelector(".next").focus();
+}
+function settle(Q,k){
+  const good=k===Q.c; results[i]=good; if(good)score++;
+  card.querySelectorAll(".ans").forEach(b=>{
+    b.disabled=true; const bk=+b.dataset.k;
+    if(bk===Q.c)b.classList.add("right"); else if(bk===k)b.classList.add("wrong"); else b.classList.add("dim");
+  });
+  segs[i].className="seg "+(good?"ok":"miss");
+  document.getElementById("score").textContent=score;
+  feedback(Q,good);
+}
+function settleMatch(Q,picks){
+  const good=picks.every((p,r)=>p===Q.key[r]); results[i]=good; if(good)score++;
+  card.querySelectorAll(".chip").forEach(ch=>{
+    ch.disabled=true; const r=+ch.dataset.r,o=+ch.dataset.o;
+    if(o===Q.key[r])ch.classList.add("right");
+    else if(ch.classList.contains("sel"))ch.classList.add("wrong");
+    ch.classList.remove("sel");
+  });
+  segs[i].className="seg "+(good?"ok":"miss");
+  document.getElementById("score").textContent=score;
+  feedback(Q,good);
+}
+function finish(){
+  document.getElementById("where").textContent="done";
+  segs.forEach((s,k)=>{s.className="seg "+(results[k]?"ok":"miss")});
+  const rank=RANKS.find(r=>score>=r[0]);
+  const missed=QUIZ.map((q,k)=>({q,k})).filter(x=>!results[x.k]);
+  card.innerHTML=`<div class="final">
+    <div class="big">${score}</div><div class="of">out of 12</div>
+    <h2>${rank[1]}</h2><p class="blurb">${rank[2]}</p>
+    ${missed.length?`<div class="review"><h3>Read up on what you missed</h3>`+
+      missed.map(x=>`<div class="item"><p>Q${x.k+1} · ${x.q.q}</p><div class="extract"><span class="lab">📖 From the Module 4 materials</span>${x.q.ex}${x.q.src?`<em>— ${x.q.src}</em>`:""}</div></div>`).join("")+`</div>`:""}
+    <div class="restart"><button class="next" id="again">Take it again</button></div>
+  </div>`;
+  document.getElementById("again").addEventListener("click",()=>{i=0;score=0;results=[];render()});
+  if(score>=11 && !matchMedia("(prefers-reduced-motion: reduce)").matches) confetti();
+}
+function confetti(){
+  const cv=document.getElementById("confetti"),ctx=cv.getContext("2d");
+  cv.width=innerWidth;cv.height=innerHeight;
+  const cols=["#2456A6","#B98A12","#2F7D4F","#B23B26","#7FA6E8"];
+  const ps=Array.from({length:140},()=>({x:Math.random()*cv.width,y:-20-Math.random()*cv.height*.5,
+    v:2+Math.random()*3,w:6+Math.random()*6,a:Math.random()*6.28,s:(Math.random()-.5)*.2,c:cols[Math.random()*cols.length|0]}));
+  let t=0;
+  (function tick(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ps.forEach(p=>{p.y+=p.v;p.a+=p.s;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a);
+      ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.w/4,p.w,p.w/2);ctx.restore()});
+    if(++t<260)requestAnimationFrame(tick); else ctx.clearRect(0,0,cv.width,cv.height);
+  })();
+}
+render();
+</script>
+</body>
+</html>

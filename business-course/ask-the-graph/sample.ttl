@@ -1,0 +1,58 @@
+@prefix :     <https://example.org/supplychain#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<https://example.org/supplychain> a owl:Ontology ;
+    rdfs:label "Supply chain (sample)" ;
+    dct:title "Supply chain (sample)" ;
+    dct:description "A small sample graph for the Ask the Graph exercise. Replace it with your own Ontology Builder export." ;
+    dct:created "2026-09-03"^^xsd:date ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "1.0" .
+
+# C-Box: terms not yet modelled
+:CBox a skos:ConceptScheme ;
+    skos:prefLabel "C-Box: unassigned terms"@en .
+:Backorder a skos:Concept ;
+    skos:prefLabel "Backorder"@en ;
+    skos:altLabel "Back order"@en ;
+    skos:inScheme :CBox .
+:Season a skos:Concept ;
+    skos:prefLabel "Season"@en ;
+    skos:inScheme :CBox .
+
+# T-Box: classes and properties
+:Customer a owl:Class ; rdfs:label "Customer" .
+:EnterpriseCustomer a owl:Class ; rdfs:label "Enterprise Customer" ; rdfs:subClassOf :Customer .
+:Order a owl:Class ; rdfs:label "Order" .
+:Product a owl:Class ; rdfs:label "Product" .
+:Supplier a owl:Class ; rdfs:label "Supplier" .
+
+:places a owl:ObjectProperty ; rdfs:label "places" ;
+    rdfs:domain :Customer ; rdfs:range :Order .
+:contains a owl:ObjectProperty ; rdfs:label "contains" ;
+    rdfs:domain :Order ; rdfs:range :Product .
+:supplies a owl:ObjectProperty ; rdfs:label "supplies" ;
+    rdfs:domain :Supplier ; rdfs:range :Product .
+:totalAmount a owl:DatatypeProperty ; rdfs:label "total amount" ;
+    rdfs:domain :Order ; rdfs:range xsd:decimal .
+:unitPrice a owl:DatatypeProperty ; rdfs:label "unit price" ;
+    rdfs:domain :Product ; rdfs:range xsd:decimal .
+:orderDate a owl:DatatypeProperty ; rdfs:label "order date" ;
+    rdfs:domain :Order ; rdfs:range xsd:date .
+
+# A-Box: individuals, facts and values
+:AcmeCorp a owl:NamedIndividual, :EnterpriseCustomer ; rdfs:label "Acme Corp" ;
+    :places :Order1042, :Order1043 .
+:Order1042 a owl:NamedIndividual, :Order ; rdfs:label "Order 1042" ;
+    :contains :Widget ; :totalAmount 48200.00 ; :orderDate "2026-03-12"^^xsd:date .
+:Order1043 a owl:NamedIndividual, :Order ; rdfs:label "Order 1043" ;
+    :contains :Gadget, :Widget ; :totalAmount 9150.50 ; :orderDate "2026-05-02"^^xsd:date .
+:Widget a owl:NamedIndividual, :Product ; rdfs:label "Widget" ; :unitPrice 241.00 .
+:Gadget a owl:NamedIndividual, :Product ; rdfs:label "Gadget" ; :unitPrice 87.25 .
+:Globex a owl:NamedIndividual, :Supplier ; rdfs:label "Globex" ;
+    :supplies :Widget, :Gadget .

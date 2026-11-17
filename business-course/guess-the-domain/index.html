@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Domain Detective</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+  /* Shared knowledge-check palette (matches Week 1): paper, ink, one blue accent, gold for emphasis */
+  :root {
+    --bg: #F7F7F2;
+    --paper: #FFFFFF;
+    --ink: #20283A;
+    --ink-2: #5A6478;
+    --ink-3: #8C94A6;
+    --line: #DDDDD3;
+    --line-strong: #C5C8BE;
+    --accent: #2456A6;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #E6EDF8;
+    --word: #2456A6;
+    --new: #B98A12;
+    --grid: rgba(36,86,166,0.07);
+    --veil: rgba(247,247,242,0.84);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px; line-height: 1.4; -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  h1, h2 { font-family: "Bricolage Grotesque", "IBM Plex Sans", sans-serif; text-wrap: balance; margin: 0; }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .slide { display: grid; grid-template-rows: auto 1fr auto; height: 100%; }
+
+  .top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 18px 28px 10px; }
+  .top h1 { font-size: clamp(22px, 3vw, 32px); font-weight: 800; letter-spacing: -0.01em; }
+  .top h1 span { color: var(--accent); }
+  .top .prompt { color: var(--ink-2); font-size: clamp(14px, 1.6vw, 18px); }
+
+  .stage {
+    position: relative; margin: 0 28px;
+    border: 1px solid var(--line); border-radius: 16px; background: var(--paper);
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px; background-position: center;
+    overflow: hidden; min-height: 240px;
+  }
+  .word {
+    position: absolute; white-space: nowrap;
+    font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; letter-spacing: -0.015em;
+    font-size: clamp(26px, 4.2vw, 48px); line-height: 1; padding: 6px 10px; border-radius: 8px; color: var(--word);
+    transform: scale(0.4); opacity: 0; user-select: none;
+    transition: transform 460ms cubic-bezier(.2,.9,.3,1.25), opacity 340ms ease, color 700ms ease;
+  }
+  .word.in { transform: scale(1); opacity: 1; }
+  .word.new { color: var(--new); }
+  .logo { height: 56px; width: auto; background: #fff; border-radius: 10px; padding: 3px 6px; flex: none; }
+
+  .reveal {
+    position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+    background: var(--veil); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    opacity: 0; pointer-events: none; transition: opacity 300ms ease;
+  }
+  .reveal.on { opacity: 1; pointer-events: auto; }
+  .reveal .eyebrow { font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; }
+  .reveal h2 { font-size: clamp(48px, 9vw, 112px); font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: var(--accent); margin: 6px 0 10px; }
+  .reveal p { margin: 0; font-size: clamp(16px, 2vw, 22px); color: var(--ink); }
+
+  .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 14px 28px 20px; }
+  .count { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: clamp(18px, 2.2vw, 24px); font-variant-numeric: tabular-nums; }
+  .count small { font-family: "IBM Plex Sans", sans-serif; font-weight: 500; font-size: 14px; color: var(--ink-3); margin-left: 8px; }
+  .controls { display: flex; gap: 10px; }
+  .btn { padding: 12px 20px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink); font-weight: 600; font-size: clamp(14px, 1.5vw, 17px); }
+  .btn:hover { border-color: var(--ink-3); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.primary:hover { filter: brightness(1.06); }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  kbd { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 6px; border: 1px solid currentColor; opacity: 0.6; font: 600 12px "IBM Plex Sans", sans-serif; }
+  .keys { font-size: 13px; color: var(--ink-3); }
+
+  .done { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; background: var(--paper); border-radius: 16px; }
+  .done h2 { font-size: clamp(30px, 5vw, 56px); font-weight: 800; letter-spacing: -0.015em; }
+  .done p { color: var(--ink-2); max-width: 48ch; margin: 8px auto 0; font-size: clamp(15px, 1.8vw, 20px); }
+  .done table { border-collapse: collapse; margin: 20px auto 0; font-size: clamp(15px, 1.8vw, 20px); }
+  .done th { text-align: left; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; padding: 8px 22px 8px 0; border-bottom: 1px solid var(--line); }
+  .done td { padding: 10px 22px 10px 0; border-bottom: 1px solid var(--line); text-align: left; font-variant-numeric: tabular-nums; }
+  .done td.n { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; }
+
+  .hidden { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { .word, .reveal { transition: none; } }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<!-- breadcrumb:start -->
+<nav class="crumbs bar" aria-label="Breadcrumb"><ol><li><a href="../../index.html">Knowledge Checks</a></li><li aria-current="page">Domain Detective</li></ol></nav>
+<!-- breadcrumb:end -->
+
+<div class="slide">
+  <div class="top">
+    <h1>Domain <span>Detective</span></h1>
+    <div class="prompt">Call out the domain as soon as you know it.</div>
+    <img class="logo" src="data:image/webp;base64,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" alt="The Knowledge Graph Guys">
+  </div>
+
+  <div class="stage" id="stage" aria-live="polite">
+    <div class="reveal" id="reveal">
+      <div>
+        <div class="eyebrow">The domain was</div>
+        <h2 id="revealName"></h2>
+        <p id="revealNote"></p>
+      </div>
+    </div>
+    <div class="done hidden" id="done">
+      <div>
+        <h2>How many words did it take?</h2>
+        <p>Ten of the words appeared every time. The rest belonged to one world only.</p>
+        <table>
+          <thead><tr><th>Domain</th><th>Words needed</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="count" id="count">Word 1</div>
+    <div class="controls">
+      <button class="btn" id="restartBtn" type="button">Start over<kbd>R</kbd></button>
+      <button class="btn" id="nextBtn" type="button">Next word<kbd>Space</kbd></button>
+      <button class="btn primary" id="gotBtn" type="button">They've got it<kbd>Enter</kbd></button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const SHARED = ["Claim", "Capacity", "Consent", "Record", "Exposure", "Liability", "Settlement", "Discharge", "Compliance", "Underwriting"];
+  const ROUNDS = [
+    { name: "Legal", words: ["Plaintiff", "Defendant", "Litigation", "Tort", "Injunction", "Deposition", "Jurisdiction", "Precedent", "Indemnify"] },
+    { name: "Healthcare", words: ["Diagnosis", "Prognosis", "Comorbidity", "Triage", "Contraindication", "Palliative", "Etiology", "Symptomatic", "Biopsy"] },
+    { name: "Finance", words: ["Liquidity", "Amortization", "Collateral", "Arbitrage", "Hedge", "Equity", "Derivative", "Solvency", "Leverage"] }
+  ];
+  const OPENING_SHARED = 3; // shared words shown before any domain-specific word can appear
+
+  let rounds = [], round = 0, shown = 0, order = [], placed = [];
+  let phase = "play"; // play | revealed | done
+  const results = [];
+
+  const $ = id => document.getElementById(id);
+  const stage = $("stage"), reveal = $("reveal"), nextBtn = $("nextBtn"), gotBtn = $("gotBtn"), count = $("count"), done = $("done");
+
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+  // ---- placement: spiral out from the centre, never overlap ----
+  function overlaps(r, pad) {
+    return placed.some(p => !(r.x + r.w + pad < p.x || p.x + p.w + pad < r.x || r.y + r.h + pad < p.y || p.y + p.h + pad < r.y));
+  }
+  function place(el) {
+    const W = stage.clientWidth, H = stage.clientHeight;
+    el.style.left = "0px"; el.style.top = "0px";
+    const w = el.offsetWidth, h = el.offsetHeight, cx = W / 2, cy = H / 2;
+    for (let a = 0; a < 1400; a += 0.22) {
+      const r = 1.8 * a;
+      const x = cx + r * Math.cos(a) * (W / H) - w / 2, y = cy + r * Math.sin(a) - h / 2;
+      if (x < 8 || y < 8 || x + w > W - 8 || y + h > H - 8) { if (r > Math.max(W, H)) break; continue; }
+      const rect = { x, y, w, h };
+      if (!overlaps(rect, 10)) { placed.push(rect); el.style.left = x + "px"; el.style.top = y + "px"; return; }
+    }
+    const x = Math.random() * Math.max(1, W - w - 16) + 8, y = Math.random() * Math.max(1, H - h - 16) + 8;
+    placed.push({ x, y, w, h }); el.style.left = x + "px"; el.style.top = y + "px";
+  }
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { placed = []; stage.querySelectorAll(".word").forEach(place); }, 120); });
+
+  function popWord(text) {
+    stage.querySelectorAll(".word.new").forEach(w => w.classList.remove("new"));
+    const el = document.createElement("span");
+    el.className = "word new"; el.textContent = text;
+    stage.insertBefore(el, reveal); place(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("in")));
+  }
+
+  // ---- round flow ----
+  function buildOrder(R) {
+    const shared = shuffle(SHARED.slice()), specific = shuffle(R.words.slice());
+    const out = shared.splice(0, OPENING_SHARED);
+    while (shared.length || specific.length) {
+      if (specific.length) out.push(specific.shift());
+      if (shared.length) out.push(shared.shift());
+    }
+    return out;
+  }
+  function setCount() {
+    count.innerHTML = phase === "done" ? "Finished" : `Word ${shown}` + (shown >= order.length ? "<small>that's all of them</small>" : "");
+  }
+  function nextWord() {
+    if (phase !== "play" || shown >= order.length) return;
+    popWord(order[shown]); shown++;
+    nextBtn.disabled = shown >= order.length;
+    setCount();
+  }
+  function startRound() {
+    phase = "play"; shown = 0; placed = []; order = buildOrder(rounds[round]);
+    stage.querySelectorAll(".word").forEach(w => w.remove());
+    reveal.classList.remove("on"); done.classList.add("hidden");
+    nextBtn.disabled = false; gotBtn.disabled = false;
+    gotBtn.innerHTML = "They've got it<kbd>Enter</kbd>";
+    nextWord();
+  }
+  function gotIt() {
+    if (phase === "play") {
+      const R = rounds[round];
+      phase = "revealed";
+      results.push({ name: R.name, shown });
+      $("revealName").textContent = R.name;
+      $("revealNote").textContent = `Guessed after ${shown} ${shown === 1 ? "word" : "words"}.`;
+      reveal.classList.add("on");
+      nextBtn.disabled = true;
+      gotBtn.innerHTML = (round < rounds.length - 1 ? "Continue" : "Finish") + "<kbd>Enter</kbd>";
+    } else if (phase === "revealed") {
+      round++;
+      if (round < rounds.length) startRound(); else finish();
+    }
+  }
+  function finish() {
+    phase = "done";
+    stage.querySelectorAll(".word").forEach(w => w.remove());
+    reveal.classList.remove("on");
+    $("rows").innerHTML = results.map(r => `<tr><td>${r.name}</td><td class="n">${r.shown}</td></tr>`).join("");
+    done.classList.remove("hidden");
+    nextBtn.disabled = true; gotBtn.disabled = true;
+    setCount();
+  }
+  function restart() { rounds = shuffle(ROUNDS.slice()); round = 0; results.length = 0; startRound(); }
+
+  nextBtn.addEventListener("click", nextWord);
+  gotBtn.addEventListener("click", gotIt);
+  $("restartBtn").addEventListener("click", restart);
+  document.addEventListener("keydown", e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === " " || e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); nextWord(); }
+    else if (e.key === "Enter") { e.preventDefault(); gotIt(); }
+    else if (e.key === "r" || e.key === "R") { restart(); }
+  });
+
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(restart);
+})();
+</script>
+</body>
+</html>

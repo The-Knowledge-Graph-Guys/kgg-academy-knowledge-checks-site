@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knowledge Checks</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+  :root {
+    --bg: #F7F7F2; --paper: #FFFFFF; --ink: #20283A; --ink-2: #5A6478; --ink-3: #8C94A6;
+    --line: #DDDDD3; --accent: #2456A6; --accent-ink: #FFFFFF; --accent-soft: #E6EDF8;
+    --shadow: 0 1px 2px rgba(32,40,58,.06), 0 8px 24px rgba(32,40,58,.06);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Source Sans 3", "Helvetica Neue", Arial, sans-serif; font-size: 16px; line-height: 1.5; }
+  h1, h2, h3 { font-family: "Bricolage Grotesque", sans-serif; margin: 0; text-wrap: balance; }
+  a { color: var(--accent); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 36px 20px 64px; }
+  header { margin-bottom: 28px; position: relative; padding-right: 110px; }
+  .logo { position: absolute; top: 0; right: 0; height: 72px; width: auto; background: #fff; border-radius: 12px; padding: 4px 8px; }
+  .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  h1 { font-size: clamp(30px, 4.5vw, 44px); font-weight: 800; letter-spacing: -.01em; line-height: 1.05; }
+  header p { color: var(--ink-2); max-width: 60ch; margin: 8px 0 0; }
+  .course { margin-top: 28px; }
+  .course-head h2 { font-size: 22px; font-weight: 800; }
+  .course-head p { margin: 2px 0 0; color: var(--ink-2); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-top: 14px; }
+  .check { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 6px; }
+  .label { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .check h3 { font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
+  .sub { margin: 0; color: var(--ink-2); font-weight: 600; }
+  .topics { margin: 8px 0 0; padding: 10px 12px 10px 14px; list-style: none; background: var(--accent-soft); border-radius: 10px; border-left: 3px solid var(--accent); }
+  .topics li { position: relative; padding: 0 0 0 14px; margin: 0; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+  .topics li + li { margin-top: 7px; }
+  .topics li::before { content: ""; position: absolute; left: 0; top: .6em; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .topics strong { color: var(--ink); font-weight: 600; }
+  .format { margin: 6px 0 0; font-size: 14px; color: var(--ink-2); }
+  .links { margin-top: auto; padding-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .open { display: inline-block; padding: 9px 14px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-weight: 600; text-decoration: none; }
+  .open:hover { filter: brightness(1.08); }
+  footer { margin-top: 36px; font-size: 13px; color: var(--ink-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img class="logo" src="assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Index</div>
+    <h1>Knowledge Checks</h1>
+    <p>Every check and exercise, each on its own page. 22 so far.</p>
+  </header>
+    <section class="course">
+      <div class="course-head">
+        <h2>Knowledge Graph Foundations</h2>
+        <p>Weekly self-scored checks, about five minutes each, drawn from that week&#x27;s lecture materials.</p>
+      </div>
+      <div class="grid">
+      <article class="check">
+        <div class="label">Week 1</div>
+        <h3>Forms, Sets &amp; Worlds</h3>
+        <p class="sub">Introduction to Conceptual Modelling</p>
+        <ul class="topics"><li>Plato&#x27;s Idea Theory</li><li>set theory and hierarchy</li><li>classes, instances, properties</li><li>TBox / ABox / CBox</li><li>open and closed world</li></ul>
+        <p class="format">Self-scored quiz · 12 questions · ~5 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/week-01-knowledge-check.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Week 2</div>
+        <h3>Control the Vocabulary</h3>
+        <p class="sub">Controlled Vocabularies and the CBox</p>
+        <ul class="topics"><li>competency questions</li><li><strong>vocabulary control</strong> define, reconcile, disambiguate</li><li>flat list, glossary, taxonomy, thesaurus</li><li>the CBox as a bridge</li><li>Ranganathan&#x27;s canons and MECE</li><li>the coverage model</li></ul>
+        <p class="format">Self-scored quiz · 12 questions · ~5 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/week-02-knowledge-check.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Week 3</div>
+        <h3>Concepts, Schemes &amp; Triples</h3>
+        <p class="sub">URIs, Taxonomies and SKOS</p>
+        <ul class="topics"><li>URIs and namespace prefixes</li><li>what a taxonomy needs</li><li>SKOS as data model and ontology</li><li>concept schemes, broader, topConceptOf, exactMatch</li><li>documentation properties</li><li>authority sources and the RDF triple</li></ul>
+        <p class="format">Self-scored quiz · 12 questions · ~5 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/week-03-knowledge-check.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Week 4</div>
+        <h3>Ontology Foundations</h3>
+        <p class="sub">Competency questions, design heuristics, RDF/RDFS/OWL</p>
+        <ul class="topics"><li><strong>analysing a competency question</strong> time, instances, genre concept, geolocation</li><li><strong>the three design heuristics</strong> rigid classes, sub classes that inherit and extend, classes drive properties</li><li>finding the TBox in your SKOS taxonomy</li><li>rdf:type, rdfs:subClassOf, owl:Class, owl:ObjectProperty, owl:DatatypeProperty</li><li>rdfs:domain and rdfs:range, rdfs:label and rdfs:comment</li><li>owl:Ontology and rdfs:isDefinedBy; Turtle semicolons and commas</li></ul>
+        <p class="format">Self-scored quiz · 12 questions · ~5 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/week-04-knowledge-check.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Module 5 tutorial</div>
+        <h3>SPARQL Practice Room</h3>
+        <p class="sub">Ten lessons, a task each, and a query window over a music graph in your browser</p>
+        <ul class="topics"><li>triples and the catch-all pattern; PREFIX, SELECT, WHERE from the module deck</li><li>FILTER, OPTIONAL and the open world, BIND and FILTER NOT EXISTS, ORDER BY, LIMIT, DISTINCT</li><li>COUNT and GROUP BY, property paths for query expansion, ASK, CONSTRUCT, DESCRIBE</li><li>upload your own Turtle and query it, or both graphs at once, with GRAPH ?g</li><li><strong>final</strong> answer one of your competency questions in SPARQL and export it</li><li>every query runs in the browser (Oxigraph in WebAssembly); nothing is sent anywhere</li></ul>
+        <p class="format">Interactive tutorial · 10 lessons · 32 points · ~60 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/sparql-tutorial/">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Module 5 tool</div>
+        <h3>ABox Workbench</h3>
+        <p class="sub">Add the facts: instances typed by your classes, controlled values picked from your taxonomy, questions answered live</p>
+        <ul class="topics"><li><strong>three layers, three jobs</strong> the TBox gives the types, the SKOS taxonomy gives controlled values, the ABox is where the facts go; a concept is a value, never a class</li><li><strong>Foundation</strong> load the module&#x27;s one .ttl file (ontology, concept schemes, instances) or the ontology and the taxonomy as two files, read-only; a concept named like a class is flagged (Activity 1 happens in the files)</li><li><strong>Activity 2, Build</strong> pick a class, name the instance, fill in its properties: a typed value, a link to another instance, or a controlled value from the taxonomy picker; every fact in words next to its Turtle; domain, range and datatype checked as you type, with the inference a reasoner would draw</li><li>a live graph of the facts, redrawn with every edit: instances, controlled values, classes and values as nodes, each fact as a labelled edge, a flash on what was just written; the answer graph lights the instances that answer a question and draws the skos:broader climb</li><li><strong>questions as fill-in-the-blanks</strong> which class, and what must be true about it; subclass and skos:broader expansion; live answers and the first statement with no match; a detailed editor for two-hop questions</li><li><strong>Activity 3</strong> the SPARQL for each question in the deck&#x27;s style, copied with the whole graph into the SPARQL Playground</li><li><strong>review</strong> coverage per question, model use (classes with instances, properties used, controlled values in use), warrant per instance, findings in plain words with a link to fix each; exports the submission .ttl, the queries .txt, a report and the project</li><li>everything in the browser, autosaved to the tab; worked example: the module&#x27;s music events graph with one question left blank to fill in</li></ul>
+        <p class="format">Design tool · 4 tabs · live graph · worked example · ~60 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/abox-workbench/">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Modules 3 to 5 explainer</div>
+        <h3>Two Jobs for SKOS</h3>
+        <p class="sub">SKOS labels and notes on your classes; SKOS concepts as controlled values beside them</p>
+        <ul class="topics"><li><strong>two kinds of SKOS property</strong> labels and notes are OWL annotation properties with no domain; broader, narrower, related and the mapping properties have domain and range skos:Concept</li><li><strong>job one, annotations</strong> prefLabel, altLabel, hiddenLabel, definition, scopeNote, example, historyNote and changeNote on a class or a property, one preferred label per language, nothing changes for a reasoner</li><li><strong>job two, controlled values</strong> rdf:type for the class, a property with range skos:Concept for the concept; rdfs:subClassOf propagates types, skos:broader is climbed by a query path</li><li><strong>one word, two layers</strong> when a word earns a class and when a concept; rdfs:seeAlso to link them, never owl:sameAs, skos:exactMatch or rdf:type; punning left for later</li><li>six checks that keep the layers apart in any file, and which ones the ABox Workbench runs</li><li>twelve questions with explanations and links back to the section that teaches each one</li></ul>
+        <p class="format">Read-along explainer · 5 sections · 12-question check · ~20 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/skos-and-the-tbox.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Modules 1 to 5 explainer</div>
+        <h3>Why the TBox Stays Small</h3>
+        <p class="sub">ABox and TBox, class explosion, and why object properties, data properties and subclasses need care</p>
+        <ul class="topics"><li>the TBox lists kinds of thing, the ABox lists things, the CBox lists allowed values; two questions sort any statement; three layers, three speeds of change</li><li><strong>class explosion</strong> a value in a class name multiplies the TBox by every dimension; an interactive counter for genres, instruments and cities; the adjective test</li><li><strong>when a subclass is earned</strong> a new property or rule, the all-members-always promise, and members that keep landing in two siblings</li><li><strong>object properties</strong> domain and range are inferences, a property per class or per value is the same explosion, sub-properties for real extra meaning, keep the domain as wide as the uses</li><li><strong>data properties</strong> literals end the graph, city as a string versus a node, one property per datatype, no property named after another class, type every literal</li><li>separation of concerns as three files with three owners; seven mistakes to find in any Turtle file; ten questions with explanations</li></ul>
+        <p class="format">Read-along explainer · 6 sections · explosion counter · 10-question check · ~20 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/why-the-tbox-stays-small.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Modules 3 to 5 explainer</div>
+        <h3>Requires, Two Ways</h3>
+        <p class="sub">&quot;An electric guitar requires an amplifier&quot;, modelled with SKOS concepts as values and with no SKOS at all</p>
+        <ul class="topics"><li>the sentence is a rule about every electric guitar and a fact about one guitar; the fact is the same object property in both models</li><li><strong>with SKOS as values</strong> types are concepts, a thing says its type through a property, the rule is an Accessory Requirement individual with two values in the ABox</li><li><strong>without SKOS</strong> types are classes, a thing says its type with rdf:type, the rule is an owl:someValuesFrom restriction on the class in the TBox</li><li>what a reasoner adds in each model (a property chain; the superclasses) and why neither flags a missing cable under the open world assumption</li><li>the gap query in both models; eight rows that decide between the models; twelve questions, six of them sorting Turtle into the model it belongs to</li></ul>
+        <p class="format">Read-along explainer · 6 sections · 12-question check · ~20 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/requires-two-ways.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Modules 3 to 5 tool</div>
+        <h3>Requires Workbench</h3>
+        <p class="sub">Write the rules, add the gear, switch between SKOS-as-values and pure OWL, and watch the three layers rebuild</p>
+        <ul class="topics"><li><strong>one switch</strong> with SKOS as values, or without SKOS; the Turtle for TBox, CBox and ABox regenerates and the rules are highlighted where they land</li><li>rules as rows (every instrument of this type needs an accessory of that type), inherited down the hierarchy through skos:broader or rdfs:subClassOf</li><li>gear with types and accessories; add a new instrument type and see one concept added, or one class and a schema-edit count</li><li>two queries answered live from what was written: what a type requires, and which instrument is missing what</li><li>what a reasoner adds in each model, and the open world note when a required accessory is missing</li><li>copy all three layers as one Turtle file to run the queries in the SPARQL Practice Room</li></ul>
+        <p class="format">Interactive tool · one switch · live Turtle and queries · ~20 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/requires-workbench/">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Modules 3 to 5 explainer</div>
+        <h3>Instruments in Three Layers</h3>
+        <p class="sub">SKOS kinds and accessories, an OWL TBox of musicians and physical instruments, and the facts about one concert: built up until one question needs all three</p>
+        <ul class="topics"><li><strong>kinds as a SKOS scheme</strong> twelve instrument kinds in three branches, labels, definitions, scope notes; a kind is a value, never a class</li><li>a kind is a concept, the instrument in your hands is an instance: five classes and ten properties, two of them with range skos:Concept (plays, is of kind), the class named Physical instrument on purpose</li><li><strong>required accessories between kinds</strong> ex:requires as a sub-property of skos:related (the ISO 25964 way to add a relationship type), the symmetric inference, the S27 rule, inheritance through skos:broader* in the query</li><li><strong>the ABox</strong> three musicians, three physical instruments, three makers, one concert; every line a type, a controlled value, a link or a value</li><li><strong>one question, three layers</strong> the gear-list query line by line, its nine answers, and two more queries; the whole graph as a downloadable Turtle file for the Workbench, the Practice Room and the Playground</li><li><strong>where everything in the music world goes</strong> a decision table from Bass guitar to Höfner to Rock to a music lesson</li><li><strong>the same word in three layers</strong> labels may repeat, IRIs must differ; a namespace per layer, a naming convention, different labels, or punning (not in this course); the ex:musician clash between this file and the Module 5 graph</li><li>fourteen questions with explanations and links back to the section that teaches each one</li></ul>
+        <p class="format">Read-along explainer · 7 sections · worked data file · 14-question check · ~30 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/instruments-three-layers.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Module 1 exercise</div>
+        <h3>Guess the Furniture</h3>
+        <p class="sub">Live twenty questions, then draw the sets</p>
+        <ul class="topics"><li>students write and answer the questions live</li><li>yes/no, multiple choice, open-ended</li><li>big reveal when someone guesses</li><li>bonus round against the computer</li><li>sets and subsets drawn from the answers</li><li>each round exports to Excel, CSV, Markdown, JSON</li></ul>
+        <p class="format">Live classroom game · one file per round · then draw the sets · ~60 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/guess-the-furniture/">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Module 1 check</div>
+        <h3>What Goes Where</h3>
+        <p class="sub">TBox, ABox and CBox in the music domain</p>
+        <ul class="topics"><li>sort music statements into the three boxes, Bad Bunny included</li><li>which box a questionnaire question reveals</li><li>flat list, glossary, taxonomy, thesaurus</li><li>synonyms, preferred terms, MECE</li><li>instance checking, realization, consistency, subsumption</li><li>why keep schema and data apart</li></ul>
+        <p class="format">Self-scored sorting game · 5 rounds · 32 points · ~8 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/tbox-abox-cbox.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Module 2 tool</div>
+        <h3>Coverage Model</h3>
+        <p class="sub">Choose your subgraph, then curate: coverage, completeness, disambiguation</p>
+        <ul class="topics"><li><strong>four subgraphs</strong> genres and works, events and venues, instruments, musicians and works</li><li>use case, coverage targets, existing vocabulary per subgraph</li><li>41 to 44 harvested terms from five sources with provenance and frequency</li><li>exact match, cluster, new candidate, documented exclusion</li><li>genus-differentia definitions and scope notes for homonyms</li><li>coverage graph by source and area, checked against a key</li><li>exports the reconciliation workbook and a SKOS starter</li></ul>
+        <p class="format">Curation exercise · 4 steps · answer key · ~90 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/coverage-model/">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Module 3 tutorial</div>
+        <h3>SKOS in One Sitting</h3>
+        <p class="sub">Labels, hierarchy and documentation</p>
+        <ul class="topics"><li>prefLabel, altLabel, hiddenLabel and the one-per-language rule</li><li>broader, narrower, related, top concepts, no cycles</li><li>definition, scopeNote, example, historyNote, editorialNote, changeNote</li><li><strong>fill in the Turtle</strong> tap each value into its blank</li><li>a complete valid scheme to download</li></ul>
+        <p class="format">Read-along tutorial · 4 tap-to-place exercises · 33 points · ~25 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/skos-tutorial.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Module 3 exercise</div>
+        <h3>SKOS Crosswalk</h3>
+        <p class="sub">Hand in your scheme, read the class&#x27;s, map across subgraphs</p>
+        <ul class="topics"><li>one link per class (?class=class-a, ?class=class-b): separate folders, saved work and graph-store space; samples step aside for real data; Start over clears a device</li><li><strong>Start screen</strong> per-team to-do list that ticks itself off, and a board showing which teams and students have uploaded</li><li><strong>submit a SKOS Turtle file</strong> parsed and checked against S13, S14, S27, hierarchy loops, missing definitions</li><li>browse the four schemes one at a time or all at once: hierarchy graph side by side, labels, definitions, search across all</li><li><strong>the class graph</strong> every concept a bubble, every relationship a line, force layout with drag, pan and zoom</li><li>map concepts across schemes with exactMatch, closeMatch, broadMatch, narrowMatch, relatedMatch</li><li>leads from shared labels, with planted false friends</li><li>mapping graph, transitivity and conflation checks, where the class disagrees</li><li>exports a mapping file in Turtle and a CSV</li><li><strong>optional live backend</strong> Apache Jena Fuseki class graph store behind a small submit-and-list API</li></ul>
+        <p class="format">Class exercise · 5 steps · shared submissions · ~60 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/skos-crosswalk/">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Module 3 game</div>
+        <h3>SKOS in the Wild</h3>
+        <p class="sub">The history and real-world use of SKOS, in seven levels</p>
+        <ul class="topics"><li><strong>origins</strong> Desire, the 2004 Core Guide, the 2009 Recommendation, ISO 25964, MeSH in RDF (timeline to order)</li><li>the ilovemusic instruments and musicians taxonomy: fill in the Violin, place hidden, alt, related, scope note, broader</li><li><strong>world tour</strong> UNESCO, Libris/DNB/BnF, STW/TheSoz, AGROVOC, EuroVoc/ADMS, ESCO, XKOS, MeSH; match each need to uneskos:contains, SKOS-XL, skos:notation, narrowMatch, xkos:Correspondence, xkos:maxLength, meshv pairs</li><li><strong>SKOS vs OWL</strong> sort statements; mapping strength owl:sameAs / exactMatch / closeMatch with the Phytoplankton anti-pattern; ISO 25964 sub-properties</li><li><strong>SKOS-XL</strong> the Stephen King / Richard Bachman reified labels in Turtle</li><li><strong>query expansion</strong> live demo of skos:narrowerTransitive* over a mini library</li><li><strong>quality patrol</strong> find omitted top concepts, a cycle, a disjoint-label violation and an orphan in a scheme</li><li>points, seven badges, a field rank and an exportable score card</li></ul>
+        <p class="format">Gamified tutorial · 7 levels · 64 points · 7 badges · ~40 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/skos-in-the-wild.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Exercise</div>
+        <h3>The CQ Forge</h3>
+        <p class="sub">Competency Questions</p>
+        <ul class="topics"><li>strong vs. weak CQs and the five checks</li><li><strong>the four shapes</strong> lookup, traversal, aggregation, inference</li><li>decomposing a CQ into classes, properties, controlled values, rules</li></ul>
+        <p class="format">Interactive game · 3 rounds · ~5 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/competency-questions-exercise.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Exercise 1</div>
+        <h3>Domain Detective</h3>
+        <p class="sub">Guess the Domain</p>
+        <ul class="topics"><li>concepts vs instances</li><li>schemas</li><li>one vocabulary, three meanings</li><li>sets up T-Box vs A-Box</li></ul>
+        <p class="format">Facilitator-led slide · 3 rounds · keyboard driven</p>
+        <div class="links">
+          <a class="open" href="business-course/guess-the-domain/">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Exercise 2</div>
+        <h3>Ontology Builder</h3>
+        <p class="sub">Build an ontology, watch it render</p>
+        <ul class="topics"><li>C-Box terms before sorting</li><li>concepts, hierarchy, relations, attributes</li><li>instances, instance relations, values</li><li>the blueprint validates the data</li><li>exports W3C RDF / RDFS / SKOS / OWL as Turtle</li></ul>
+        <p class="format">Split-screen builder · palette of tools · guided 10 steps or free build</p>
+        <div class="links">
+          <a class="open" href="business-course/ontology-builder/">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Exercise 3</div>
+        <h3>Ask the Graph</h3>
+        <p class="sub">SPARQL over the data and the blueprint</p>
+        <ul class="topics"><li>the triple as a question</li><li>one language for A-Box and T-Box</li><li>SKOS terms queried too</li><li>open standards, no vendor lock-in</li></ul>
+        <p class="format">Browser SPARQL workbench · ready-made questions · loads any Turtle</p>
+        <div class="links">
+          <a class="open" href="business-course/ask-the-graph/">Open the check</a>
+        </div>
+      </article>
+      </div>
+    </section>
+    <section class="course">
+      <div class="course-head">
+        <h2>Business course</h2>
+        <p>Facilitator-led exercises for the executive course. Run them full screen in a session.</p>
+      </div>
+      <div class="grid">
+      <article class="check">
+        <div class="label">Exercise 1</div>
+        <h3>Domain Detective</h3>
+        <p class="sub">Guess the Domain</p>
+        <ul class="topics"><li>concepts vs instances</li><li>schemas</li><li>one vocabulary, three meanings</li><li>sets up T-Box vs A-Box</li></ul>
+        <p class="format">Facilitator-led slide · 3 rounds · keyboard driven</p>
+        <div class="links">
+          <a class="open" href="business-course/guess-the-domain/">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Exercise 2</div>
+        <h3>Ontology Builder</h3>
+        <p class="sub">Build an ontology, watch it render</p>
+        <ul class="topics"><li>C-Box terms before sorting</li><li>concepts, hierarchy, relations, attributes</li><li>instances, instance relations, values</li><li>the blueprint validates the data</li><li>exports W3C RDF / RDFS / SKOS / OWL as Turtle</li></ul>
+        <p class="format">Split-screen builder · palette of tools · guided 10 steps or free build</p>
+        <div class="links">
+          <a class="open" href="business-course/ontology-builder/">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Exercise 3</div>
+        <h3>Ask the Graph</h3>
+        <p class="sub">SPARQL over the data and the blueprint</p>
+        <ul class="topics"><li>the triple as a question</li><li>one language for A-Box and T-Box</li><li>SKOS terms queried too</li><li>open standards, no vendor lock-in</li></ul>
+        <p class="format">Browser SPARQL workbench · ready-made questions · loads any Turtle</p>
+        <div class="links">
+          <a class="open" href="business-course/ask-the-graph/">Open the check</a>
+        </div>
+      </article>
+      </div>
+    </section>
+    <section class="course">
+      <div class="course-head">
+        <h2>Facilitator guides</h2>
+        <p>Discussion prompts and notes to run after the checks and exercises.</p>
+      </div>
+      <div class="grid">
+      <article class="check">
+        <div class="label">Guide</div>
+        <h3>Discussion Guide</h3>
+        <p class="sub">After every check and exercise</p>
+        <ul class="topics"><li>prompts per exercise</li><li>what to listen for</li><li>closing three lines</li><li>prints with notes expanded</li></ul>
+        <p class="format">Facilitator page · pick 2–3 prompts per session</p>
+        <div class="links">
+          <a class="open" href="discussion/">Open the check</a>
+        </div>
+      </article>
+      </div>
+    </section>
+  <footer>Created by Jessica Talisman · © Knowledge Graph Academy</footer>
+</div>
+</body>
+</html>

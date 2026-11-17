@@ -1,0 +1,1101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ontology Builder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Shared knowledge-check palette (matches Week 1): paper, ink, one blue accent.
+     Graph semantics: concept = blue, instance = plum, attribute = gold, relation = teal. */
+  :root {
+    color-scheme: light;
+    --bg: #FFFFFF;
+    --paper: #FFFFFF;
+    --ink: #20283A;
+    --ink-2: #5A6478;
+    --ink-3: #8C94A6;
+    --line: #DDDDD3;
+    --line-strong: #C5C8BE;
+    --accent: #2456A6;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #E6EDF8;
+    --class: #2456A6;      --class-fill: #E6EDF8;
+    --instance: #7C3F73;   --instance-fill: #F0DFEE;
+    --attr: #B98A12;       --attr-fill: #F7EFD6;
+    --relation: #1F7A6D;   --relation-fill: #DCEFEA;
+    --bad: #B23B26;        --bad-soft: #F7ECE8;
+    --grid: rgba(36,86,166,0.07);
+    --shadow: 0 2px 10px rgba(32,40,58,0.08);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Source Sans 3", "Helvetica Neue", Arial, sans-serif; font-size: 15px; line-height: 1.45;
+    -webkit-font-smoothing: antialiased; overflow: hidden;
+  }
+  h1, h2, h3 { font-family: "Bricolage Grotesque", "Source Sans 3", sans-serif; margin: 0; text-wrap: balance; }
+  button, input, select { font: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .app { display: grid; grid-template-columns: 420px minmax(0, 1fr); height: 100%; }
+  @media (max-width: 900px) { .app { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); } body { overflow: auto; } }
+
+  /* ---------- left rail ---------- */
+  .side { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); background: var(--paper); }
+  .side-head { position: relative; padding: 16px 96px 12px 20px; border-bottom: 1px solid var(--line); }
+  .logo { position: absolute; top: 12px; right: 16px; height: 56px; width: auto; background: #fff; border-radius: 10px; padding: 3px 6px; }
+  .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  .side-head h1 { font-size: 24px; font-weight: 800; letter-spacing: -.01em; line-height: 1.05; }
+  .side-head h1 span { color: var(--accent); }
+  .oname { margin-top: 4px; font-size: 14px; color: var(--ink-2); }
+  .oname b { color: var(--ink); }
+  .side-body { overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px; }
+
+  .card { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--bg); }
+  .step { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .card h2 { font-size: 19px; font-weight: 700; margin-top: 4px; }
+  .why { color: var(--ink-2); margin: 6px 0 0; font-size: 14px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+  .btn { padding: 9px 13px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink); font-weight: 600; }
+  .btn:hover { border-color: var(--ink-3); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.primary:hover { filter: brightness(1.06); }
+  .btn.quiet { border-color: transparent; background: transparent; color: var(--ink-2); font-weight: 500; }
+  .btn.small { padding: 5px 9px; font-size: 13px; }
+  .btn.danger { color: var(--bad); border-color: var(--bad); }
+  .btn.danger:hover { background: var(--bad-soft); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .error { font-size: 13px; color: var(--bad); background: var(--bad-soft); padding: 8px 10px; border-radius: 8px; margin-top: 8px; }
+  .note { font-size: 14px; color: var(--ink); background: var(--accent-soft); padding: 10px 12px; border-radius: 10px; border-left: 3px solid var(--accent); margin-top: 10px; }
+  .gap-btns { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+  .hint.soft { background: var(--bg); border-left-color: var(--line-strong); color: var(--ink-2); }
+  .hint { font-size: 13.5px; color: var(--ink); background: var(--attr-fill); border-left: 3px solid var(--attr); padding: 8px 10px; border-radius: 0 8px 8px 0; margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; justify-content: space-between; }
+
+  /* guide */
+  .guide-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .guide-head .step { color: var(--ink-3); }
+  .progress { display: flex; gap: 3px; margin: 10px 0 8px; }
+  .progress i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+  .progress i.done { background: var(--accent); }
+  .progress i.now { background: var(--accent); opacity: .45; }
+  .guide.off .guide-body { display: none; }
+
+  /* switch */
+  .switch { position: relative; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-3); cursor: pointer; user-select: none; }
+  .switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .switch i { width: 30px; height: 18px; border-radius: 9px; background: var(--line-strong); position: relative; transition: background .15s; }
+  .switch i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: left .15s; }
+  .switch input:checked + i { background: var(--accent); }
+  .switch input:checked + i::after { left: 14px; }
+  .switch input:focus-visible + i { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* palette */
+  .palette { display: flex; flex-direction: column; gap: 6px; }
+  .pal-title { display: flex; justify-content: space-between; align-items: baseline; font-size: 15px; font-weight: 700; font-family: "Bricolage Grotesque", sans-serif; margin: 4px 0 2px; }
+  .pal-title span { font-family: "Source Sans 3", sans-serif; font-weight: 500; font-size: 12.5px; color: var(--ink-3); }
+  .pal { border: 1px solid var(--line); border-radius: 12px; background: var(--paper); overflow: hidden; }
+  .pal.disabled { opacity: .55; }
+  .pal-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 6px; }
+  .pal-toggle { flex: 1; display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 4px 6px; color: var(--ink); font-weight: 600; font-size: 14.5px; text-align: left; border-radius: 8px; }
+  .pal-toggle:hover { background: var(--bg); }
+  .pal-toggle .chev { width: 8px; height: 8px; border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3); transform: rotate(-45deg); transition: transform .15s; flex: none; margin-left: 2px; }
+  .pal[data-open="true"] .pal-toggle .chev { transform: rotate(45deg); }
+  .pal.disabled .pal-toggle { cursor: default; }
+  .sw { width: 14px; height: 14px; border-radius: 4px; border: 1.6px solid; flex: none; }
+  .sw.term { background: var(--paper); border-color: var(--ink-3); border-style: dashed; }
+  .sw.concept { background: var(--class-fill); border-color: var(--class); }
+  .sw.subclass { background: transparent; border-color: var(--class); border-style: double; border-width: 3px; }
+  .sw.relation { background: var(--relation-fill); border-color: var(--relation); border-radius: 999px; }
+  .sw.attribute { background: var(--attr-fill); border-color: var(--attr); }
+  .sw.instance { background: var(--instance-fill); border-color: var(--instance); border-radius: 999px; }
+  .sw.fact { background: transparent; border-color: var(--instance); border-radius: 999px; border-style: dashed; }
+  .sw.value { background: var(--paper); border-color: var(--attr); border-style: dashed; }
+  .count { font-size: 12px; color: var(--ink-3); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .pal-body { display: none; padding: 0 12px 12px; border-top: 1px solid var(--line); }
+  .pal[data-open="true"]:not(.disabled) .pal-body { display: block; }
+  .pal-desc { font-size: 13px; color: var(--ink-2); margin: 10px 0 0; }
+  .std { margin-top: 6px; font: 500 11.5px "IBM Plex Mono", Menlo, monospace; color: var(--accent); background: var(--accent-soft); display: inline-block; padding: 2px 8px; border-radius: 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; border: 1px solid var(--line-strong); border-radius: 999px; padding: 3px 4px 3px 10px; font-size: 13px; background: var(--bg); }
+  .chip .lab { cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+  .chip .lab:hover { color: var(--accent); }
+  .chip button { border: 0; background: transparent; color: var(--ink-3); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; line-height: 1; padding: 0; }
+  .chip button:hover { background: var(--paper); color: var(--ink); }
+  .chip button.del:hover { color: var(--bad); }
+  .chip.c-term { border-color: var(--ink-3); border-style: dashed; padding-right: 6px; }
+  .chip .assign { display: inline-flex; gap: 2px; margin-left: 4px; }
+  .chip .assign button { width: auto; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 600; border: 1px solid var(--line-strong); color: var(--ink-2); }
+  .chip .assign button:hover { border-color: var(--accent); color: var(--accent); background: var(--paper); }
+  .chip.c-concept, .chip.c-subclass { border-color: var(--class); }
+  .chip.c-relation { border-color: var(--relation); }
+  .chip.c-attribute, .chip.c-value { border-color: var(--attr); }
+  .chip.c-instance, .chip.c-fact { border-color: var(--instance); }
+  .none { font-size: 13px; color: var(--ink-3); margin-top: 10px; }
+  form.stmt { margin-top: 12px; display: grid; gap: 8px; }
+  .row { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .row.three { grid-template-columns: 1fr auto 1fr; align-items: center; }
+  .field { display: grid; gap: 3px; }
+  .field label { font-size: 12px; color: var(--ink-2); font-weight: 500; }
+  .field input, .field select { width: 100%; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink); }
+  .field .k-class { border-color: var(--class); }
+  .field .k-instance { border-color: var(--instance); }
+  .field .k-attr { border-color: var(--attr); }
+  .field .k-relation { border-color: var(--relation); }
+  .joiner { font-size: 13px; color: var(--ink-3); text-align: center; padding-top: 18px; }
+  .pal.hot { box-shadow: 0 0 0 2px var(--accent); }
+
+  .stmts h3 { font-size: 15px; font-weight: 700; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; }
+  .stmts h3 .tools { display: flex; gap: 2px; flex: none; white-space: nowrap; }
+  .stmts ol { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+  .stmts li { display: flex; gap: 8px; align-items: baseline; font-size: 14px; padding: 6px 8px; border-radius: 8px; background: var(--bg); }
+  .tag { flex: none; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+  .tag.c { background: var(--bg); color: var(--ink-2); border: 1px dashed var(--ink-3); }
+  .tag.t { background: var(--class-fill); color: var(--class); }
+  .tag.a { background: var(--instance-fill); color: var(--instance); }
+  .stmts li b { font-weight: 600; }
+  .empty { font-size: 14px; color: var(--ink-3); margin-top: 6px; }
+  pre.ttl { margin: 8px 0 0; padding: 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); font: 12.5px/1.5 "IBM Plex Mono", Menlo, monospace; overflow-x: auto; color: var(--ink); }
+
+  /* ---------- right: graph ---------- */
+  .main { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--paper); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--ink-2); }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; border: 1.5px solid; }
+  .legend .sw-term { background: var(--paper); border-color: var(--ink-3); border-style: dashed; }
+  .legend .sw-class { background: var(--class-fill); border-color: var(--class); }
+  .legend .sw-inst { background: var(--instance-fill); border-color: var(--instance); border-radius: 999px; }
+  .legend .sw-attr { background: var(--attr-fill); border-color: var(--attr); }
+  .legend .sw-rel { width: 18px; height: 0; border: 0; border-top: 2px solid var(--relation); vertical-align: 3px; }
+  .legend .sw-sub { width: 18px; height: 0; border: 0; border-top: 2px solid var(--class); vertical-align: 3px; }
+  .legend .sw-fact { width: 18px; height: 0; border: 0; border-top: 2px solid var(--instance); vertical-align: 3px; }
+  .legend .sw-isa { width: 18px; height: 0; border: 0; border-top: 2px dotted var(--instance); vertical-align: 3px; }
+  .seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; }
+  .seg button { padding: 6px 10px; border: 0; background: var(--paper); color: var(--ink-2); font-size: 13px; font-weight: 500; border-right: 1px solid var(--line-strong); }
+  .seg button:last-child { border-right: 0; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .seg button[data-view="cbox"][aria-pressed="true"] { background: var(--ink-2); color: #fff; }
+  .seg button[data-view="tbox"][aria-pressed="true"] { background: var(--class); color: #fff; }
+  .seg button[data-view="abox"][aria-pressed="true"] { background: var(--instance); color: #fff; }
+  .tally { font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .zoom { display: inline-flex; }
+  .zoom .btn { min-width: 32px; font-size: 16px; line-height: 1; padding: 4px 8px; }
+  .zoom .btn:first-child { border-radius: 8px 0 0 8px; }
+  .zoom .btn:last-child { border-radius: 0 8px 8px 0; margin-left: -1px; }
+  .app.collapsed { grid-template-columns: minmax(0, 1fr); }
+  .app.collapsed .side { display: none; }
+
+  .canvas { position: relative; flex: 1; min-height: 0;
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px; background-position: center; }
+  svg { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+  svg.panning { cursor: grabbing; }
+  .empty-graph { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: var(--ink-3); pointer-events: none; padding: 20px; }
+  .empty-graph b { display: block; font-family: "Bricolage Grotesque", sans-serif; font-size: 22px; color: var(--ink-2); }
+  .onto-title { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -.01em; color: var(--ink); padding-right: 12px; border-right: 1px solid var(--line); margin-right: 4px; }
+  .onto-title:empty { display: none; }
+  .view-caption { position: absolute; left: 18px; bottom: 14px; right: 18px; font-size: 13px; color: var(--ink-2); pointer-events: none; padding: 8px 12px; border-radius: 10px; max-width: 60ch; }
+  .view-caption:empty { display: none; }
+  .view-caption.c { background: var(--bg); color: var(--ink-2); border: 1px dashed var(--ink-3); }
+  .view-caption.t { background: var(--class-fill); color: var(--class); }
+  .view-caption.a { background: var(--instance-fill); color: var(--instance); }
+
+  .node { cursor: grab; }
+  .node:active { cursor: grabbing; }
+  .node rect { stroke-width: 1.6; }
+  .node.class rect { fill: var(--class-fill); stroke: var(--class); }
+  .node.instance rect { fill: var(--instance-fill); stroke: var(--instance); }
+  .node.attr rect { fill: var(--attr-fill); stroke: var(--attr); }
+  .node.value rect { fill: var(--paper); stroke: var(--attr); stroke-dasharray: 3 3; }
+  .node.term rect { fill: var(--paper); stroke: var(--ink-3); stroke-dasharray: 4 3; }
+  .node.term text { fill: var(--ink-2); font-weight: 500; }
+  .node text { font-family: "Source Sans 3", sans-serif; font-weight: 600; font-size: 14px; fill: var(--ink); pointer-events: none; }
+  .node.attr text, .node.value text { font-size: 12px; font-weight: 500; }
+  .node.value text { font-family: "IBM Plex Mono", monospace; }
+  .node.ghost, .edge.ghost { opacity: .45; }
+  .node.ghost rect { stroke-dasharray: 5 4; }
+  .node.enter { animation: pop 420ms cubic-bezier(.2,.9,.3,1.25); transform-box: fill-box; transform-origin: center; }
+  @keyframes pop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .edge line { stroke-width: 1.8; }
+  .edge.subclass line { stroke: var(--class); }
+  .edge.relation line { stroke: var(--relation); }
+  .edge.instanceOf line { stroke: var(--instance); stroke-dasharray: 2 4; }
+  .edge.attr line { stroke: var(--attr); stroke-width: 1.3; }
+  .edge.value line { stroke: var(--attr); stroke-width: 1.2; stroke-dasharray: 2 3; }
+  .edge.fact line { stroke: var(--instance); }
+  .edge text { font-family: "Source Sans 3", sans-serif; font-size: 12px; font-weight: 500; paint-order: stroke; stroke: var(--bg); stroke-width: 5px; stroke-linejoin: round; pointer-events: none; }
+  .edge.relation text { fill: var(--relation); }
+  .edge.fact text { fill: var(--instance); font-weight: 700; font-size: 13px; }
+  .edge.fact line { stroke-width: 2.2; }
+  .edge.subclass text { fill: var(--class); font-size: 11px; }
+  .edge.instanceOf text { fill: var(--instance); font-size: 11px; }
+  .off { display: none !important; }
+  .faint { opacity: .28; }
+  .faint rect { stroke-dasharray: 4 3; }
+  .hl-node rect, .hl-node line { stroke-width: 3.2; }
+  .hidden { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { .node.enter { animation: none; } }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<!-- breadcrumb:start -->
+<nav class="crumbs bar" aria-label="Breadcrumb"><ol><li><a href="../../index.html">Knowledge Checks</a></li><li aria-current="page">Ontology Builder</li></ol></nav>
+<!-- breadcrumb:end -->
+
+<div class="app">
+  <aside class="side">
+    <div class="side-head">
+      <img class="logo" src="data:image/webp;base64,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" alt="The Knowledge Graph Guys">
+      <div class="eyebrow">Exercise · Build an ontology</div>
+      <h1>Ontology <span>Builder</span></h1>
+      <div class="oname" id="onameLine"></div>
+    </div>
+    <div class="side-body">
+      <section class="card" id="nameCard">
+        <div class="step">Before you build</div>
+        <h2>Name your ontology</h2>
+        <p class="why">An ontology describes one world. Give yours a name that says which world. Everything you build will belong to it.</p>
+        <form class="stmt" id="nameForm" autocomplete="off">
+          <div class="field"><label>Ontology name</label><input name="oname" class="k-class" placeholder="Your ontology's name"></div>
+          <div class="actions"><button class="btn primary" type="submit">Start building</button></div>
+        </form>
+      </section>
+
+      <div id="workspace" class="hidden" style="display:contents">
+        <section class="card guide" id="guide">
+          <div class="guide-head">
+            <div class="step" id="guideLabel">Guide</div>
+            <label class="switch"><input type="checkbox" id="guideToggle" checked><i></i>Guide</label>
+          </div>
+          <div class="guide-body">
+            <div class="progress" id="progress"></div>
+            <h2 id="stepTitle"></h2>
+            <p class="why" id="stepWhy"></p>
+            <div class="actions">
+              <button class="btn primary" id="openStepBtn" type="button"></button>
+              <button class="btn quiet" id="skipBtn" type="button">Skip this step</button>
+            </div>
+            <div class="note hidden" id="note"></div>
+          </div>
+        </section>
+
+        <div class="pal-title">Palette <span>switch tools on or off · open one to add</span></div>
+        <div class="palette" id="palette"></div>
+
+        <section class="stmts">
+          <h3>What you've said so far
+            <span class="tools">
+              <button class="btn small quiet" id="ttlBtn" type="button">Show RDF</button>
+              <button class="btn small quiet" id="copyTtlBtn" type="button">Copy</button>
+              <button class="btn small quiet" id="dlTtlBtn" type="button">Download .ttl</button>
+              <button class="btn small quiet" id="undoBtn" type="button">Undo</button>
+              <button class="btn small quiet" id="resetBtn" type="button">Reset</button>
+            </span>
+          </h3>
+          <ol id="stmts"></ol>
+          <div class="empty" id="stmtsEmpty">Nothing yet. Every statement you add appears here and in the graph.</div>
+          <pre class="ttl hidden" id="ttl"></pre>
+        </section>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="toolbar">
+      <div class="onto-title" id="ontoTitle"></div>
+      <div class="legend">
+        <span><i class="sw-term"></i>term (C-Box, not yet assigned)</span>
+        <span><i class="sw-class"></i>Concept</span>
+        <span><i class="sw-sub"></i>is a kind of (hollow arrow)</span>
+        <span><i class="sw-isa"></i>is a (dotted)</span>
+        <span><i class="sw-rel"></i>relation (between concepts)</span>
+        <span><i class="sw-fact"></i>fact (relation between instances)</span>
+        <span><i class="sw-attr"></i>attribute</span>
+        <span><i class="sw-inst"></i>instance</span>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <span class="tally" id="tally"></span>
+        <div class="seg" role="group" aria-label="Show">
+          <button type="button" data-view="all" aria-pressed="true">Everything</button>
+          <button type="button" data-view="cbox" aria-pressed="false">Categories (C-Box)</button>
+          <button type="button" data-view="tbox" aria-pressed="false">Blueprint only (T-Box)</button>
+          <button type="button" data-view="abox" aria-pressed="false">Data only (A-Box)</button>
+        </div>
+        <span class="zoom"><button class="btn small" id="zoomOutBtn" type="button" title="Zoom out">−</button><button class="btn small" id="zoomInBtn" type="button" title="Zoom in">+</button></span>
+        <button class="btn small" id="fitBtn" type="button">Fit to screen</button>
+        <button class="btn small" id="panelBtn" type="button">Hide tools</button>
+        <button class="btn small" id="tidyBtn" type="button">Tidy layout</button>
+        <button class="btn small danger" id="resetTopBtn" type="button">Reset</button>
+      </div>
+    </div>
+    <div class="canvas" id="canvas">
+      <svg id="svg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="m-relation" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" style="fill:var(--relation)"/></marker>
+          <marker id="m-fact" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" style="fill:var(--instance)"/></marker>
+          <marker id="m-subclass" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M1,1 L11,6 L1,11 z" style="fill:var(--paper);stroke:var(--class);stroke-width:1.4"/></marker>
+        </defs>
+        <g id="edges"></g>
+        <g id="nodes"></g>
+      </svg>
+      <div class="view-caption" id="viewCaption"></div>
+      <div class="empty-graph" id="emptyGraph"><div><b>Your graph starts here.</b><span id="emptyHint">Name your ontology on the left, then add the first concept and watch it appear.</span></div></div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // =================== model ===================
+  const model = { name: "", nodes: [], edges: [], history: [] };
+  const byId = id => model.nodes.find(n => n.id === id);
+  const edgeById = id => model.edges.find(e => e.id === id);
+  const slug = s => s.trim().replace(/[^A-Za-z0-9 ]+/g, " ").trim().split(/\s+/).map(w => w[0].toUpperCase() + w.slice(1)).join("");
+  const classes = () => model.nodes.filter(n => n.kind === "class");
+  const instances = () => model.nodes.filter(n => n.kind === "instance");
+  const findByLabel = (label, kind) => model.nodes.find(n => n.kind !== "value" && n.kind !== "term" && n.label.toLowerCase() === label.trim().toLowerCase() && (!kind || n.kind === kind));
+  const findTerm = label => model.nodes.find(n => n.kind === "term" && n.label.toLowerCase() === label.trim().toLowerCase());
+  const terms = () => model.nodes.filter(n => n.kind === "term");
+  const labelOf = n => n.kind === "value" ? `${(byId(n.attrId) || { label: "?" }).label}: ${n.value}` : n.label;
+
+  function ancestors(classId) {
+    const out = [classId]; let frontier = [classId];
+    while (frontier.length) {
+      const next = [];
+      model.edges.filter(e => e.kind === "subclass" && frontier.includes(e.from)).forEach(e => { if (!out.includes(e.to)) { out.push(e.to); next.push(e.to); } });
+      frontier = next;
+    }
+    return out;
+  }
+  const classOf = inst => (model.edges.find(e => e.kind === "instanceOf" && e.from === inst.id) || {}).to;
+  const relationsFor = (a, b) => { const A = ancestors(classOf(a)), B = ancestors(classOf(b)); return model.edges.filter(e => e.kind === "relation" && A.includes(e.from) && B.includes(e.to)); };
+  const attrsFor = inst => { const A = ancestors(classOf(inst)); return model.edges.filter(e => e.kind === "attr" && A.includes(e.from)).map(e => byId(e.to)); };
+
+  let uid = 1;
+  function addNode(kind, label, near) {
+    const c = viewCentre(), base = near ? byId(near) : null;
+    const n = { id: "n" + uid++, kind, label,
+      x: base ? base.x + (Math.random() - .5) * 120 : c.x + (Math.random() - .5) * 60,
+      y: base ? base.y + 90 + (Math.random() - .5) * 30 : c.y + (Math.random() - .5) * 60,
+      vx: 0, vy: 0, fresh: true };
+    model.nodes.push(n); return n;
+  }
+  function addEdge(kind, from, to, label) { const e = { id: "e" + uid++, kind, from, to, label: label || "" }; model.edges.push(e); return e; }
+
+  // Remove a node and everything that cannot stand without it. History entries that lose a part are dropped.
+  function removeNode(id) {
+    const gone = new Set([id]);
+    // Everything that cannot stand without this node goes with it: a concept's attributes and instances,
+    // an attribute's values, an instance's values. Subclasses stay and simply lose their parent link.
+    let grew = true;
+    while (grew) {
+      grew = false;
+      for (const gid of [...gone]) {
+        const n = byId(gid); if (!n) continue;
+        model.edges.filter(e => (e.kind === "value" || e.kind === "attr") && e.from === gid).forEach(e => { if (!gone.has(e.to)) { gone.add(e.to); grew = true; } });
+        if (n.kind === "class") model.edges.filter(e => e.kind === "instanceOf" && e.to === gid).forEach(e => { if (!gone.has(e.from)) { gone.add(e.from); grew = true; } });
+        if (n.kind === "attr") model.nodes.filter(x => x.kind === "value" && x.attrId === gid).forEach(x => { if (!gone.has(x.id)) { gone.add(x.id); grew = true; } });
+      }
+    }
+    const goneEdges = new Set(model.edges.filter(e => gone.has(e.from) || gone.has(e.to)).map(e => e.id));
+    model.nodes = model.nodes.filter(n => !gone.has(n.id));
+    model.edges = model.edges.filter(e => !goneEdges.has(e.id));
+    model.history = model.history.filter(h => !h.nodes.some(n => gone.has(n)) && !h.edges.some(e => goneEdges.has(e)));
+    prune();
+  }
+  function removeEdge(id) {
+    const e = edgeById(id); if (!e) return;
+    if (e.kind === "subclass" || e.kind === "instanceOf") return removeNode(e.from); // the child or instance cannot stand without it
+    model.edges = model.edges.filter(x => x.id !== id);
+    model.history = model.history.filter(h => !h.edges.includes(id));
+    prune();
+  }
+  // Drop data the blueprint no longer supports: facts whose relation is gone, values whose attribute no longer applies.
+  function prune() {
+    const dead = new Set();
+    model.edges.filter(e => e.kind === "fact").forEach(e => {
+      const a = byId(e.from), b = byId(e.to);
+      if (!a || !b || !relationsFor(a, b).some(r => r.label === e.label)) dead.add(e.id);
+    });
+    if (dead.size) { model.edges = model.edges.filter(e => !dead.has(e.id)); model.history = model.history.filter(h => !h.edges.some(x => dead.has(x))); }
+    const deadValues = model.nodes.filter(n => n.kind === "value").filter(n => { const e = model.edges.find(x => x.kind === "value" && x.to === n.id); const inst = e && byId(e.from); return !inst || !attrsFor(inst).some(a => a.id === n.attrId); });
+    deadValues.forEach(n => { const ids = new Set(model.edges.filter(e => e.to === n.id).map(e => e.id)); model.nodes = model.nodes.filter(x => x.id !== n.id); model.edges = model.edges.filter(e => !ids.has(e.id)); model.history = model.history.filter(h => !h.nodes.includes(n.id)); });
+  }
+
+  // =================== statement kinds ===================
+  const KINDS = {
+    term: { name: "Term", plural: "Terms (C-Box)", box: "c", std: "skos:Concept · skos:prefLabel", desc: "Words from your world before you've decided what they are. Collect them here, then assign each one: to the blueprint as a concept or attribute, or to the data as an instance.",
+      fields: [{ k: "name", label: "A word from your world", cls: "", ph: "anything people say when they talk about it" }],
+      items: () => terms().map(n => ({ id: n.id, node: true, text: n.label, assign: true })),
+      commit(v) {
+        const label = v.name.trim(); if (!label) throw "Type a term.";
+        if (findTerm(label)) throw `"${label}" is already in the box.`;
+        if (findByLabel(label)) throw `"${label}" is already a ${findByLabel(label).kind === "class" ? "concept" : findByLabel(label).kind}.`;
+        return { nodes: [addNode("term", label)], edges: [] };
+      },
+      preview(v) { return v.name.trim() && !findTerm(v.name) && !findByLabel(v.name) ? { node: { kind: "term", label: v.name.trim() } } : null; } },
+    concept: { name: "Concept", plural: "Concepts", box: "t", std: "owl:Class (⊑ rdfs:Class) · rdfs:label", desc: "A kind of thing in your world. Not one specific thing, the idea of it.",
+      fields: [{ k: "name", label: "Name of the concept", cls: "k-class", ph: "a kind of thing in your world" }],
+      items: () => classes().map(n => ({ id: n.id, node: true, text: n.label })),
+      commit(v) {
+        const label = v.name.trim(); if (!label) throw "Give the concept a name.";
+        if (findByLabel(label)) throw `"${label}" already exists.`;
+        return { nodes: [addNode("class", label)], edges: [] };
+      },
+      preview(v) { return v.name.trim() && !findByLabel(v.name) ? { node: { kind: "class", label: v.name.trim() } } : null; } },
+    subclass: { name: "Subclass", plural: "Subclasses", box: "t", std: "rdfs:subClassOf", desc: "A more specific kind of an existing concept. It inherits everything from the broader one.",
+      fields: [{ k: "name", label: "New, more specific concept", cls: "k-class", ph: "a more specific kind" }, { k: "parent", label: "is a kind of", sel: "class", cls: "k-class" }],
+      items: () => model.edges.filter(e => e.kind === "subclass").map(e => ({ id: e.id, text: `${byId(e.from).label} ◂ ${byId(e.to).label}` })),
+      commit(v) {
+        const label = v.name.trim(); if (!label) throw "Name the more specific concept.";
+        if (!v.parent) throw "Pick the broader concept it specialises.";
+        if (findByLabel(label)) throw `"${label}" already exists.`;
+        const n = addNode("class", label, v.parent), e = addEdge("subclass", n.id, v.parent, "");
+        return { nodes: [n], edges: [e] };
+      },
+      preview(v) { return v.name.trim() && v.parent && !findByLabel(v.name) ? { node: { kind: "class", label: v.name.trim(), near: v.parent }, edge: { kind: "subclass", to: v.parent } } : null; } },
+    relation: { name: "Relation", plural: "Relations (between concepts)", box: "t", std: "owl:ObjectProperty · rdfs:domain · rdfs:range", desc: "A named, directed link between two concepts. Direction matters.",
+      fields: [{ k: "from", label: "Concept", sel: "class", cls: "k-class" }, { k: "verb", label: "relation (a verb)", cls: "k-relation", ph: "what the first does to the second" }, { k: "to", label: "Concept", sel: "class", cls: "k-class" }], layout: "three",
+      items: () => model.edges.filter(e => e.kind === "relation").map(e => ({ id: e.id, text: `${byId(e.from).label} ${e.label} ${byId(e.to).label}`, rename: true })),
+      commit(v) {
+        if (!v.from || !v.to) throw "Pick both concepts."; const verb = v.verb.trim(); if (!verb) throw "Name the relation with a verb.";
+        if (model.edges.some(e => e.kind === "relation" && e.from === v.from && e.to === v.to && e.label.toLowerCase() === verb.toLowerCase())) throw "That relation already exists.";
+        return { nodes: [], edges: [addEdge("relation", v.from, v.to, verb)] };
+      },
+      preview(v) { return v.from && v.to && v.verb.trim() ? { edge: { kind: "relation", from: v.from, to: v.to, label: v.verb.trim() } } : null; } },
+    attribute: { name: "Attribute", plural: "Attributes", box: "t", std: "owl:DatatypeProperty · rdfs:range rdfs:Literal", desc: "A value that describes a concept, not a thing in its own right.",
+      fields: [{ k: "owner", label: "Concept", sel: "class", cls: "k-class" }, { k: "name", label: "has an attribute called", cls: "k-attr", ph: "name of the attribute" }],
+      items: () => model.nodes.filter(n => n.kind === "attr").map(n => { const e = model.edges.find(e => e.kind === "attr" && e.to === n.id); return { id: n.id, node: true, text: `${e ? byId(e.from).label + " · " : ""}${n.label}` }; }),
+      commit(v) {
+        if (!v.owner) throw "Pick the concept that carries the attribute."; const label = v.name.trim(); if (!label) throw "Name the attribute.";
+        if (model.edges.some(e => e.kind === "attr" && e.from === v.owner && byId(e.to).label.toLowerCase() === label.toLowerCase())) throw "That attribute already exists on this concept.";
+        const n = addNode("attr", label, v.owner), e = addEdge("attr", v.owner, n.id, "");
+        return { nodes: [n], edges: [e] };
+      },
+      preview(v) { return v.owner && v.name.trim() ? { node: { kind: "attr", label: v.name.trim(), near: v.owner }, edge: { kind: "attr", from: v.owner } } : null; } },
+    instance: { name: "Instance", plural: "Instances", box: "a", std: "owl:NamedIndividual · rdf:type", desc: "One specific, named thing. The \"is a\" here only says which concept it belongs to. To link two instances to each other, use Facts, the next tool down.",
+      fields: [{ k: "name", label: "A specific, named thing", cls: "k-instance", ph: "one real, named thing" }, { k: "cls", label: "is a", sel: "class", cls: "k-class" }],
+      items: () => instances().map(n => ({ id: n.id, node: true, text: `${n.label} (${(byId(classOf(n)) || {}).label || "?"})` })),
+      commit(v) {
+        const label = v.name.trim(); if (!label) throw "Name the instance."; if (!v.cls) throw "Pick which concept it is an instance of.";
+        if (findByLabel(label)) throw `"${label}" already exists.`;
+        const n = addNode("instance", label, v.cls), e = addEdge("instanceOf", n.id, v.cls, "");
+        return { nodes: [n], edges: [e] };
+      },
+      preview(v) { return v.name.trim() && v.cls && !findByLabel(v.name) ? { node: { kind: "instance", label: v.name.trim(), near: v.cls }, edge: { kind: "instanceOf", to: v.cls } } : null; },
+      gap() {
+        const last = lastAdded.instance && byId(lastAdded.instance); if (!last) return null;
+        return { soft: true, text: `${last.label} is in the data. To link it to another instance with a verb:`, buttons: [{ label: `Relate ${last.label} to another instance`, kind: "fact", prefill: { from: last.id } }] };
+      } },
+    fact: { name: "Fact", plural: "Facts · relations between instances", box: "a", std: "RDF triple: subject · predicate · object", desc: "Link one instance to another. The verb comes from the relations you defined between their concepts; direction matters. Need a new verb? Define it in Relations and it appears here.",
+      fields: [{ k: "from", label: "Instance", sel: "instance", cls: "k-instance" }, { k: "rel", label: "relation", sel: "relation", cls: "k-relation" }, { k: "to", label: "Instance", sel: "instance", cls: "k-instance" }], layout: "three",
+      items: () => model.edges.filter(e => e.kind === "fact").map(e => ({ id: e.id, text: `${byId(e.from).label} ${e.label} ${byId(e.to).label}` })),
+      commit(v) {
+        if (!v.from || !v.to) throw "Pick both instances."; if (!v.rel) throw "Pick a relation.";
+        const rel = edgeById(v.rel);
+        if (!relationsFor(byId(v.from), byId(v.to)).some(e => e.id === rel.id)) throw `The blueprint doesn't allow "${rel.label}" between these two.`;
+        if (model.edges.some(e => e.kind === "fact" && e.from === v.from && e.to === v.to && e.label === rel.label)) throw "You've already stated that.";
+        return { nodes: [], edges: [addEdge("fact", v.from, v.to, rel.label)] };
+      },
+      preview(v) { return v.from && v.to && v.rel ? { edge: { kind: "fact", from: v.from, to: v.to, label: (edgeById(v.rel) || {}).label } } : null; },
+      gap(v) {
+        if (!v.from || !v.to) return null;
+        const a = byId(v.from), b = byId(v.to); if (!a || !b) return null;
+        const ca = byId(classOf(a)), cb = byId(classOf(b));
+        const define = { label: `Define one from ${ca.label} to ${cb.label}`, kind: "relation", prefill: { from: ca.id, to: cb.id } };
+        if (!relationsFor(a, b).length) {
+          const rev = relationsFor(b, a);
+          if (rev.length) return { text: `Your relation runs the other way: ${cb.label} ${rev.map(r => r.label).join(" / ")} ${ca.label}. Swap the two instances, or define one from ${ca.label} to ${cb.label}.`, buttons: [{ label: "Swap the instances", action: "swap" }, define] };
+          const all = model.edges.filter(e => e.kind === "relation");
+          const have = all.length ? ` You have: ${all.map(r => `${byId(r.from).label} ${r.label} ${byId(r.to).label}`).join("; ")}.` : "";
+          return { text: `No relation from ${ca.label} to ${cb.label} yet, so these two can't be linked.${have}`, buttons: [define] };
+        }
+        return { soft: true, text: `Relations from ${ca.label} to ${cb.label} are listed above.`, buttons: [{ label: "Define another", kind: "relation", prefill: { from: ca.id, to: cb.id } }] };
+      } },
+    value: { name: "Value", plural: "Values", box: "a", std: "RDF literal · xsd datatype", desc: "An actual value for one instance's attribute. Only attributes the blueprint gives its concept are offered.",
+      fields: [{ k: "inst", label: "Instance", sel: "instance", cls: "k-instance" }, { k: "attr", label: "attribute", sel: "attr", cls: "k-attr" }, { k: "val", label: "value", cls: "k-attr", ph: "the actual value" }],
+      items: () => model.nodes.filter(n => n.kind === "value").map(n => { const e = model.edges.find(e => e.kind === "value" && e.to === n.id); return { id: n.id, node: true, text: `${e ? byId(e.from).label + " · " : ""}${labelOf(n)}` }; }),
+      commit(v) {
+        if (!v.inst) throw "Pick the instance."; if (!v.attr) throw "Pick an attribute."; const val = v.val.trim(); if (!val) throw "Enter the value.";
+        const attr = byId(v.attr);
+        if (!attrsFor(byId(v.inst)).some(a => a.id === attr.id)) throw `The blueprint doesn't give this instance's concept an attribute "${attr.label}".`;
+        const n = addNode("value", "", v.inst); n.attrId = attr.id; n.value = val;
+        const e = addEdge("value", v.inst, n.id, "");
+        return { nodes: [n], edges: [e] };
+      },
+      preview(v) { return v.inst && v.attr && v.val.trim() ? { node: { kind: "value", label: `${byId(v.attr).label}: ${v.val.trim()}`, near: v.inst }, edge: { kind: "value", from: v.inst } } : null; },
+      gap(v) {
+        if (!v.inst) return null;
+        const i = byId(v.inst); if (!i || attrsFor(i).length) return null;
+        const c = byId(classOf(i));
+        return { text: `${c.label} has no attributes yet, so ${i.label} can't hold a value.`, btn: `Add an attribute to ${c.label}`, kind: "attribute", prefill: { owner: c.id } };
+      } }
+  };
+  const ORDER = ["term", "concept", "subclass", "relation", "attribute", "instance", "fact", "value"];
+
+  // Sentence for a history entry, computed from the live model so renames show through.
+  function sentence(h) {
+    const n = h.nodes.map(byId), e = h.edges.map(edgeById);
+    const L = x => `<b>${esc(x ? labelOf(x) : "?")}</b>`;
+    switch (h.kind) {
+      case "term": return `${L(n[0])} is a term, not yet assigned.`;
+      case "concept": return `${L(n[0])} is a concept${n[0] && n[0].fromTerm ? " (assigned from the C-Box)" : ""}.`;
+      case "subclass": return `${L(byId(e[0].from))} is a kind of ${L(byId(e[0].to))}.`;
+      case "relation": return `${L(byId(e[0].from))} ${esc(e[0].label)} ${L(byId(e[0].to))}.`;
+      case "attribute": return `${L(byId(e[0].from))} has an attribute ${L(n[0])}.`;
+      case "instance": return `${L(n[0])} is a ${L(byId(e[0].to))}.`;
+      case "fact": return `${L(byId(e[0].from))} ${esc(e[0].label)} ${L(byId(e[0].to))}.`;
+      case "value": return `${L(byId(e[0].from))} ${esc(byId(n[0].attrId)?.label || "?")}: <b>${esc(n[0].value)}</b>.`;
+    }
+    return "";
+  }
+
+  // =================== guide ===================
+  const STEPS = [
+    { kind: "term", title: "Collect terms first (C-Box)", why: "Before deciding anything, list a few words people use when they talk about your world. Don't sort them yet. This pool of unsorted categories is the C-Box.", after: "Terms float unassigned in the graph. Each one will become a concept, an attribute or an instance once you decide what it is. Use the arrows on a term's chip, or keep collecting." },
+    { kind: "concept", title: "Start with a concept", why: "What kind of thing does your world revolve around? Not one specific thing, the idea of it. Name that concept. This is the first brick of the blueprint (the T-Box).", after: "One node. It stands for every one of those things there will ever be, without naming any of them." },
+    { kind: "concept", title: "Add a second concept", why: "An ontology with one concept says nothing. What does the first concept deal with, produce, need or belong to? Name that.", after: "Two concepts, no connection yet. The graph is honest: you haven't said how they relate." },
+    { kind: "relation", title: "Connect them with a relation", why: "A relation is a named, directed link between two concepts. Pick a verb and a direction. Direction matters: who does what to whom.", after: "The arrow reads as a sentence. Every relation you add is a sentence the data will later be allowed to make." },
+    { kind: "subclass", title: "Specialise a concept", why: "Is there a more specific kind of one of your concepts that deserves its own name? A subclass inherits everything from the broader one.", after: "The new concept inherits every relation of its parent without you repeating anything. Hierarchy is how an ontology stays small while covering a lot." },
+    { kind: "attribute", title: "Give a concept an attribute", why: "Attributes are values that describe a thing, not things in their own right. Which of your concepts carries one, and what is it called?", after: "Attributes hang off the concept that carries them. When you record real things later, each will get its own value." },
+    { kind: "instance", title: "Now add real data: an instance", why: "Everything so far is the blueprint. An instance is one specific, named thing in your world. This is where the data (the A-Box) begins.", after: "The instance sits under its concept, and through it under every broader concept. Whatever is true of the concept is now true of this one thing." },
+    { kind: "instance", title: "Add a second instance", why: "Instance relations need two instances. Add a specific thing of the concept your relation points to.", after: "Two instances. Now the blueprint gets to do its job." },
+    { kind: "fact", title: "Relate two instances (a fact)", why: "Link your two instances with a verb. The menu only offers relations the blueprint defines between their concepts, in that direction. That is the schema validating the data.", after: "That fact was allowed because the blueprint defines that relation between those concepts, or their parents. Try one the blueprint forbids and watch it refuse." },
+    { kind: "value", title: "Record a value", why: "Your blueprint gave a concept an attribute. Give one of its instances an actual value. If the attribute is missing, the form will point you to Attributes.", after: "You have a complete, small ontology: concepts, hierarchy, relations, attributes, and data the blueprint checks. Keep building. Try to break it." }
+  ];
+  let step = 0, guideOn = true, view = "all", activeKind = "concept";
+  const lastAdded = {};
+  const enabled = Object.fromEntries(ORDER.map(k => [k, true]));
+  const open = Object.fromEntries(ORDER.map(k => [k, false]));
+
+  function renderGuide() {
+    $("guide").classList.toggle("off", !guideOn);
+    $("progress").innerHTML = STEPS.map((_, i) => `<i class="${i < step ? "done" : i === step ? "now" : ""}"></i>`).join("");
+    if (step < STEPS.length) {
+      const s = STEPS[step];
+      $("guideLabel").textContent = `Guide · step ${step + 1} of ${STEPS.length}`;
+      $("stepTitle").textContent = s.title; $("stepWhy").textContent = s.why;
+      $("openStepBtn").textContent = `Open ${KINDS[s.kind].plural}`; $("openStepBtn").classList.remove("hidden"); $("skipBtn").classList.remove("hidden");
+    } else {
+      $("guideLabel").textContent = "Guide · complete";
+      $("stepTitle").textContent = "Keep building"; $("stepWhy").textContent = "Add anything from the palette. The blueprint keeps checking the data. Rename or delete from the chips to fix mistakes.";
+      $("openStepBtn").classList.add("hidden"); $("skipBtn").classList.add("hidden");
+    }
+    ORDER.forEach(k => document.querySelector(`.pal[data-kind="${k}"]`)?.classList.toggle("hot", guideOn && step < STEPS.length && STEPS[step].kind === k));
+  }
+  $("guideToggle").addEventListener("change", e => { guideOn = e.target.checked; renderGuide(); });
+  $("openStepBtn").addEventListener("click", () => { if (step < STEPS.length) openSection(STEPS[step].kind); });
+  $("skipBtn").addEventListener("click", () => { if (step < STEPS.length) step++; $("note").classList.add("hidden"); renderGuide(); });
+
+  // =================== palette ===================
+  function buildPalette() {
+    $("palette").innerHTML = ORDER.map(k => `
+      <section class="pal" data-kind="${k}" data-open="false">
+        <div class="pal-head">
+          <button class="pal-toggle" type="button" aria-expanded="false"><span class="chev"></span><i class="sw ${k}"></i><span>${KINDS[k].plural}</span><span class="count" data-count></span></button>
+          <label class="switch" title="Switch this tool on or off"><input type="checkbox" checked data-enable><i></i></label>
+        </div>
+        <div class="pal-body">
+          <p class="pal-desc">${KINDS[k].desc}</p>
+          <div class="std">${KINDS[k].std}</div>
+          <div class="chips" data-chips></div>
+          <form class="stmt" autocomplete="off" data-form></form>
+          <div class="hint hidden" data-gap></div>
+          <div class="error hidden" data-error></div>
+          <div class="actions"><button class="btn primary" type="button" data-add>Add ${KINDS[k].name.toLowerCase()}</button></div>
+        </div>
+      </section>`).join("");
+    ORDER.forEach(k => {
+      const sec = document.querySelector(`.pal[data-kind="${k}"]`);
+      sec.querySelector(".pal-toggle").addEventListener("click", () => {
+        if (!enabled[k]) return;
+        open[k] = !open[k]; sec.dataset.open = open[k]; sec.querySelector(".pal-toggle").setAttribute("aria-expanded", open[k]);
+        if (open[k]) { activeKind = k; renderForm(k); updatePreview(); } else if (activeKind === k) { preview = null; syncGraph(); }
+      });
+      sec.querySelector("[data-enable]").addEventListener("change", ev => { enabled[k] = ev.target.checked; sec.classList.toggle("disabled", !enabled[k]); if (!enabled[k] && activeKind === k) { preview = null; syncGraph(); } });
+      const form = sec.querySelector("[data-form]");
+      sec.querySelector("[data-add]").addEventListener("click", () => commit(k));
+      form.addEventListener("submit", ev => { ev.preventDefault(); commit(k); });
+      form.addEventListener("focusin", () => { if (activeKind !== k) { activeKind = k; updatePreview(); } });
+      sec.querySelector("[data-gap]").addEventListener("click", ev => {
+        const b = ev.target.closest("button"); if (!b) return;
+        if (b.dataset.action === "swap") { const v = formValues(k); renderForm(k, Object.assign({}, v, { from: v.to, to: v.from })); updatePreview(); return; }
+        if (b.dataset.jump) openSection(b.dataset.jump, JSON.parse(b.dataset.prefill || "{}"));
+      });
+    });
+    renderPalette();
+  }
+  function openSection(k, prefill) {
+    const sec = document.querySelector(`.pal[data-kind="${k}"]`);
+    if (!enabled[k]) { enabled[k] = true; sec.classList.remove("disabled"); sec.querySelector("[data-enable]").checked = true; }
+    open[k] = true; sec.dataset.open = "true"; sec.querySelector(".pal-toggle").setAttribute("aria-expanded", "true");
+    activeKind = k; renderForm(k, null, prefill || {}); updatePreview();
+    sec.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const first = sec.querySelector("[data-form] input, [data-form] select"); if (first) first.focus({ preventScroll: true });
+  }
+  function options(type, ctx) {
+    if (type === "class") return classes().map(n => [n.id, n.label]);
+    if (type === "instance") return instances().map(n => [n.id, n.label]);
+    if (type === "relation") {
+      const a = ctx.from && byId(ctx.from), b = ctx.to && byId(ctx.to);
+      const rels = a && b ? relationsFor(a, b) : model.edges.filter(e => e.kind === "relation");
+      return rels.map(e => [e.id, `${e.label} (${byId(e.from).label} → ${byId(e.to).label})`]);
+    }
+    if (type === "attr") {
+      const i = ctx.inst && byId(ctx.inst);
+      const attrs = i ? attrsFor(i) : model.nodes.filter(n => n.kind === "attr");
+      return attrs.map(n => { const e = model.edges.find(e => e.kind === "attr" && e.to === n.id); return [n.id, `${n.label} (${e ? byId(e.from).label : "?"})`]; });
+    }
+    return [];
+  }
+  const formOf = k => document.querySelector(`.pal[data-kind="${k}"] [data-form]`);
+  function formValues(k) { const v = {}; formOf(k).querySelectorAll("[name]").forEach(el => v[el.name] = el.value); return v; }
+  function renderForm(k, keepValues, prefill) {
+    const d = KINDS[k], form = formOf(k);
+    const prev = keepValues || (form.querySelector("[name]") ? formValues(k) : {});
+    const vals = Object.assign({}, prev, prefill || {});
+    const cells = d.fields.map(f => {
+      const val = vals[f.k] ?? "";
+      let input;
+      if (f.sel) {
+        const opts = options(f.sel, vals);
+        const emptyText = opts.length ? "Choose…" : (f.sel === "attr" ? "None for this instance's concept (see note)" : f.sel === "relation" ? "None between these two concepts (see note)" : f.sel === "instance" ? "No instances yet" : "No concepts yet");
+        input = `<select name="${f.k}" class="${f.cls}"><option value="">${emptyText}</option>${opts.map(([id, l]) => `<option value="${id}" ${id === val ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+      } else input = `<input name="${f.k}" class="${f.cls}" value="${esc(val)}" placeholder="${esc(f.ph || "")}">`;
+      return `<div class="field"><label>${esc(f.label)}</label>${input}</div>`;
+    });
+    form.innerHTML = d.layout === "three" ? `<div class="row three">${cells[0]}<div class="joiner">→</div>${cells[2]}</div>${cells[1]}` : `<div class="row">${cells.join("")}</div>`;
+    form.querySelectorAll("select").forEach(s => s.addEventListener("change", () => { renderForm(k); updatePreview(); }));
+    form.querySelectorAll("input").forEach(el => el.addEventListener("input", updatePreview));
+    // Gap hint: the blueprint is missing what this statement needs. Offer the fix in one click.
+    const gapEl = form.parentElement.querySelector("[data-gap]");
+    const gap = d.gap ? d.gap(vals) : null;
+    if (gap) {
+      const btns = gap.buttons || [{ label: gap.btn, kind: gap.kind, prefill: gap.prefill }];
+      gapEl.innerHTML = `<span>${esc(gap.text)}</span><span class="gap-btns">${btns.map(b => b.action ? `<button class="btn small" type="button" data-action="${b.action}">${esc(b.label)}</button>` : `<button class="btn small" type="button" data-jump="${b.kind}" data-prefill='${esc(JSON.stringify(b.prefill))}'>${esc(b.label)}</button>`).join("")}</span>`;
+      gapEl.classList.remove("hidden"); gapEl.classList.toggle("soft", !!gap.soft);
+    }
+    else gapEl.classList.add("hidden");
+    form.parentElement.querySelector("[data-error]").classList.add("hidden");
+  }
+  function renderPalette() {
+    ORDER.forEach(k => {
+      const sec = document.querySelector(`.pal[data-kind="${k}"]`), items = KINDS[k].items();
+      sec.querySelector("[data-count]").textContent = items.length || "";
+      const chips = sec.querySelector("[data-chips]");
+      chips.innerHTML = items.length ? items.map(it => `<span class="chip c-${k}" data-id="${it.id}"><span class="lab" title="Show in graph">${esc(it.text)}</span>${it.assign ? `<span class="assign"><button type="button" data-assign="concept" title="Make it a concept (T-Box)">→ Concept</button><button type="button" data-assign="attribute" title="Make it an attribute (T-Box)">→ Attribute</button><button type="button" data-assign="instance" title="Make it an instance (A-Box)">→ Instance</button></span>` : ""}${it.node || it.rename ? `<button type="button" class="ren" title="Rename">✎</button>` : ""}<button type="button" class="del" title="Delete">×</button></span>`).join("") : `<div class="none">None yet.</div>`;
+      chips.querySelectorAll(".chip").forEach(ch => {
+        const id = ch.dataset.id;
+        ch.querySelectorAll("[data-assign]").forEach(b => b.addEventListener("click", () => assignTerm(id, b.dataset.assign)));
+        ch.querySelector(".lab").addEventListener("click", () => flash(id));
+        ch.querySelector(".ren")?.addEventListener("click", () => rename(id));
+        ch.querySelector(".del").addEventListener("click", () => { if (confirm("Delete this and everything that depends on it?")) { byId(id) ? removeNode(id) : removeEdge(id); afterChange(); } });
+      });
+      if (open[k]) renderForm(k);
+    });
+  }
+  function rename(id) {
+    const n = byId(id), e = edgeById(id);
+    if (n) {
+      if (n.kind === "value") { const v = prompt("New value:", n.value); if (v === null || !v.trim()) return; n.value = v.trim(); }
+      else {
+        const v = prompt("New name:", n.label); if (v === null || !v.trim()) return;
+        const dup = findByLabel(v); if (dup && dup.id !== id) { alert(`"${v.trim()}" already exists.`); return; }
+        n.label = v.trim();
+      }
+      els.get(id)?.remove(); els.delete(id);
+      model.nodes.filter(x => x.kind === "value" && x.attrId === id).forEach(x => { els.get(x.id)?.remove(); els.delete(x.id); });
+    } else if (e && e.kind === "relation") {
+      const v = prompt("New relation name (a verb):", e.label); if (v === null || !v.trim()) return;
+      const old = e.label; e.label = v.trim();
+      model.edges.filter(x => x.kind === "fact" && x.label === old && ancestors(classOf(byId(x.from))).includes(e.from) && ancestors(classOf(byId(x.to))).includes(e.to))
+        .forEach(x => { x.label = e.label; els.get(x.id)?.remove(); els.delete(x.id); });
+      els.get(id)?.remove(); els.delete(id);
+    }
+    afterChange();
+  }
+  // A term leaves the C-Box the moment something with its name is created in the T-Box or A-Box.
+  function assignTerm(termId, kind) {
+    const t = byId(termId); if (!t) return;
+    if (kind === "concept") { commit("concept", { name: t.label }); openSection("concept"); return; }
+    openSection(kind, { name: t.label });
+  }
+  function absorbTerm(res) {
+    res.nodes.forEach(n => {
+      if (n.kind === "term" || n.kind === "value") return;
+      const t = findTerm(n.label); if (!t) return;
+      n.fromTerm = true;
+      model.nodes = model.nodes.filter(x => x.id !== t.id);
+      model.history = model.history.filter(h => !h.nodes.includes(t.id));
+      els.get(t.id)?.remove(); els.delete(t.id);
+      n.x = t.x; n.y = t.y + 60;
+    });
+  }
+  function commit(k, values) {
+    const d = KINDS[k], sec = document.querySelector(`.pal[data-kind="${k}"]`), err = sec.querySelector("[data-error]");
+    try {
+      const res = d.commit(values || formValues(k));
+      absorbTerm(res);
+      model.history.push({ kind: k, nodes: res.nodes.map(n => n.id), edges: res.edges.map(e => e.id), box: d.box });
+      if (res.nodes[0]) lastAdded[k] = res.nodes[0].id;
+      err.classList.add("hidden");
+      let after = "";
+      if (guideOn && step < STEPS.length && STEPS[step].kind === k) { after = STEPS[step].after; step++; }
+      preview = null; renderForm(k, {}); afterChange();
+      if (after) { $("note").textContent = after; $("note").classList.remove("hidden"); }
+      const first = sec.querySelector("[data-form] input, [data-form] select"); if (first) first.focus({ preventScroll: true });
+    } catch (msg) { err.textContent = msg; err.classList.remove("hidden"); }
+  }
+  function afterChange() { renderGuide(); renderPalette(); renderStatements(); syncGraph(); kick(); fit(); }
+
+  // =================== naming / reset / undo ===================
+  $("nameForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const name = $("nameForm").querySelector("[name=oname]").value.trim();
+    if (!name) { $("nameForm").querySelector("input").focus(); return; }
+    model.name = name;
+    $("ontoTitle").textContent = name; $("onameLine").innerHTML = `Ontology: <b>${esc(name)}</b>`;
+    $("emptyHint").textContent = "Open Concepts in the palette, add the first one, and watch it appear.";
+    $("nameCard").classList.add("hidden"); $("workspace").classList.remove("hidden");
+    renderGuide(); if (guideOn) openSection(STEPS[0].kind);
+  });
+  $("undoBtn").addEventListener("click", () => {
+    const h = model.history.pop(); if (!h) return;
+    model.edges = model.edges.filter(e => !h.edges.includes(e.id));
+    model.nodes = model.nodes.filter(n => !h.nodes.includes(n.id));
+    if (guideOn && step > 0 && STEPS[step - 1].kind === h.kind) step--;
+    $("note").classList.add("hidden"); afterChange();
+  });
+  function resetAll() {
+    if (model.history.length && !confirm("Reset? This clears your whole ontology, including its name. Nothing is saved anywhere.")) return;
+    model.nodes = []; model.edges = []; model.history = []; model.name = ""; step = 0; preview = null;
+    ORDER.forEach(k => { open[k] = false; document.querySelector(`.pal[data-kind="${k}"]`).dataset.open = "false"; });
+    $("note").classList.add("hidden"); $("ontoTitle").textContent = ""; $("onameLine").textContent = "";
+    $("emptyHint").textContent = "Name your ontology on the left, then add the first concept and watch it appear.";
+    $("workspace").classList.add("hidden"); $("nameCard").classList.remove("hidden");
+    const ni = $("nameForm").querySelector("input"); ni.value = ""; ni.focus();
+    afterChange();
+  }
+  $("resetBtn").addEventListener("click", resetAll);
+  $("resetTopBtn").addEventListener("click", resetAll);
+  $("ttlBtn").addEventListener("click", () => { const p = $("ttl"); p.classList.toggle("hidden"); $("ttlBtn").textContent = p.classList.contains("hidden") ? "Show RDF" : "Hide RDF"; renderStatements(); });
+
+  function renderStatements() {
+    const ol = $("stmts");
+    ol.innerHTML = model.history.map((h, i) => `<li data-i="${i}" data-box="${h.box}"><span class="tag ${h.box}">${h.box === "t" ? "T-Box" : h.box === "a" ? "A-Box" : "C-Box"}</span><span>${sentence(h)}</span></li>`).join("");
+    $("stmtsEmpty").classList.toggle("hidden", model.history.length > 0);
+    $("undoBtn").disabled = !model.history.length;
+    ol.querySelectorAll("li").forEach(li => {
+      li.addEventListener("mouseenter", () => highlight(model.history[+li.dataset.i]));
+      li.addEventListener("mouseleave", () => highlight(null));
+    });
+    const c = classes().length, r = model.edges.filter(e => e.kind === "relation").length, a = model.nodes.filter(n => n.kind === "attr").length, i = instances().length, f = model.edges.filter(e => e.kind === "fact").length;
+    const tcount = terms().length;
+    $("tally").textContent = model.nodes.length ? `${tcount ? tcount + " term" + (tcount === 1 ? "" : "s") + " · " : ""}${c} concept${c === 1 ? "" : "s"} · ${r} relation${r === 1 ? "" : "s"} · ${a} attribute${a === 1 ? "" : "s"} · ${i} instance${i === 1 ? "" : "s"} · ${f} fact${f === 1 ? "" : "s"}` : "";
+    if (!$("ttl").classList.contains("hidden")) $("ttl").textContent = turtle();
+  }
+  // =================== RDF export: RDF 1.1 + RDFS 1.1 + SKOS + OWL 2 (simple), Turtle 1.1 ===================
+  const BASE = () => `https://example.org/${model.name ? pnLocal(model.name).toLowerCase() : "ontology"}`;
+  // Turtle PN_LOCAL-safe local names: ASCII letters, digits, underscore; never empty; never starting with a digit.
+  function pnLocal(s, lowerFirst) {
+    let t = String(s).normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9 ]+/g, " ").trim().split(/\s+/).filter(Boolean)
+      .map((w, i) => (lowerFirst && i === 0) ? w[0].toLowerCase() + w.slice(1) : w[0].toUpperCase() + w.slice(1)).join("");
+    if (!t) t = "x"; if (/^[0-9]/.test(t)) t = "_" + t; return t;
+  }
+  const lit = s => `"${String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n").replace(/\r/g, "\\r")}"`;
+  // Typed literals where the value is unambiguous, xsd:string otherwise.
+  function literal(v) {
+    const t = String(v).trim();
+    if (/^[+-]?\d+$/.test(t)) return t;                       // xsd:integer
+    if (/^[+-]?(\d+\.\d*|\.\d+)$/.test(t)) return t;          // xsd:decimal
+    if (/^(true|false)$/i.test(t)) return t.toLowerCase();    // xsd:boolean
+    if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return `${lit(t)}^^xsd:date`;
+    return lit(v);
+  }
+  // One IRI per resource. A property name reused between different concepts gets a qualified IRI,
+  // because two rdfs:domain triples on one property would mean their intersection, not either.
+  function iriTable() {
+    const m = new Map(), used = new Set();
+    const claim = (id, name) => { let n = name, i = 2; while (used.has(n)) n = `${name}_${i++}`; used.add(n); m.set(id, ":" + n); };
+    model.nodes.filter(n => n.kind === "class" || n.kind === "instance" || n.kind === "term").forEach(n => claim(n.id, pnLocal(n.label)));
+    const rel = {}; model.edges.filter(e => e.kind === "relation").forEach(e => { const k = pnLocal(e.label, true); (rel[k] = rel[k] || []).push(e); });
+    Object.entries(rel).forEach(([k, es]) => es.forEach(e => claim(e.id, es.length > 1 ? `${k}_${pnLocal(byId(e.from).label)}_${pnLocal(byId(e.to).label)}` : k)));
+    const att = {}; model.nodes.filter(n => n.kind === "attr").forEach(n => { const k = pnLocal(n.label, true); (att[k] = att[k] || []).push(n); });
+    Object.entries(att).forEach(([k, ns]) => ns.forEach(n => { const o = model.edges.find(e => e.kind === "attr" && e.to === n.id); claim(n.id, ns.length > 1 && o ? `${k}_${pnLocal(byId(o.from).label)}` : k); }));
+    return m;
+  }
+  function turtle() {
+    const I = iriTable(), base = BASE(), T = terms(), C = classes(), R = model.edges.filter(e => e.kind === "relation"), A = model.nodes.filter(n => n.kind === "attr"), N = instances();
+    const L = [];
+    L.push(`@prefix :     <${base}#> .`);
+    L.push("@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .");
+    L.push("@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .");
+    L.push("@prefix owl:  <http://www.w3.org/2002/07/owl#> .");
+    L.push("@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .");
+    L.push("@prefix dct:  <http://purl.org/dc/terms/> .");
+    if (T.length) L.push("@prefix skos: <http://www.w3.org/2004/02/skos/core#> .");
+    L.push("");
+    L.push(`<${base}> a owl:Ontology ;`);
+    L.push(`    rdfs:label ${lit(model.name || "Untitled ontology")} ;`);
+    L.push(`    dct:title ${lit(model.name || "Untitled ontology")} ;`);
+    L.push(`    dct:created "${new Date().toISOString().slice(0, 10)}"^^xsd:date ;`);
+    L.push(`    owl:versionInfo "1.0" ;`);
+    L.push(`    rdfs:comment "Built in the Ontology Builder exercise. Vocabulary: RDF 1.1, RDFS 1.1, SKOS (C-Box terms), OWL 2 (classes, properties, individuals)." .`);
+    if (T.length) {
+      L.push("", "# C-Box: terms not yet assigned. SKOS holds vocabulary before it is modelled.");
+      L.push(`:CBox a skos:ConceptScheme ;\n    skos:prefLabel "C-Box: unassigned terms" .`);
+      T.forEach(t => L.push(`${I.get(t.id)} a skos:Concept ;\n    skos:prefLabel ${lit(t.label)} ;\n    skos:inScheme :CBox .`));
+    }
+    if (C.length || R.length || A.length) L.push("", "# T-Box: classes and properties. owl:Class is a subclass of rdfs:Class; hierarchy, domain and range are RDFS.");
+    C.forEach(c => {
+      const sup = model.edges.filter(e => e.kind === "subclass" && e.from === c.id).map(e => I.get(e.to));
+      L.push(`${I.get(c.id)} a owl:Class ;\n    rdfs:label ${lit(c.label)}${sup.map(s => ` ;\n    rdfs:subClassOf ${s}`).join("")} .`);
+    });
+    R.forEach(e => L.push(`${I.get(e.id)} a owl:ObjectProperty ;\n    rdfs:label ${lit(e.label)} ;\n    rdfs:domain ${I.get(e.from)} ;\n    rdfs:range  ${I.get(e.to)} .`));
+    A.forEach(n => { const o = model.edges.find(e => e.kind === "attr" && e.to === n.id); L.push(`${I.get(n.id)} a owl:DatatypeProperty ;\n    rdfs:label ${lit(n.label)}${o ? ` ;\n    rdfs:domain ${I.get(o.from)}` : ""} ;\n    rdfs:range  rdfs:Literal .`); });
+    if (N.length) L.push("", "# A-Box: individuals, facts and values. Plain RDF triples; rdf:type links each individual to its class.");
+    N.forEach(i => {
+      const parts = [`a owl:NamedIndividual, ${I.get(classOf(i))}`, `rdfs:label ${lit(i.label)}`];
+      model.edges.filter(e => e.kind === "fact" && e.from === i.id).forEach(e => {
+        const r = relationsFor(i, byId(e.to)).find(x => x.label === e.label); if (r) parts.push(`${I.get(r.id)} ${I.get(e.to)}`);
+      });
+      model.edges.filter(e => e.kind === "value" && e.from === i.id).forEach(e => { const v = byId(e.to); if (v && I.get(v.attrId)) parts.push(`${I.get(v.attrId)} ${literal(v.value)}`); });
+      L.push(`${I.get(i.id)} ${parts.join(" ;\n    ")} .`);
+    });
+    return L.join("\n") + "\n";
+  }
+  $("copyTtlBtn").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(turtle()); $("copyTtlBtn").textContent = "Copied"; setTimeout(() => $("copyTtlBtn").textContent = "Copy", 1200); }
+    catch { $("ttl").classList.remove("hidden"); $("ttl").textContent = turtle(); }
+  });
+  $("dlTtlBtn").addEventListener("click", () => {
+    const blob = new Blob([turtle()], { type: "text/turtle" }), a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = `${pnLocal(model.name || "ontology").toLowerCase()}.ttl`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+
+  // =================== graph ===================
+  const svg = $("svg"), gN = $("nodes"), gE = $("edges");
+  const els = new Map();
+  let preview = null, ghostEls = [];
+  const meas = document.createElement("canvas").getContext("2d");
+  function size(n) {
+    const label = labelOf(n);
+    meas.font = n.kind === "value" ? `500 12px "IBM Plex Mono"` : n.kind === "attr" ? `500 12px "Source Sans 3"` : n.kind === "term" ? `500 14px "Source Sans 3"` : `600 14px "Source Sans 3"`;
+    const w = meas.measureText(label).width + (n.kind === "class" ? 28 : 22);
+    return { w: Math.max(w, 44), h: n.kind === "class" ? 36 : n.kind === "instance" ? 32 : n.kind === "term" ? 30 : 24 };
+  }
+  function nodeEl(n, ghost) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", `node ${n.kind}${ghost ? " ghost" : n.fresh ? " enter" : ""}`); g.dataset.id = n.id || "";
+    const { w, h } = size(n);
+    const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    r.setAttribute("width", w); r.setAttribute("height", h); r.setAttribute("x", -w / 2); r.setAttribute("y", -h / 2);
+    r.setAttribute("rx", n.kind === "instance" ? h / 2 : n.kind === "class" ? 8 : 5);
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.setAttribute("text-anchor", "middle"); t.setAttribute("dominant-baseline", "central"); t.textContent = labelOf(n);
+    g.appendChild(r); g.appendChild(t); n.w = w; n.h = h;
+    if (!ghost) attachDrag(g, n);
+    return g;
+  }
+  function edgeEl(e, ghost) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class", `edge ${e.kind}${ghost ? " ghost" : ""}`); g.dataset.id = e.id || "";
+    const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    if (e.kind === "relation" || e.kind === "fact" || e.kind === "subclass") l.setAttribute("marker-end", `url(#m-${e.kind})`);
+    g.appendChild(l);
+    if (e.label) { const t = document.createElementNS("http://www.w3.org/2000/svg", "text"); t.setAttribute("text-anchor", "middle"); t.textContent = e.label; g.appendChild(t); }
+    return g;
+  }
+  function syncGraph() {
+    for (const [id, el] of els) if (!byId(id) && !edgeById(id)) { el.remove(); els.delete(id); }
+    model.edges.forEach(e => { if (!els.has(e.id)) { const el = edgeEl(e); gE.appendChild(el); els.set(e.id, el); } });
+    model.nodes.forEach(n => { if (!els.has(n.id)) { const el = nodeEl(n); gN.appendChild(el); els.set(n.id, el); setTimeout(() => { n.fresh = false; el.classList.remove("enter"); }, 500); } });
+    ghostEls.forEach(el => el.remove()); ghostEls = [];
+    if (preview) {
+      const gnode = preview.node ? { ...preview.node, id: "ghost", x: 0, y: 0 } : null;
+      if (gnode) {
+        const base = gnode.near && byId(gnode.near);
+        const c = viewCentre(); gnode.x = base ? base.x + 60 : c.x; gnode.y = base ? base.y + 80 : c.y + 60;
+        if (!base && model.nodes.length) { gnode.x = model.nodes[model.nodes.length - 1].x + 120; gnode.y = model.nodes[model.nodes.length - 1].y; }
+        const el = nodeEl(gnode, true); gN.appendChild(el); ghostEls.push(el); preview._node = gnode;
+      }
+      if (preview.edge) { const el = edgeEl({ ...preview.edge, id: "ghost-e" }, true); gE.appendChild(el); ghostEls.push(el); }
+    }
+    $("emptyGraph").classList.toggle("hidden", model.nodes.length > 0 || !!preview);
+    applyView(); draw();
+  }
+  function updatePreview() {
+    const k = activeKind, d = KINDS[k];
+    try { preview = (enabled[k] && open[k] && d.preview) ? d.preview(formValues(k)) : null; } catch { preview = null; }
+    syncGraph();
+  }
+
+  const TBOX_NODES = new Set(["class", "attr"]), TBOX_EDGES = new Set(["subclass", "relation", "attr"]);
+  function applyView() {
+    model.nodes.forEach(n => { const el = els.get(n.id); if (!el) return; const isT = TBOX_NODES.has(n.kind), isTerm = n.kind === "term";
+      el.classList.toggle("off", view === "tbox" ? !isT : view === "abox" ? (n.kind === "attr" || isTerm) : view === "cbox" ? n.kind === "value" : false);
+      el.classList.toggle("faint", (view === "abox" && n.kind === "class") || (view === "cbox" && !isTerm)); });
+    model.edges.forEach(e => { const el = els.get(e.id); if (!el) return; const isT = TBOX_EDGES.has(e.kind);
+      el.classList.toggle("off", view === "tbox" ? !isT : view === "abox" ? isT : view === "cbox"); });
+    const boxOf = { tbox: "t", abox: "a", cbox: "c" }[view];
+    document.querySelectorAll("#stmts li").forEach(li => li.classList.toggle("off", view !== "all" && li.dataset.box !== boxOf));
+    const c = classes().length, r = model.edges.filter(e => e.kind === "relation").length, at = model.nodes.filter(n => n.kind === "attr").length;
+    const i = instances().length, f = model.edges.filter(e => e.kind === "fact").length, v = model.nodes.filter(n => n.kind === "value").length;
+    const cap = $("viewCaption");
+    const tc = terms().length, assigned = model.nodes.filter(n => n.fromTerm).length;
+    if (!model.nodes.length) cap.textContent = "";
+    else if (view === "cbox") cap.textContent = `Categories (C-Box): ${tc} unassigned term${tc === 1 ? "" : "s"}${assigned ? `, ${assigned} already assigned (shown faintly where they went)` : ""}. Nothing here is a concept or an instance yet.`;
+    else if (view === "tbox") cap.textContent = `Blueprint only (T-Box): ${c} concept${c === 1 ? "" : "s"}, ${r} relation${r === 1 ? "" : "s"}, ${at} attribute${at === 1 ? "" : "s"}. Data is hidden.`;
+    else if (view === "abox") cap.textContent = i ? `Data only (A-Box): ${i} instance${i === 1 ? "" : "s"}, ${f} fact${f === 1 ? "" : "s"}, ${v} value${v === 1 ? "" : "s"}. Concepts shown faintly so you can see what each instance is a kind of.` : "Data only (A-Box): nothing yet. Add an instance to start the data layer.";
+    else cap.textContent = "";
+    cap.classList.toggle("t", view === "tbox"); cap.classList.toggle("a", view === "abox"); cap.classList.toggle("c", view === "cbox");
+  }
+  document.querySelectorAll(".seg [data-view]").forEach(b => b.addEventListener("click", () => {
+    view = b.dataset.view; document.querySelectorAll(".seg [data-view]").forEach(x => x.setAttribute("aria-pressed", x === b)); applyView();
+  }));
+  function highlight(h) { els.forEach(el => el.classList.remove("hl-node")); if (!h) return; [...h.nodes, ...h.edges].forEach(id => els.get(id)?.classList.add("hl-node")); }
+  function flash(id) { const el = els.get(id); if (!el) return; el.classList.add("hl-node"); setTimeout(() => el.classList.remove("hl-node"), 1200); }
+
+  function endpoints(a, b) {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const ta = Math.min((a.w / 2 + 2) / Math.abs(dx || 1e-6), (a.h / 2 + 2) / Math.abs(dy || 1e-6));
+    const tb = Math.min((b.w / 2 + 2) / Math.abs(dx || 1e-6), (b.h / 2 + 2) / Math.abs(dy || 1e-6));
+    return [{ x: a.x + dx * ta, y: a.y + dy * ta }, { x: b.x - dx * tb, y: b.y - dy * tb }];
+  }
+  function draw() {
+    model.nodes.forEach(n => { const el = els.get(n.id); if (el) el.setAttribute("transform", `translate(${n.x},${n.y})`); });
+    // Edges that share the same two nodes are spread sideways so each one, and its label, stays readable.
+    const groups = new Map();
+    model.edges.forEach(e => { const key = [e.from, e.to].sort().join("|"); if (!groups.has(key)) groups.set(key, []); groups.get(key).push(e); });
+    const drawEdge = (el, a, b, offset) => {
+      if (!el || !a || !b) return;
+      let [p, q] = endpoints(a, b);
+      if (offset) { const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1; const nx = -dy / d * offset, ny = dx / d * offset; p = { x: p.x + nx, y: p.y + ny }; q = { x: q.x + nx, y: q.y + ny }; }
+      const l = el.querySelector("line"); l.setAttribute("x1", p.x); l.setAttribute("y1", p.y); l.setAttribute("x2", q.x); l.setAttribute("y2", q.y);
+      const t = el.querySelector("text"); if (t) { t.setAttribute("x", (p.x + q.x) / 2); t.setAttribute("y", (p.y + q.y) / 2 - 6); }
+    };
+    model.edges.forEach(e => {
+      const g = groups.get([e.from, e.to].sort().join("|")); const i = g.indexOf(e);
+      const offset = g.length > 1 ? (i - (g.length - 1) / 2) * 18 * (e.from < e.to ? 1 : -1) : 0;
+      drawEdge(els.get(e.id), byId(e.from), byId(e.to), offset);
+    });
+    if (preview && ghostEls.length) {
+      const gn = preview._node;
+      if (gn) ghostEls.filter(el => el.classList.contains("node")).forEach(el => el.setAttribute("transform", `translate(${gn.x},${gn.y})`));
+      const ge = ghostEls.find(el => el.classList.contains("edge"));
+      if (ge && preview.edge) drawEdge(ge, preview.edge.from ? byId(preview.edge.from) : gn, preview.edge.to ? byId(preview.edge.to) : gn);
+    }
+  }
+
+  // ---------- camera: the graph is never clipped; it fits itself, and can be zoomed and panned ----------
+  let vb = null, userView = false;
+  const viewCentre = () => vb ? { x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 } : { x: (svg.clientWidth || 800) / 2, y: (svg.clientHeight || 600) / 2 };
+  function setVB(x, y, w, h) { vb = { x, y, w, h }; svg.setAttribute("viewBox", `${x} ${y} ${w} ${h}`); }
+  function fit(force) {
+    if (userView && !force) return;
+    const W = svg.clientWidth || 800, H = svg.clientHeight || 600;
+    if (!model.nodes.length) { svg.removeAttribute("viewBox"); vb = null; return; }
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    model.nodes.forEach(n => { x0 = Math.min(x0, n.x - n.w / 2); y0 = Math.min(y0, n.y - n.h / 2); x1 = Math.max(x1, n.x + n.w / 2); y1 = Math.max(y1, n.y + n.h / 2); });
+    const pad = 70; x0 -= pad; y0 -= pad; x1 += pad; y1 += pad + 44;
+    let w = x1 - x0, h = y1 - y0;
+    if (w <= W && h <= H) { const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2; x0 = cx - W / 2; y0 = cy - H / 2; w = W; h = H; }
+    else { const r = W / H; if (w / h > r) { const nh = w / r; y0 -= (nh - h) / 2; h = nh; } else { const nw = h * r; x0 -= (nw - w) / 2; w = nw; } }
+    setVB(x0, y0, w, h);
+  }
+  $("fitBtn").addEventListener("click", () => { userView = false; fit(true); });
+  function zoomBy(f) {
+    const cur = vb || { x: 0, y: 0, w: svg.clientWidth, h: svg.clientHeight };
+    if (cur.w * f < 200 || cur.w * f > 20000) return;
+    const cx = cur.x + cur.w / 2, cy = cur.y + cur.h / 2;
+    setVB(cx - cur.w * f / 2, cy - cur.h * f / 2, cur.w * f, cur.h * f); userView = true;
+  }
+  $("zoomInBtn").addEventListener("click", () => zoomBy(1 / 1.25));
+  $("zoomOutBtn").addEventListener("click", () => zoomBy(1.25));
+  $("panelBtn").addEventListener("click", () => {
+    const app = document.querySelector(".app"); app.classList.toggle("collapsed");
+    $("panelBtn").textContent = app.classList.contains("collapsed") ? "Show tools" : "Hide tools";
+    requestAnimationFrame(() => { userView = false; fit(true); kick(); });
+  });
+  svg.addEventListener("wheel", ev => {
+    ev.preventDefault();
+    const cur = vb || { x: 0, y: 0, w: svg.clientWidth, h: svg.clientHeight };
+    const p = svgPoint(ev), f = ev.deltaY > 0 ? 1.12 : 1 / 1.12;
+    if (cur.w * f < 200 || cur.w * f > 20000) return;
+    setVB(p.x - (p.x - cur.x) * f, p.y - (p.y - cur.y) * f, cur.w * f, cur.h * f); userView = true;
+  }, { passive: false });
+  svg.addEventListener("pointerdown", ev => {
+    if (ev.target !== svg) return;
+    const cur = vb || { x: 0, y: 0, w: svg.clientWidth, h: svg.clientHeight }; if (!vb) setVB(cur.x, cur.y, cur.w, cur.h);
+    const x0 = ev.clientX, y0 = ev.clientY, sx = vb.x, sy = vb.y, k = vb.w / svg.clientWidth; let moved = false;
+    svg.setPointerCapture(ev.pointerId); svg.classList.add("panning");
+    const move = e2 => { const dx = e2.clientX - x0, dy = e2.clientY - y0; if (Math.abs(dx) + Math.abs(dy) > 2) moved = true; setVB(sx - dx * k, sy - dy * k, vb.w, vb.h); };
+    const up = () => { svg.removeEventListener("pointermove", move); svg.removeEventListener("pointerup", up); svg.removeEventListener("pointercancel", up); svg.classList.remove("panning"); if (moved) userView = true; };
+    svg.addEventListener("pointermove", move); svg.addEventListener("pointerup", up); svg.addEventListener("pointercancel", up);
+  });
+
+  // ---------- force layout ----------
+  let running = false, energyTicks = 0;
+  function kick() { energyTicks = 260; if (!running) { running = true; requestAnimationFrame(tick); } }
+  const REST = { subclass: 110, relation: 190, instanceOf: 120, attr: 80, value: 70, fact: 190 };
+  function tick() {
+    const N = model.nodes, c = viewCentre();
+    const others = N.filter(n => n.kind !== "term");
+    const termTop = others.length ? Math.min(...others.map(n => n.y)) - 120 : c.y - 120;
+    for (let i = 0; i < N.length; i++) for (let j = i + 1; j < N.length; j++) {
+      const a = N[i], b = N[j]; let dx = b.x - a.x, dy = b.y - a.y; let d2 = dx * dx + dy * dy; if (d2 < 1) { dx = Math.random() - .5; dy = Math.random() - .5; d2 = 1; }
+      const small = (a.kind === "attr" || a.kind === "value") && (b.kind === "attr" || b.kind === "value");
+      const k = small ? 1400 : 9000; const f = k / d2; const d = Math.sqrt(d2);
+      const fx = dx / d * f, fy = dy / d * f; a.vx -= fx; a.vy -= fy; b.vx += fx; b.vy += fy;
+    }
+    model.edges.forEach(e => {
+      const a = byId(e.from), b = byId(e.to); if (!a || !b) return;
+      const dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const rest = REST[e.kind] + (a.w + b.w) / 4; const f = (d - rest) * 0.03;
+      const fx = dx / d * f, fy = dy / d * f; a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
+      if (e.kind === "subclass" || e.kind === "instanceOf") { const want = b.y + (e.kind === "subclass" ? 110 : 120); const g = (want - a.y) * 0.05; a.vy += g; b.vy -= g * 0.3; }
+      if (e.kind === "attr" || e.kind === "value") {
+        const side = b.side || (b.side = (b.id.replace(/\D/g, "") % 2 ? 1 : -1));
+        const wantX = a.x + side * (a.w / 2 + b.w / 2 + 44), wantY = e.kind === "attr" ? a.y - 28 : a.y + 34;
+        b.vx += (wantX - b.x) * 0.05; b.vy += (wantY - b.y) * 0.05;
+      }
+    });
+    N.forEach(n => {
+      n.vx += (c.x - n.x) * 0.002; n.vy += (c.y - n.y) * 0.002;
+      if (n.kind === "term") n.vy += (termTop - n.y) * 0.06;
+      if (n.drag) { n.vx = 0; n.vy = 0; return; }
+      n.vx *= 0.82; n.vy *= 0.82; const sp = Math.hypot(n.vx, n.vy); if (sp > 14) { n.vx *= 14 / sp; n.vy *= 14 / sp; }
+      n.x += n.vx; n.y += n.vy;
+    });
+    draw();
+    if (energyTicks % 6 === 0) fit();
+    if (--energyTicks > 0) requestAnimationFrame(tick); else { running = false; fit(); }
+  }
+  $("tidyBtn").addEventListener("click", () => { model.nodes.forEach(n => { n.vx += (Math.random() - .5) * 6; n.vy += (Math.random() - .5) * 6; }); kick(); });
+  window.addEventListener("resize", () => { kick(); fit(); });
+  function attachDrag(g, n) {
+    g.addEventListener("pointerdown", ev => {
+      ev.preventDefault(); ev.stopPropagation(); g.setPointerCapture(ev.pointerId); n.drag = true;
+      const pt = svgPoint(ev); const ox = n.x - pt.x, oy = n.y - pt.y;
+      const move = e2 => { const p = svgPoint(e2); n.x = p.x + ox; n.y = p.y + oy; kick(); };
+      const up = () => { n.drag = false; g.removeEventListener("pointermove", move); g.removeEventListener("pointerup", up); g.removeEventListener("pointercancel", up); kick(); };
+      g.addEventListener("pointermove", move); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
+    });
+  }
+  function svgPoint(ev) { const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY; const m = svg.getScreenCTM(); if (!m) return { x: ev.clientX, y: ev.clientY }; const p = pt.matrixTransform(m.inverse()); return { x: p.x, y: p.y }; }
+
+  // =================== boot ===================
+  buildPalette(); renderGuide(); renderStatements(); syncGraph();
+  $("nameForm").querySelector("input").focus();
+})();
+</script>
+</body>
+</html>

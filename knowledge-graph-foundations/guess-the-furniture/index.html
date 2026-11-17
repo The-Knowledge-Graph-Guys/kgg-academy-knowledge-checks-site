@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guess the Furniture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --paper:#F7F7F2; --grid:rgba(36,86,166,.07); --surface:#FFFFFF; --ink:#20283A;
+    --ink-soft:#5A6478; --accent:#2456A6; --accent-ink:#FFFFFF; --line:#DDDDD3;
+    --ok:#2F7D4F; --ok-bg:#EAF3ED; --miss:#B23B26; --miss-bg:#F7ECE8;
+    --gold:#B98A12; --chip:#EEEEE6; --extract-bg:#F1F3F8; --shadow:0 2px 10px rgba(32,40,58,.08);
+    --yn:#2456A6; --yn-bg:#E6EDF8; --mc:#6B3FA0; --mc-bg:#EFE8F7; --op:#2F7D4F; --op-bg:#EAF3ED;
+    --set-fill:rgba(36,86,166,.10); --set-fill2:rgba(107,63,160,.12);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; color:var(--ink); font:400 17px/1.55 "Source Sans 3",system-ui,sans-serif; background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:28px 28px; min-height:100vh;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:28px 20px 80px}
+  header{margin-bottom:18px;position:relative;padding-right:106px}
+  .kgg-logo{position:absolute;top:0;right:0;height:88px;width:auto;background:#fff;border-radius:12px;padding:4px 8px;box-shadow:var(--shadow)}
+  @media (max-width:520px){header{padding-right:76px}.kgg-logo{height:62px}}
+  .eyebrow{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(32px,7vw,46px)/1.05 "Bricolage Grotesque","Source Sans 3",sans-serif;margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0}
+  .steps{display:flex;gap:6px;margin:20px 0 16px;flex-wrap:wrap}
+  .steps button{flex:1;min-width:150px;font:700 14px "Bricolage Grotesque",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:10px;padding:11px 12px;cursor:pointer;text-align:left}
+  .steps button .n{font:600 11px "IBM Plex Mono",monospace;color:var(--accent);display:block;letter-spacing:.1em;margin-bottom:2px}
+  .steps button.on{background:var(--surface);border-color:var(--accent);box-shadow:var(--shadow)}
+  .steps button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .scorebar{display:flex;justify-content:space-between;align-items:baseline;font:600 13px "IBM Plex Mono",monospace;color:var(--ink-soft);margin-bottom:10px;flex-wrap:wrap;gap:8px}
+  .scorebar b{color:var(--gold);font-size:15px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:26px 24px}
+  .card h2{font:800 24px "Bricolage Grotesque",sans-serif;margin:0 0 8px}
+  .card h3{font:800 17px "Bricolage Grotesque",sans-serif;margin:22px 0 8px}
+  .card p{margin:0 0 12px}
+  .muted{color:var(--ink-soft)} .small{font-size:14.5px}
+  .mono{font:600 12px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+  .roundchip{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:6px 12px;margin-bottom:14px}
+  .note{background:var(--extract-bg);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:12px 16px;font-size:15.5px;margin:12px 0}
+  .note .lab{display:block;margin-bottom:6px;color:var(--accent)}
+  .note ol,.note ul{margin:4px 0 0;padding-left:20px}
+  a{color:var(--accent);text-decoration:underline;text-underline-offset:2px;font-weight:600}
+  /* add a question while playing */
+  .addq{border:2px dashed var(--line);border-radius:12px;padding:12px 14px;margin-top:14px;background:var(--paper)}
+  .addq b{display:block;font:700 14px "Bricolage Grotesque",sans-serif;margin-bottom:6px}
+  .addq .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .addq input[type=text]{flex:1;min-width:160px;font:400 15px "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:8px 10px}
+  .addq select{font:400 14px "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:8px 10px}
+  .addq input:focus,.addq select:focus{outline:2px solid var(--accent);outline-offset:1px}
+  /* the big reveal */
+  .reveal{position:fixed;inset:0;background:rgba(32,40,58,.82);display:flex;align-items:center;justify-content:center;z-index:30;padding:20px}
+  .reveal .panel{background:var(--surface);border-radius:20px;padding:36px 30px;max-width:560px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+  .reveal .lab{color:var(--ink-soft)}
+  .reveal .name{font:800 clamp(38px,9vw,64px)/1.05 "Bricolage Grotesque",sans-serif;color:var(--accent);margin:10px 0 6px;text-wrap:balance}
+  .reveal .verdict{margin:8px 0 0}
+  .reveal .btns{justify-content:center}
+  button.big{font:800 20px "Bricolage Grotesque",sans-serif;color:#fff;background:var(--gold);border:none;border-radius:14px;padding:16px 28px;cursor:pointer;box-shadow:0 6px 18px rgba(185,138,18,.35);transition:transform .12s}
+  button.big:hover{transform:translateY(-2px)}
+  button.big:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+  .revealbox{margin-top:22px;border:2px solid var(--gold);border-radius:14px;padding:16px 18px;background:#FFFBEE}
+  .revealbox h3{margin:0 0 6px}
+  .revealbox .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .revealbox input[type=text]{flex:1;min-width:160px;font:400 16px "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:9px 11px}
+  .guesslog{margin:10px 0 0;padding:0;list-style:none;font-size:14.5px}
+  .guesslog li{padding:3px 0}
+  .guesslog .hit{color:var(--ok);font-weight:700} .guesslog .nope{color:var(--miss);font-weight:700}
+  /* questionnaire list */
+  .qlist{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+  .q{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--paper);display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:start}
+  .q .num{font:600 12px "IBM Plex Mono",monospace;color:var(--accent);padding-top:6px}
+  .q input[type=text],.q select,.field input,.field select{width:100%;font:400 16px "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:8px 10px}
+  .q input:focus,.q select:focus,.field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .q .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
+  .q .row select{width:auto}
+  .q .row label{font-size:13.5px;color:var(--ink-soft)}
+  .tag{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:5px 9px;white-space:nowrap}
+  .tag.yesno{background:var(--yn-bg);color:var(--yn)} .tag.choice{background:var(--mc-bg);color:var(--mc)} .tag.open{background:var(--op-bg);color:var(--op)}
+  .q .x{background:none;border:none;color:var(--ink-soft);font-size:20px;cursor:pointer;padding:2px 6px;border-radius:6px}
+  .q .x:hover{color:var(--miss);background:var(--miss-bg)}
+  .meter{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 14px}
+  .meter span{font:600 12.5px "IBM Plex Mono",monospace;border-radius:999px;padding:6px 12px;background:var(--chip)}
+  .meter span.yesno{background:var(--yn-bg);color:var(--yn)} .meter span.choice{background:var(--mc-bg);color:var(--mc)} .meter span.open{background:var(--op-bg);color:var(--op)}
+  .empty{border:2px dashed var(--line);border-radius:12px;padding:22px;text-align:center;color:var(--ink-soft);margin:14px 0}
+  /* buttons */
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
+  button.next{font:700 16px "Bricolage Grotesque",sans-serif;color:var(--accent-ink);background:var(--accent);border:none;border-radius:10px;padding:12px 22px;cursor:pointer;transition:transform .12s}
+  button.next:hover{transform:translateY(-1px)}
+  button.next:focus-visible,button.ghost:focus-visible,button.ans:focus-visible,button.chip:focus-visible,.exports button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  button.next:disabled{opacity:.45;cursor:default;transform:none}
+  button.ghost{font:700 15px "Bricolage Grotesque",sans-serif;color:var(--accent);background:transparent;border:1.5px solid var(--accent);border-radius:10px;padding:10px 18px;cursor:pointer}
+  button.ghost:hover{background:var(--extract-bg)}
+  button.ghost.danger{color:var(--miss);border-color:var(--miss)}
+  .answers{display:flex;flex-direction:column;gap:8px}
+  button.ans{text-align:left;font:400 16px/1.4 "Source Sans 3",sans-serif;color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;cursor:pointer;transition:border-color .15s,transform .1s,background .15s;display:flex;justify-content:space-between;gap:10px;align-items:center}
+  button.ans:hover:not(:disabled){border-color:var(--accent);transform:translateY(-1px)}
+  button.ans:disabled{cursor:default;opacity:.55}
+  button.chip{font:400 14.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:999px;padding:8px 14px;cursor:pointer;transition:all .15s}
+  button.chip:hover:not(:disabled){border-color:var(--accent)}
+  button.chip.sel{background:var(--accent);color:var(--accent-ink)}
+  /* play */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:640px){.split{grid-template-columns:1fr}}
+  .log{display:flex;flex-direction:column;gap:8px}
+  .log .e{background:var(--extract-bg);border-radius:10px;padding:10px 12px;font-size:15px}
+  .log .e b{display:block;font-weight:600}
+  .log .e .a{color:var(--accent);font-weight:600}
+  .log .e.closed .a{color:var(--gold)}
+  .log .e .cut{display:block;font:600 12px "IBM Plex Mono",monospace;color:var(--ink-soft);margin-top:3px}
+  .fits{font:600 13px "IBM Plex Mono",monospace;color:var(--ink-soft);margin:6px 0 12px}
+  .fits b{color:var(--accent);font-size:16px}
+  .guess{display:flex;gap:8px;margin-top:8px}
+  .guess input{flex:1;font:400 16px "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:9px 11px;min-width:0}
+  .verdict{font:700 18px "Bricolage Grotesque",sans-serif;margin:16px 0 0}
+  .verdict.ok{color:var(--ok)} .verdict.miss{color:var(--miss)} .verdict.part{color:var(--gold)}
+  .explain{margin:6px 0 0;color:var(--ink-soft)}
+  .field{margin:10px 0}
+  .field label{display:block;font:600 14px "Source Sans 3",sans-serif;margin-bottom:4px}
+  .field .hint{font-size:13px;color:var(--ink-soft);margin:2px 0 0}
+  .secret{display:flex;gap:8px;align-items:center} .secret input{flex:1}
+  /* sets */
+  .setcard{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;background:var(--paper)}
+  .setcard .qt{font-weight:600;margin-bottom:8px} .setcard .qt .tag{margin-left:8px;vertical-align:middle}
+  .setcard svg{width:100%;height:auto;display:block;margin:4px 0 6px}
+  .members{display:flex;gap:12px;flex-wrap:wrap}
+  .members .m{flex:1;min-width:160px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:14px}
+  .members .m b{display:block;font:700 13px "Bricolage Grotesque",sans-serif;margin-bottom:3px}
+  .members .m.you{border-color:var(--gold)} .members .m .you{color:var(--gold);font-weight:700}
+  .members .m .cnt{font:600 11px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  .vals{display:flex;gap:6px;flex-wrap:wrap}
+  .vals span{font-size:13.5px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+  .vals span.you{border-color:var(--gold);font-weight:600}
+  .exports{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .exports button{font:600 14px "Source Sans 3",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:10px;padding:9px 14px;cursor:pointer}
+  .exports button:hover{border-color:var(--accent)}
+  .exports .fmt{font:600 11px "IBM Plex Mono",monospace;color:var(--accent);margin-left:6px}
+  textarea.preview{width:100%;min-height:220px;font:400 13px/1.45 "IBM Plex Mono",monospace;color:var(--ink);background:var(--extract-bg);border:1.5px solid var(--line);border-radius:10px;padding:10px;margin-top:10px;white-space:pre;overflow:auto}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);font:600 14px "Source Sans 3",sans-serif;padding:10px 16px;border-radius:999px;box-shadow:var(--shadow);opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+  .toast.show{opacity:1}
+  .final{text-align:center;padding:22px 10px 6px}
+  .final .big{font:800 clamp(52px,12vw,80px)/1 "Bricolage Grotesque",sans-serif;color:var(--gold)}
+  .final .of{font:600 15px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:9}
+  @media print{
+    body{background:none} .steps,.btns,.exports,.kgg-logo,.scorebar,button,.toast{display:none!important}
+    .card{box-shadow:none;border:none;padding:0} textarea.preview{min-height:0;height:auto;border:none;background:none}
+  }
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../index.html">Knowledge Checks</a></li><li aria-current="page">Guess the Furniture</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="kgg-logo" src="../../assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Knowledge Graph Academy · Module 1 · Conceptual Modelling</div>
+    <h1>Guess the Furniture</h1>
+    <p class="sub">Think of a piece of furniture, take your group's questions live, and then draw the sets they made.</p>
+  </header>
+  <div class="steps" role="tablist" id="steps">
+    <button role="tab" data-step="play"><span class="n">Step 1</span>Play the game</button>
+    <button role="tab" data-step="review"><span class="n">Step 2</span>Draw the sets &amp; export</button>
+    <button role="tab" data-step="build"><span class="n">Optional</span>Prepare questions</button>
+  </div>
+  <div class="scorebar"><span id="where"></span><span>score <b id="scorePlay">0</b>/90</span></div>
+  <div class="card" id="card"></div>
+</div>
+<div class="toast" id="toast"></div>
+<canvas id="confetti"></canvas>
+
+<script>
+/* ---------- the computer's world: sixteen pieces of furniture ---------- */
+const BANK = [
+  {name:'Dining chair', aliases:['kitchen chair','chair'], a:{material:'Wood', room:'Dining room', user:'Everyone', sit:true, purpose:'Sitting', legs:'Four', storage:false, soft:false, size:'Medium', wall:false, price:'50 to 300'}},
+  {name:'Armchair', aliases:['arm chair','easy chair','lounge chair'], a:{material:'Fabric', room:'Living room', user:'Adults', sit:true, purpose:'Sitting', legs:'Four', storage:false, soft:true, size:'Medium', wall:false, price:'300 to 1,000'}},
+  {name:"Children's high chair", aliases:['high chair','highchair','childrens high chair','baby chair'], a:{material:'Wood', room:'Kitchen', user:'Toddlers', sit:true, purpose:'Sitting', legs:'Four', storage:false, soft:false, size:'Medium', wall:false, price:'50 to 300'}},
+  {name:'Bar stool', aliases:['stool','barstool'], a:{material:'Metal', room:'Kitchen', user:'Adults', sit:true, purpose:'Sitting', legs:'One', storage:false, soft:false, size:'Small', wall:false, price:'50 to 300'}},
+  {name:'Office chair', aliases:['desk chair','swivel chair'], a:{material:'Plastic', room:'Study', user:'Adults', sit:true, purpose:'Sitting', legs:'More than four', storage:false, soft:true, size:'Medium', wall:false, price:'50 to 300'}},
+  {name:'Rocking chair', aliases:['rocker'], a:{material:'Wood', room:'Living room', user:'Older adults', sit:true, purpose:'Sitting', legs:'Four', storage:false, soft:false, size:'Medium', wall:false, price:'50 to 300'}},
+  {name:'Bean bag', aliases:['beanbag','bean bag chair'], a:{material:'Fabric', room:'Living room', user:'Teenagers', sit:true, purpose:'Sitting', legs:'None', storage:false, soft:true, size:'Medium', wall:false, price:'50 to 300'}},
+  {name:'Sofa', aliases:['couch','settee'], a:{material:'Fabric', room:'Living room', user:'Everyone', sit:true, purpose:'Sitting', legs:'Four', storage:false, soft:true, size:'Large', wall:true, price:'Over 1,000'}},
+  {name:'Bed', aliases:['double bed','single bed'], a:{material:'Wood', room:'Bedroom', user:'Everyone', sit:true, purpose:'Sleeping', legs:'Four', storage:false, soft:true, size:'Large', wall:true, price:'Over 1,000'}},
+  {name:'Wardrobe', aliases:['closet','armoire'], a:{material:'Wood', room:'Bedroom', user:'Adults', sit:false, purpose:'Storing things', legs:'None', storage:true, soft:false, size:'Large', wall:true, price:'300 to 1,000'}},
+  {name:'Bookshelf', aliases:['bookcase','shelf','shelves'], a:{material:'Wood', room:'Study', user:'Adults', sit:false, purpose:'Storing things', legs:'None', storage:true, soft:false, size:'Large', wall:true, price:'50 to 300'}},
+  {name:'Chest of drawers', aliases:['dresser','drawers'], a:{material:'Wood', room:'Bedroom', user:'Everyone', sit:false, purpose:'Storing things', legs:'Four', storage:true, soft:false, size:'Medium', wall:true, price:'300 to 1,000'}},
+  {name:'Bedside table', aliases:['nightstand','night stand','night table'], a:{material:'Wood', room:'Bedroom', user:'Adults', sit:false, purpose:'Storing things', legs:'Four', storage:true, soft:false, size:'Small', wall:true, price:'50 to 300'}},
+  {name:'Desk', aliases:['writing desk','office desk'], a:{material:'Wood', room:'Study', user:'Adults', sit:false, purpose:'Working or eating at', legs:'Four', storage:true, soft:false, size:'Medium', wall:true, price:'300 to 1,000'}},
+  {name:'Dining table', aliases:['kitchen table','table'], a:{material:'Wood', room:'Dining room', user:'Everyone', sit:false, purpose:'Working or eating at', legs:'Four', storage:false, soft:false, size:'Large', wall:false, price:'300 to 1,000'}},
+  {name:'Coffee table', aliases:['side table'], a:{material:'Glass', room:'Living room', user:'Adults', sit:false, purpose:'Displaying things', legs:'Four', storage:false, soft:false, size:'Medium', wall:false, price:'50 to 300'}},
+];
+/* How the computer understands a student's question: which fact it is about, and which words point at a particular value. */
+const ATTRS = {
+  material:{label:'material', kw:['material','made','wood','wooden','metal','steel','plastic','fabric','cloth','glass','leather'], vals:{Wood:['wood','wooden','timber'],Metal:['metal','steel','iron'],Plastic:['plastic'],Fabric:['fabric','cloth','textile'],Glass:['glass'],Leather:['leather']}},
+  room:{label:'room', kw:['room','bedroom','kitchen','living','dining','study','office','where','hallway','bathroom'], vals:{'Bedroom':['bedroom'],'Kitchen':['kitchen'],'Living room':['living','lounge'],'Dining room':['dining'],'Study':['study','office']}},
+  user:{label:'who uses it', kw:['who','use','uses','used','people','person','demographic','adult','adults','child','children','kid','kids','baby','babies','toddler','toddlers','teen','teens','teenager','teenagers','elderly','older','everyone','grown'], vals:{'Toddlers':['toddler','toddlers','baby','babies','child','children','kid','kids','infant'],'Teenagers':['teen','teens','teenager','teenagers'],'Older adults':['older','elderly','old','grandparent','grandparents'],'Adults':['adult','adults','grown'],'Everyone':['everyone','anyone','everybody','family','all']}},
+  sit:{label:'whether you can sit on it', kw:['sit','seat','sitting'], bool:true},
+  purpose:{label:'what it is for', kw:['purpose','sleep','sleeping','work','working','eat','eating','display','displaying','lie','lying'], vals:{'Sleeping':['sleep','sleeping','lie','lying'],'Working or eating at':['work','working','eat','eating','meal','meals'],'Displaying things':['display','displaying','show'],'Storing things':['keep'],'Sitting':['rest']}},
+  legs:{label:'how many legs it has', kw:['leg','legs'], vals:{'None':['none','zero','no'],'One':['one','single'],'Three':['three'],'Four':['four'],'More than four':['five','six','many','more']}},
+  storage:{label:'whether it has storage', kw:['storage','store','storing','drawer','drawers','inside','keep','things in','shelf','shelves','cupboard'], bool:true},
+  soft:{label:'whether it is padded', kw:['soft','upholstered','upholstery','padded','padding','cushion','cushioned','cushions','comfortable','comfy','hard'], bool:true, invert:['hard']},
+  size:{label:'size', kw:['big','small','large','size','heavy','light','carry','lift','van','huge','tiny'], vals:{'Small':['small','tiny','light','carry','one hand'],'Medium':['medium','two people'],'Large':['large','big','huge','heavy','van']}},
+  wall:{label:'whether it stands against a wall', kw:['wall'], bool:true},
+  price:{label:'price', kw:['cost','price','expensive','cheap','afford','money','euros','dollars','pounds','pay'], vals:{'Under 50':['cheap','under 50','less than 50'],'50 to 300':['hundred'],'300 to 1,000':['few hundred'],'Over 1,000':['expensive','thousand','over 1000','pricey','dear']}},
+};
+const ATTR_ORDER = Object.keys(ATTRS);
+const ROUNDS = 3, START_POINTS = 20, Q_COST = 1, WRONG_COST = 3, GUESS_BONUS = 10;
+const typeName = {yesno:'Yes / no', choice:'Multiple choice', open:'Open-ended'};
+
+/* ---------- state ---------- */
+const KEY = 'kga.furniture.v3';
+let S = load() || fresh();
+function fresh(){
+  return {
+    step:'play', questions:[], nextId:1,
+    play:{mode:'form', round:1, secret:null, asked:[], wrong:0, done:false, banked:[], history:[], finished:false, lastVerdict:null},
+    responses:[newResponse()], cur:0, includeSecret:true,
+  };
+}
+function newResponse(){ return {author:'', secret:'', answers:{}, log:[], guesses:[], done:false, guessedBy:'', reveal:false}; }
+const R = () => S.responses[S.cur];
+const answered = r => liveQs().filter(q => r.answers[q.id] !== undefined && r.answers[q.id] !== '');
+function load(){ try{ const s = JSON.parse(localStorage.getItem(KEY)); return s && s.questions && s.responses ? s : null; }catch(e){ return null; } }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function reset(){ if(confirm('Start over? This clears the questions, the game and your answers on this computer.')){ S = fresh(); save(); render(); } }
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+const slug = s => norm(s).replace(/\s+/g,'-');
+const today = () => new Date().toISOString().slice(0,10);
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove('show'), 1800); }
+const item = name => BANK.find(b => b.name === name);
+const playScore = () => S.play.banked.reduce((a,b)=>a+b,0);
+const liveQs = () => S.questions.filter(q => q.q.trim());
+const hasWord = (text, w) => (' '+text+' ').includes(' '+w+' ');
+
+/* Which fact is a question about? Returns {attr, value} where value is a named value the question mentions, if any. */
+function understand(q){
+  const t = norm(q.q);
+  let best = null, bestScore = 0;
+  for(const key of ATTR_ORDER){
+    const A = ATTRS[key]; let score = 0;
+    A.kw.forEach(w => { if(hasWord(t, w)) score += (w.length > 4 ? 2 : 1); });
+    if(score > bestScore){ best = key; bestScore = score; }
+  }
+  if(!best) return null;
+  const A = ATTRS[best]; let value = null;
+  if(A.vals){ for(const [v, words] of Object.entries(A.vals)){ if(words.some(w => hasWord(t, w))){ value = v; break; } } }
+  const inverted = A.invert && A.invert.some(w => hasWord(t, w));
+  return {attr:best, value, inverted};
+}
+/* Answer a question for one piece. Returns {text, allowed} where allowed lists the attribute values that would give the same answer. */
+function answerFor(q, piece){
+  const u = understand(q); if(!u) return null;
+  const A = ATTRS[u.attr]; const actual = piece.a[u.attr];
+  const allVals = A.bool ? [true,false] : [...new Set(BANK.map(b => b.a[u.attr]))];
+  if(A.bool){
+    let yes = actual === true; if(u.inverted) yes = !yes;
+    if(q.type === 'yesno' || q.type === 'choice') return {text: yes ? 'Yes' : 'No', attr:u.attr, allowed:[actual]};
+    return {text: yes ? 'Yes' : 'No', attr:u.attr, allowed:[actual]};
+  }
+  if(q.type === 'yesno'){
+    if(u.value){
+      const yes = actual === u.value;
+      return {text: yes ? 'Yes' : 'No', attr:u.attr, allowed: yes ? [u.value] : allVals.filter(v => v !== u.value)};
+    }
+    return {text: `The computer answers with what it knows: ${actual}.`, attr:u.attr, allowed:[actual]};
+  }
+  return {text: String(actual), attr:u.attr, allowed:[actual]};
+}
+function fitsAll(piece, asked){ return asked.every(e => !e.attr || e.allowed.includes(piece.a[e.attr])); }
+
+/* ---------- render ---------- */
+function render(){
+  document.querySelectorAll('#steps button').forEach(b => b.classList.toggle('on', b.dataset.step === S.step));
+  $('#scorePlay').textContent = playScore();
+  const card = $('#card');
+  if(S.step === 'build') renderBuild(card);
+  else if(S.step === 'play') renderPlay(card);
+  else renderReview(card);
+  save();
+}
+document.querySelectorAll('#steps button').forEach(b => b.addEventListener('click', () => { S.step = b.dataset.step; render(); window.scrollTo({top:0}); }));
+
+/* ---------- step 1: write the questions ---------- */
+function renderBuild(card){
+  const qs = S.questions;
+  $('#where').textContent = `prepare · ${qs.length} question${qs.length===1?'':'s'}`;
+  const counts = {yesno:0, choice:0, open:0}; qs.forEach(q => counts[q.type]++);
+  card.innerHTML = `
+    <span class="roundchip">Optional · Prepare</span>
+    <h2>What would you ask?</h2>
+    <p>Optional. If your group wants a head start, write the questions you plan to ask. They show up as one-tap chips in the live round. Most groups skip this and go straight to playing.</p>
+    <div class="note"><span class="lab mono">Decide how each question can be answered</span>
+      <b>Yes or no</b>: the answer is one of two. <b>Multiple choice</b>: you write the allowed answers. <b>Open-ended</b>: they can answer anything. Try to have some of each. You will see in the Draw step why the shape of the answer changes the shape of the model.</div>
+    ${qs.length ? `<div class="meter"><span class="yesno">${counts.yesno} yes / no</span><span class="choice">${counts.choice} multiple choice</span><span class="open">${counts.open} open-ended</span><span>${qs.length} total${qs.length < 8 ? ' · aim for 8 to 12' : qs.length > 12 ? ' · that is plenty' : ' · good range'}</span></div>` : ''}
+    <div class="qlist" id="qlist">${qs.length ? qs.map((q,i)=>qRow(q,i)).join('') : '<div class="empty">No questions yet. What is the first thing you would want to know? Go to Play and type them live during the game.</div>'}</div>
+    <div class="btns">
+      <button class="ghost" id="addQ">+ Add a question</button>
+      <span style="flex:1"></span>
+      <button class="next" id="toPlay">Play the game →</button>
+    </div>`;
+  card.querySelectorAll('[data-edit]').forEach(el => {
+    el.addEventListener('input', e => editQ(e.target, false));
+    el.addEventListener('change', e => editQ(e.target, true));
+  });
+  card.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => { S.questions.splice(+b.dataset.del,1); render(); }));
+  $('#addQ').addEventListener('click', () => { S.questions.push({id:'q'+(S.nextId++), q:'', type:'yesno'}); render(); const inputs = card.querySelectorAll('.q input[type=text]'); if(inputs.length) inputs[inputs.length-1].focus(); });
+  $('#toPlay').addEventListener('click', () => { S.step='play'; render(); window.scrollTo({top:0}); });
+}
+function qRow(q,i){
+  return `<div class="q">
+    <span class="num">${String(i+1).padStart(2,'0')}</span>
+    <div>
+      <input type="text" data-edit="q" data-i="${i}" value="${esc(q.q)}" placeholder="Type a question…" aria-label="Question ${i+1}">
+      <div class="row">
+        <label>answered by
+        <select data-edit="type" data-i="${i}" aria-label="Answer type">
+          <option value="yesno" ${q.type==='yesno'?'selected':''}>yes or no</option>
+          <option value="choice" ${q.type==='choice'?'selected':''}>choosing from a list</option>
+          <option value="open" ${q.type==='open'?'selected':''}>anything they like</option>
+        </select></label>
+        <span class="tag ${q.type}">${typeName[q.type]}</span>
+      </div>
+      ${q.type==='choice' ? `<div class="row" style="width:100%"><label style="flex:1">the allowed answers, comma separated<input type="text" data-edit="options" data-i="${i}" value="${esc((q.options||[]).join(', '))}" placeholder="Wood, Metal, Fabric, Glass" style="width:100%;margin-top:4px" aria-label="Allowed answers"></label></div>` : ''}
+    </div>
+    <button class="x" data-del="${i}" title="Remove this question" aria-label="Remove question ${i+1}">×</button>
+  </div>`;
+}
+function editQ(el, committed){
+  const q = S.questions[+el.dataset.i]; const f = el.dataset.edit;
+  if(f === 'q') q.q = el.value;
+  else if(f === 'type'){ q.type = el.value; if(q.type==='choice' && !q.options) q.options = []; }
+  else if(f === 'options') q.options = el.value.split(',').map(s=>s.trim()).filter(Boolean);
+  save();
+  if(f === 'type') render();
+}
+
+/* ---------- step 2: play ---------- */
+function renderPlay(card){
+  const P = S.play;
+  $('#where').textContent = `step 1 · ${P.mode==='computer' ? `computer round ${Math.min(P.round,ROUNDS)} of ${ROUNDS}` : `live round ${S.cur+1} of ${S.responses.length}`}`;
+  card.innerHTML = `<span class="roundchip">Step 1 · Play</span>
+    <div class="btns" style="margin:0 0 16px">
+      <button class="chip ${P.mode==='form'?'sel':''}" data-mode="form">Live round</button>
+      <button class="chip ${P.mode==='computer'?'sel':''}" data-mode="computer">Bonus round: against the computer</button>
+    </div><div id="playBody"></div>`;
+  card.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { P.mode = b.dataset.mode; render(); }));
+  if(P.mode === 'computer' && !liveQs().length){ $('#playBody').innerHTML = '<p class="muted">Prepare at least one question first (the Optional tab), or play a live round.</p>'; return; }
+  if(P.mode === 'computer') renderComputer($('#playBody')); else renderForm($('#playBody'));
+}
+function pickSecret(){ const used = new Set(S.play.history); const pool = BANK.filter(b => !used.has(b.name)); const src = pool.length ? pool : BANK; return src[Math.floor(Math.random()*src.length)].name; }
+function renderComputer(el){
+  const P = S.play;
+  if(P.finished){
+    const total = playScore(), max = ROUNDS*(START_POINTS+GUESS_BONUS);
+    el.innerHTML = `<div class="final"><div class="big">${total}</div><div class="of">of ${max} points over ${ROUNDS} rounds</div>
+      <h2 style="margin-top:12px">${total >= max*0.8 ? 'Twenty questions? You needed far fewer.' : total >= max*0.5 ? 'Sharp questions, quick guesses.' : total >= max*0.25 ? 'You got there. Now look at which questions did the work.' : 'The computer kept its secrets. Sharpen the questions and try again.'}</h2>
+      <p class="muted">Rounds: ${P.banked.map((b,i)=>`${P.history[i]} (${b})`).join(' · ')}</p></div>
+      <div class="note"><span class="lab mono">Before you draw</span>Which question threw out the most pieces? Which one threw out none? A question that never shrinks the set is not telling you anything.</div>
+      <div class="btns"><button class="ghost" id="again">Play again</button><span style="flex:1"></span><button class="next" id="toReview">Draw the sets →</button></div>`;
+    $('#again').addEventListener('click', () => { S.play = {...fresh().play, mode:'computer'}; render(); });
+    $('#toReview').addEventListener('click', () => { S.step='review'; render(); window.scrollTo({top:0}); });
+    return;
+  }
+  if(!P.secret){ P.secret = pickSecret(); P.asked = []; P.wrong = 0; P.done = false; P.lastVerdict = null; save(); }
+  const pts = Math.max(0, START_POINTS - P.asked.length*Q_COST - P.wrong*WRONG_COST);
+  const askedIds = new Set(P.asked.map(e=>e.id));
+  const fits = BANK.filter(b => fitsAll(b, P.asked)).length;
+  el.innerHTML = `
+    <h2>Round ${P.round} of ${ROUNDS}</h2>
+    <p>The computer is thinking of one of ${BANK.length} pieces of furniture. Ask your questions, watch the pieces that still fit fall away, and guess when you are sure. A question costs ${Q_COST} point, a wrong guess ${WRONG_COST}, a right guess earns ${GUESS_BONUS}.</p>
+    <div class="fits">points on the table <b>${pts}</b> · pieces that still fit <b>${fits}</b> of ${BANK.length}</div>
+    <div class="split">
+      <div>
+        <h3 style="margin-top:0">Ask</h3>
+        <div class="answers">${liveQs().map(q => `<button class="ans" data-ask="${q.id}" ${askedIds.has(q.id)||P.done?'disabled':''}><span>${esc(q.q)}</span><span class="tag ${q.type}">${typeName[q.type]}</span></button>`).join('')}</div>
+        ${P.done ? '' : addQBox('Still stuck? Ask something new', 'It joins your questionnaire and you can ask it straight away.')}
+      </div>
+      <div>
+        <h3 style="margin-top:0">Answers</h3>
+        <div class="log">${P.asked.length ? P.asked.map(e => `<div class="e ${e.closed?'closed':''}"><b>${esc(e.q)}</b><span class="a">${esc(e.answer)}</span>${e.cut!==undefined?`<span class="cut">${e.cut === 0 ? 'threw out nothing' : `threw out ${e.cut} piece${e.cut===1?'':'s'}`} · ${e.left} left</span>`:''}</div>`).join('') : '<p class="muted small">Nothing asked yet.</p>'}</div>
+        ${P.done ? '' : `<div class="guess"><input type="text" id="guessIn" placeholder="Your guess, e.g. armchair" aria-label="Your guess"><button class="next" id="guessBtn">Guess</button></div>
+        <div class="btns" style="margin-top:8px"><button class="ghost danger" id="giveUp">Give up</button></div>`}
+        ${P.lastVerdict ? `<p class="verdict ${P.lastVerdict.kind}">${esc(P.lastVerdict.text)}</p><p class="explain">${esc(P.lastVerdict.why||'')}</p>` : ''}
+        ${P.done ? `<div class="btns"><button class="next" id="nextRound">${P.round >= ROUNDS ? 'See the score →' : 'Next round →'}</button></div>` : ''}
+      </div>
+    </div>`;
+  el.querySelectorAll('[data-ask]').forEach(b => b.addEventListener('click', () => ask(b.dataset.ask)));
+  wireAddQ(el);
+  const gi = $('#guessIn'); if(gi){ gi.addEventListener('keydown', e => { if(e.key==='Enter') guess(gi.value); }); $('#guessBtn').addEventListener('click', () => guess(gi.value)); }
+  const gu = $('#giveUp'); if(gu) gu.addEventListener('click', () => { P.done = true; P.lastVerdict = {kind:'miss', text:`It was the ${item(P.secret).name.toLowerCase()}.`, why:'No points this round. Which question would have found it?'}; P.banked.push(0); P.history.push(P.secret); render(); showReveal(item(P.secret).name, 'No points this round.', 'Which question would have found it?', false); });
+  const nr = $('#nextRound'); if(nr) nr.addEventListener('click', () => { if(P.round >= ROUNDS){ P.finished = true; } else { P.round++; P.secret = null; } render(); window.scrollTo({top:0}); });
+}
+function ask(id){
+  const P = S.play; const q = S.questions.find(x=>x.id===id); const piece = item(P.secret);
+  const before = BANK.filter(b => fitsAll(b, P.asked)).length;
+  const ans = answerFor(q, piece);
+  let entry;
+  if(ans){ entry = {id, q:q.q, answer:ans.text, attr:ans.attr, allowed:ans.allowed}; }
+  else { entry = {id, q:q.q, answer:"The computer cannot answer that: it only knows a few facts about each piece. A classmate could.", closed:true}; }
+  P.asked.push(entry);
+  const after = BANK.filter(b => fitsAll(b, P.asked)).length;
+  entry.cut = before - after; entry.left = after;
+  P.lastVerdict = null; render();
+}
+function guess(text){
+  const P = S.play; const g = norm(text); if(!g) return;
+  const piece = item(P.secret);
+  const hit = g === norm(piece.name) || (piece.aliases||[]).some(a => norm(a) === g);
+  if(hit){
+    const pts = Math.max(0, START_POINTS - P.asked.length*Q_COST - P.wrong*WRONG_COST) + GUESS_BONUS;
+    P.done = true; P.banked.push(pts); P.history.push(P.secret);
+    P.lastVerdict = {kind:'ok', text:`Yes! It was the ${piece.name.toLowerCase()}. ${pts} points.`, why:`${P.asked.length} question${P.asked.length===1?'':'s'} asked. Every one that cut the set down was drawing a line around a smaller set.`};
+    showReveal(piece.name, `${pts} points`, `Guessed in ${P.asked.length} question${P.asked.length===1?'':'s'}.`, true);
+  } else {
+    P.wrong++;
+    const known = BANK.find(b => norm(b.name) === g || (b.aliases||[]).some(a => norm(a) === g));
+    P.lastVerdict = {kind:'miss', text:`Not the ${text.trim().toLowerCase()}.`, why: known ? (fitsAll(known, P.asked) ? `That piece still fits everything you have been told. ${WRONG_COST} points off.` : `The answers you already have rule that piece out. ${WRONG_COST} points off.`) : `The computer does not know a piece called that. It knows things like ${BANK.slice(0,5).map(b=>b.name.toLowerCase()).join(', ')} and ${BANK.length-5} more. ${WRONG_COST} points off.`};
+  }
+  render();
+}
+
+/* ---------- step 2: fill in the form (one response per person, like a Google Form) ---------- */
+function roundLabel(r, i){ return `Round ${i+1}${r.author ? ' · ' + r.author : ''}`; }
+function renderForm(el){
+  const C = R(); const log = C.log || []; const asked = new Set(log.map(e => e.id));
+  const prepared = liveQs().filter(q => !asked.has(q.id));
+  el.innerHTML = `
+    <h2>Live round</h2>
+    <p>You think of a piece of furniture. Your group asks questions. Type each one as it comes and answer it right there: yes, no, or whatever the answer is. Keep going until they guess it.</p>
+    <div class="btns" style="margin:0 0 14px">${S.responses.map((r,i) => `<button class="chip ${i===S.cur?'sel':''}" data-resp="${i}">${esc(roundLabel(r,i))}${r.done ? ' · guessed' : (r.log||[]).length ? ` · ${r.log.length} asked` : ''}</button>`).join('')}<button class="chip" id="newResp">+ New round</button></div>
+    <div class="split">
+      <div class="field" style="margin:0"><label for="author">Who is thinking of the furniture?</label><input type="text" id="author" value="${esc(C.author)}" placeholder="Your name"></div>
+      <div class="field" style="margin:0"><label for="secret">The furniture (kept out of view)</label>
+        <div class="secret"><input type="${C.reveal?'text':'password'}" id="secret" value="${esc(C.secret)}" placeholder="Only you see this" autocomplete="off"><button class="ghost" id="reveal">${C.reveal?'Hide':'Show'}</button></div></div>
+    </div>
+    ${C.done ? `<div class="note" style="border-color:var(--ok)"><span class="lab mono" style="color:var(--ok)">Round over</span>${esc(C.guessedBy || 'Someone')} guessed <b>${esc(S.includeSecret ? C.secret : 'it')}</b> after ${log.length} question${log.length===1?'':'s'}. Start a new round for the next person.</div>` : `
+    <h3>Question ${log.length + 1}${log.length >= 20 ? ' · past twenty, keep going' : ` · ${20 - log.length} left of twenty`}</h3>
+    <div class="addq" style="border-style:solid;border-color:var(--accent)">
+      ${prepared.length ? `<div class="row" style="margin-bottom:8px"><span class="small muted">Prepared:</span>${prepared.map(q => `<button class="chip" data-pick="${q.id}">${esc(q.q)}</button>`).join('')}</div>` : ''}
+      <input type="text" id="askText" placeholder="What did they ask? e.g. How many legs does it have?" aria-label="The question" style="width:100%;margin-bottom:8px">
+      <div class="row">
+        <span class="small muted">Answer:</span>
+        <button class="chip" data-answer="Yes" style="font-weight:700">Yes</button>
+        <button class="chip" data-answer="No" style="font-weight:700">No</button>
+        <input type="text" id="ansText" placeholder="or type it, e.g. 4" aria-label="The answer">
+        <button class="next" id="ansBtn">Record</button>
+      </div>
+      <p class="small muted" style="margin:8px 0 0">Tap Yes or No, or type the answer and press Enter. The next question is ready straight after.</p>
+    </div>`}
+    <h3>Asked so far · ${log.length}</h3>
+    ${log.length ? `<div class="log">${log.map((e,i) => `<div class="e"><b>${i+1}. ${esc(e.q)}</b><span class="a">${esc(e.answer)}</span></div>`).join('')}</div>` : '<p class="muted small">Nothing yet. Type the first question above.</p>'}
+    ${C.done ? '' : `<div class="revealbox">
+      <h3>Somebody thinks they know?</h3>
+      <p class="small" style="margin:0">Type the guess and check it. A right guess ends the round with the big reveal. A wrong one just costs them a turn.${C.secret ? '' : ' Enter your furniture above first.'}</p>
+      <div class="row"><input type="text" id="theirGuess" placeholder="The guess, e.g. bean bag" aria-label="The guess"><input type="text" id="guesser" placeholder="who guessed?" aria-label="Who guessed" style="max-width:150px"><button class="big" id="revealBtn" ${C.secret ? '' : 'disabled'}>Check the guess!</button></div>
+      ${(C.guesses||[]).length ? `<ul class="guesslog">${C.guesses.map(g => `<li><span class="${g.correct?'hit':'nope'}">${g.correct?'✓':'✗'}</span> ${esc(g.guess)}${g.by ? ` <span class="muted">· ${esc(g.by)}</span>` : ''}</li>`).join('')}</ul>` : ''}
+      <div class="row" style="margin-top:10px"><button class="ghost danger" id="giveUpLive" ${C.secret ? '' : 'disabled'}>Nobody will get it: reveal anyway</button></div>
+    </div>`}
+    <h3>Save this round</h3>
+    <p class="small muted" style="margin:0 0 6px">Just this round: its questions, answers and guesses. One file per round.</p>
+    ${exportBar('round')}
+    <div class="btns"><button class="ghost" id="clearC">Clear this round</button>${S.responses.length > 1 ? '<button class="ghost danger" id="delResp">Delete this round</button>' : ''}<span style="flex:1"></span><button class="next" id="toReview2">Draw the sets →</button></div>`;
+  el.querySelectorAll('[data-resp]').forEach(b => b.addEventListener('click', () => { S.cur = +b.dataset.resp; render(); }));
+  el.querySelectorAll('[data-x]').forEach(b => b.addEventListener('click', () => doExport(b.dataset.x, b.dataset.scope)));
+  $('#newResp').addEventListener('click', () => { S.responses.push(newResponse()); S.cur = S.responses.length - 1; render(); $('#author').focus(); });
+  $('#author').addEventListener('input', e => { C.author = e.target.value; save(); });
+  $('#reveal').addEventListener('click', () => { C.reveal = !C.reveal; render(); });
+  $('#clearC').addEventListener('click', () => { if(confirm('Clear the questions and answers in this round?')){ C.log = []; C.answers = {}; C.guesses = []; C.done = false; C.guessedBy = ''; render(); } });
+  const dr = $('#delResp'); if(dr) dr.addEventListener('click', () => { if(confirm('Delete this round?')){ S.responses.splice(S.cur,1); S.cur = Math.max(0, S.cur-1); render(); } });
+  $('#toReview2').addEventListener('click', () => { S.step='review'; render(); window.scrollTo({top:0}); });
+  const rb = $('#revealBtn'), gu = $('#giveUpLive');
+  $('#secret').addEventListener('input', e => { C.secret = e.target.value; save(); if(rb) rb.disabled = !C.secret; if(gu) gu.disabled = !C.secret; });
+  if(C.done) return;
+  /* ask + answer in one go */
+  const t = $('#askText'), a = $('#ansText');
+  el.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => { const q = S.questions.find(x => x.id === b.dataset.pick); t.value = q.q; a.focus(); }));
+  const record = answer => {
+    const text = t.value.trim(); answer = String(answer).trim();
+    if(!text){ t.focus(); toast('Type the question first'); return; }
+    if(!answer){ a.focus(); return; }
+    const isYN = /^(yes|no)$/i.test(answer); if(isYN) answer = answer[0].toUpperCase() + answer.slice(1).toLowerCase();
+    let q = S.questions.find(x => norm(x.q) === norm(text));
+    if(!q){ q = {id:'q'+(S.nextId++), q:text, type: isYN ? 'yesno' : 'open'}; S.questions.push(q); }
+    (C.log ||= []).push({id:q.id, q:q.q, type:q.type, answer}); C.answers[q.id] = answer; save(); render(); $('#askText').focus();
+  };
+  el.querySelectorAll('[data-answer]').forEach(b => b.addEventListener('click', () => record(b.dataset.answer)));
+  $('#ansBtn').addEventListener('click', () => record(a.value));
+  a.addEventListener('keydown', e => { if(e.key === 'Enter') record(a.value); });
+  t.addEventListener('keydown', e => { if(e.key === 'Enter') a.focus(); });
+  /* guessing */
+  const tg = $('#theirGuess'), who = $('#guesser');
+  const check = () => {
+    const g = tg.value.trim(); if(!g){ tg.focus(); return; }
+    const correct = norm(g) === norm(C.secret);
+    (C.guesses ||= []).push({guess:g, by:who.value.trim(), correct, afterQuestions:(C.log||[]).length});
+    if(correct){ C.done = true; C.guessedBy = who.value.trim(); save(); render(); showReveal(C.secret, `${who.value.trim() || 'They'} got it in ${(C.log||[]).length} question${(C.log||[]).length===1?'':'s'}!`, 'The questions did their job. Start a new round for the next person.', true); }
+    else { save(); render(); toast(`Not "${g}". Keep asking.`); const ng = $('#theirGuess'); if(ng) ng.focus(); }
+  };
+  rb.addEventListener('click', check);
+  tg.addEventListener('keydown', e => { if(e.key==='Enter' && !rb.disabled) check(); });
+  gu.addEventListener('click', () => { if(!confirm('Reveal the furniture without a correct guess?')) return; C.done = true; C.guessedBy = ''; save(); render(); showReveal(C.secret, 'Nobody guessed it.', 'Which question would have given it away?', false); });
+  if(!t.value) t.focus();
+}
+/* Add a question from inside the game, in either mode. */
+function addQBox(title, hint){
+  return `<div class="addq"><b>${esc(title)}</b><div class="row">
+    <input type="text" id="addqText" placeholder="Type the new question…" aria-label="New question">
+    <select id="addqType" aria-label="How it is answered"><option value="yesno">yes or no</option><option value="choice">from a list</option><option value="open">anything</option></select>
+    <input type="text" id="addqOpts" placeholder="allowed answers, comma separated" aria-label="Allowed answers" hidden>
+    <button class="ghost" id="addqBtn">Add it</button></div><p class="small muted" style="margin:6px 0 0">${esc(hint)}</p></div>`;
+}
+function wireAddQ(el){
+  const t = el.querySelector('#addqText'), ty = el.querySelector('#addqType'), op = el.querySelector('#addqOpts'), b = el.querySelector('#addqBtn');
+  if(!t) return;
+  ty.addEventListener('change', () => { op.hidden = ty.value !== 'choice'; });
+  const add = () => {
+    const text = t.value.trim(); if(!text){ t.focus(); return; }
+    const q = {id:'q'+(S.nextId++), q:text, type:ty.value};
+    if(q.type === 'choice') q.options = op.value.split(',').map(s=>s.trim()).filter(Boolean);
+    S.questions.push(q); toast('Question added'); render();
+  };
+  b.addEventListener('click', add);
+  t.addEventListener('keydown', e => { if(e.key === 'Enter') add(); });
+}
+/* Full-screen reveal with confetti. */
+function showReveal(name, headline, line, celebrate){
+  const old = document.querySelector('.reveal'); if(old) old.remove();
+  const d = document.createElement('div'); d.className = 'reveal';
+  d.innerHTML = `<div class="panel" role="dialog" aria-label="The furniture revealed">
+    <div class="lab mono">It was…</div>
+    <div class="name">${esc(name)}</div>
+    ${headline ? `<p class="verdict ${celebrate?'ok':'miss'}">${esc(headline)}</p>` : ''}
+    ${line ? `<p class="explain">${esc(line)}</p>` : ''}
+    <div class="btns"><button class="next" id="revealClose">Close</button></div></div>`;
+  document.body.appendChild(d);
+  d.querySelector('#revealClose').addEventListener('click', () => d.remove());
+  d.addEventListener('click', e => { if(e.target === d) d.remove(); });
+  if(celebrate) confetti();
+}
+function exportBar(scope){
+  const sc = scope === 'round' ? ' data-scope="round"' : '';
+  return `<div class="exports">
+      <button data-x="xlsx"${sc}>Excel<span class="fmt">.xlsx</span></button>
+      <button data-x="csv"${sc}>CSV<span class="fmt">.csv</span></button>
+      <button data-x="md"${sc}>Markdown<span class="fmt">.md</span></button>
+      <button data-x="json"${sc}>Data<span class="fmt">.json</span></button>
+      <button data-x="copy"${sc}>Copy Markdown</button>
+      <button data-x="print"${sc}>Print</button>
+    </div>`;
+}
+/* One round only: this round's questions, answers and guesses. */
+function roundData(){
+  const C = R(); const i = S.cur; const log = C.log || [];
+  return {round: i+1, who: C.author || undefined, furniture: S.includeSecret ? (C.secret || undefined) : undefined, guessed: !!C.done, exportedAt: new Date().toISOString(),
+    questions: log.map((e,n) => ({n:n+1, question:e.q, answer:e.answer})),
+    guesses: (C.guesses||[]).map(g => ({guess:g.guess, by:g.by||undefined, correct:g.correct, afterQuestions:g.afterQuestions}))};
+}
+function roundMd(){
+  const D = roundData(); const L = [`# Guess the Furniture · Round ${D.round}${D.who?' · '+md(D.who):''}`, ``, `${D.exportedAt.slice(0,10)} · ${D.questions.length} question${D.questions.length===1?'':'s'}${D.guessed?' · guessed':''}`, ``, `| # | Question | Answer |`, `|---|---|---|`];
+  D.questions.forEach(q => L.push(`| ${q.n} | ${md(q.question)} | ${md(q.answer)} |`));
+  if(D.guesses.length){ L.push(``, `## Guesses`, ``); D.guesses.forEach(g => L.push(`- ${md(g.guess)}${g.by?' by '+md(g.by):''}: ${g.correct?'right':'wrong'} (after ${g.afterQuestions} question${g.afterQuestions===1?'':'s'})`)); }
+  if(D.furniture) L.push(``, `**The furniture:** ${md(D.furniture)}`);
+  return L.join('\n') + '\n';
+}
+function roundCsv(){
+  const D = roundData(); const rows = [['round','who','n','question','answer']];
+  D.questions.forEach(q => rows.push([D.round, D.who||'', q.n, q.question, q.answer]));
+  D.guesses.forEach(g => rows.push([D.round, g.by||'', '', 'Guess: ' + g.guess, g.correct ? 'right' : 'wrong']));
+  if(D.furniture) rows.push([D.round, D.who||'', '', 'The furniture', D.furniture]);
+  return rows.map(r => r.map(v => { v = String(v??''); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }).join(',')).join('\n') + '\n';
+}
+function roundSheets(){
+  const D = roundData(); const rows = [['#','Question','Answer']];
+  D.questions.forEach(q => rows.push([q.n, q.question, q.answer]));
+  if(D.guesses.length){ rows.push([]); rows.push(['Guess','By','Right?']); D.guesses.forEach(g => rows.push([g.guess, g.by||'', g.correct ? 'right' : 'wrong'])); }
+  if(D.furniture){ rows.push([]); rows.push(['The furniture', D.furniture]); }
+  return [{name:`Round ${D.round}`, rows}];
+}
+function challengeField(q, v){
+  let ctl;
+  if(q.type==='yesno') ctl = `<div style="display:flex;gap:8px">${['Yes','No'].map(o=>`<button class="chip ${v===o?'sel':''}" data-ans="${q.id}" data-val="${o}">${o}</button>`).join('')}</div>`;
+  else if(q.type==='choice') ctl = `<div style="display:flex;gap:8px;flex-wrap:wrap">${(q.options||[]).map(o=>`<button class="chip ${v===o?'sel':''}" data-ans="${q.id}" data-val="${esc(o)}">${esc(o)}</button>`).join('') || '<span class="muted small">No allowed answers yet: add some in Step 1.</span>'}</div>`;
+  else ctl = `<input type="text" data-ans="${q.id}" value="${esc(v||'')}" placeholder="Your answer">`;
+  return `<div class="field"><label>${esc(q.q)} <span class="tag ${q.type}">${typeName[q.type]}</span></label>${ctl}</div>`;
+}
+
+/* ---------- step 3: draw the sets & export ---------- */
+function renderReview(card){
+  const qs = liveQs();
+  $('#where').textContent = `step 2 · ${qs.length} question${qs.length===1?'':'s'}`;
+  card.innerHTML = `
+    <span class="roundchip">Step 2 · Draw</span>
+    <h2>The sets your questions made</h2>
+    <p>Start with one big set: every piece of furniture. Each question you asked draws a line inside it. Below, the computer shows where its ${BANK.length} pieces land for every question it understood${S.responses.some(r => answered(r).length) ? ', and where the pieces from your responses land' : ''}.</p>
+    <div class="note"><span class="lab mono">Now draw it yourself</span>On paper or in <a href="https://excalidraw.com/" target="_blank" rel="noopener">Excalidraw</a>, draw the big circle first, then a circle for each set a question made. Some circles sit inside others. Some overlap. Some never touch. Label every circle with the question that drew it, and put at least one piece of furniture inside each. That drawing is your conceptual model.</div>
+    ${qs.length ? qs.map(q => setCard(q)).join('') : '<p class="muted">No questions yet. Play a live round first.</p>'}
+    <h3>Talk about it</h3>
+    <ul class="small">
+      <li>Which question split the pieces most evenly? Which one barely split them at all?</li>
+      <li>Find two circles where one sits entirely inside the other. What does that tell you about those two questions?</li>
+      <li>For the open-ended questions: how many different answers did you get? Could you turn them into a fixed list?</li>
+      <li>If you asked different questions, what would the drawing look like?</li>
+    </ul>
+    <h3>Export the whole session</h3>
+    <p class="small muted">Every round in one file, plus the computer rounds and where the pieces landed. For a single round, use the buttons on that round in the Play step.</p>
+    <label class="small" style="display:block;margin:6px 0"><input type="checkbox" id="incSecret" ${S.includeSecret?'checked':''}> include the secret furniture in the export and the sets below</label>
+    ${exportBar()}
+    <textarea class="preview" id="preview" readonly aria-label="Export preview"></textarea>
+    <div class="btns"><button class="ghost danger" id="resetAll">Start over</button></div>`;
+  $('#incSecret').addEventListener('change', e => { S.includeSecret = e.target.checked; render(); });
+  card.querySelectorAll('[data-x]').forEach(b => b.addEventListener('click', () => doExport(b.dataset.x)));
+  $('#resetAll').addEventListener('click', reset);
+  $('#preview').value = exportMd();
+}
+/* Where do the computer's pieces (and your piece) land for one question? */
+function respLabel(r, i){ const who = r.author || 'Round ' + (i+1); return S.includeSecret && r.secret ? `${r.secret} (${who})` : who; }
+function partition(q){
+  const u = understand(q);
+  const you = S.responses.map((r,i) => ({label: respLabel(r,i), answer: r.answers[q.id]})).filter(x => x.answer !== undefined && x.answer !== '');
+  if(!u) return {kind:'unknown', you};
+  const A = ATTRS[u.attr];
+  if(q.type === 'yesno'){
+    const groups = {Yes:[], No:[]};
+    BANK.forEach(b => { const a = answerFor(q, b); groups[a.text === 'Yes' ? 'Yes' : 'No'].push(b.name); });
+    if(!A.bool && !u.value){ /* a yes/no question the computer can only answer with a value: show it grouped by value */
+      const byVal = {}; BANK.forEach(b => (byVal[b.a[u.attr]] ||= []).push(b.name));
+      return {kind:'groups', about:A.label, groups:byVal, you, note:'The computer could not tell what "yes" would mean here, so it grouped the pieces by ' + A.label + ' instead. Could the question be sharper?'};
+    }
+    return {kind:'split', about:A.label, groups, you};
+  }
+  const byVal = {}; BANK.forEach(b => (byVal[String(b.a[u.attr])] ||= []).push(b.name));
+  if(q.type === 'choice'){
+    const opts = q.options || []; const seen = Object.keys(byVal);
+    const outside = seen.filter(v => !opts.some(o => norm(o) === norm(v)));
+    return {kind:'groups', about:A.label, groups:byVal, you, note: outside.length ? `Your list allows ${opts.length ? opts.join(', ') : 'nothing yet'}. The computer's pieces also answer ${outside.join(', ')}. A fixed list decides what can and cannot be said.` : 'Every piece fits one of your allowed answers.'};
+  }
+  return {kind:'values', about:A.label, groups:byVal, you};
+}
+function setCard(q){
+  const p = partition(q);
+  let body;
+  const yoursIn = k => p.you.filter(y => norm(y.answer) === norm(k));
+  const yoursHtml = list => list.length ? `<div class="you">+ ${list.map(y => esc(y.label)).join(', ')}</div>` : '';
+  const strays = keys => p.you.filter(y => !keys.some(k => norm(k) === norm(y.answer)));
+  if(p.kind === 'unknown'){
+    body = `<p class="small muted">The computer could not work out what this question is about, so it cannot place its pieces. ${p.you.length ? 'Your responses said: ' + p.you.map(y => `<b>${esc(y.label)}</b>: ${esc(y.answer)}`).join('; ') + '. Where do they go?' : 'Where would your piece go?'} Draw this one by hand.</p>`;
+  } else if(p.kind === 'split'){
+    const yes = p.groups.Yes, no = p.groups.No, yYes = yoursIn('yes'), yNo = yoursIn('no');
+    body = venn(q.q, yes.length, no.length, yYes.length, yNo.length) + `<div class="members">
+      <div class="m ${yYes.length?'you':''}"><b>Yes <span class="cnt">${yes.length + yYes.length}</span></b>${yes.map(esc).join(', ')||'<span class="muted">none</span>'}${yoursHtml(yYes)}</div>
+      <div class="m ${yNo.length?'you':''}"><b>No <span class="cnt">${no.length + yNo.length}</span></b>${no.map(esc).join(', ')||'<span class="muted">none</span>'}${yoursHtml(yNo)}</div></div>`;
+  } else if(p.kind === 'groups'){
+    const keys = Object.keys(p.groups);
+    body = `<div class="members">${keys.map(k => { const ys = yoursIn(k); return `<div class="m ${ys.length?'you':''}"><b>${esc(k)} <span class="cnt">${p.groups[k].length + ys.length}</span></b>${p.groups[k].map(esc).join(', ')}${yoursHtml(ys)}</div>`; }).join('')}
+      ${strays(keys).map(y => `<div class="m you"><b>${esc(y.answer)} <span class="cnt">1</span></b><div class="you">${esc(y.label)}</div></div>`).join('')}</div>
+      ${p.note ? `<p class="small muted" style="margin:8px 0 0">${esc(p.note)}</p>` : ''}`;
+  } else {
+    const keys = Object.keys(p.groups);
+    body = `<p class="small muted" style="margin:0 0 6px">Open-ended, so every piece can answer in its own words. Here the computer gave ${keys.length} different answers about ${esc(p.about)}:</p>
+      <div class="vals">${keys.map(k => `<span class="${yoursIn(k).length?'you':''}">${esc(k)} · ${p.groups[k].length + yoursIn(k).length}</span>`).join('')}${strays(keys).map(y => `<span class="you">${esc(y.answer)} · ${esc(y.label)}</span>`).join('')}</div>
+      <p class="small muted" style="margin:8px 0 0">If you drew a circle per answer, how many circles would you need? Would some answers belong together?</p>`;
+  }
+  return `<div class="setcard"><div class="qt">${esc(q.q)}<span class="tag ${q.type}">${typeName[q.type]}</span></div>${body}</div>`;
+}
+/* A big circle (all furniture) with a smaller circle inside it (the "yes" set), sized by count. */
+function venn(label, yes, no, yYes, yNo){
+  const total = Math.max(1, yes + no + yYes + yNo); const R = 70; const r = Math.max(10, Math.sqrt((yes + yYes)/total) * (R-8));
+  const cx = 110, cy = 96; const ycx = cx - (R - r - 8);
+  return `<svg viewBox="0 0 520 180" role="img" aria-label="Set diagram: ${esc(yes + yYes)} of ${esc(total)} pieces answer yes">
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="var(--set-fill)" stroke="var(--ink)" stroke-width="2"/>
+    <circle cx="${ycx}" cy="${cy}" r="${r}" fill="var(--set-fill2)" stroke="var(--accent)" stroke-width="2"/>
+    <text x="${cx}" y="${cy - R - 8}" font-size="12" font-family="IBM Plex Mono, monospace" fill="var(--ink-soft)" text-anchor="middle">all furniture · ${total}</text>
+    <text x="${ycx}" y="${cy + 4}" font-size="12" font-weight="700" font-family="Bricolage Grotesque, sans-serif" fill="var(--accent)" text-anchor="middle">yes · ${yes + yYes}</text>
+    <text x="${cx + R + 24}" y="${cy - 10}" font-size="14" font-family="Source Sans 3, sans-serif" fill="var(--ink)">${esc(label.length > 44 ? label.slice(0,42) + '…' : label)}</text>
+    <text x="${cx + R + 24}" y="${cy + 12}" font-size="13" font-family="Source Sans 3, sans-serif" fill="var(--ink-soft)">inner circle: the pieces that answer yes</text>
+    <text x="${cx + R + 24}" y="${cy + 32}" font-size="13" font-family="Source Sans 3, sans-serif" fill="var(--ink-soft)">outside it, still inside the big one: ${no + yNo} that answer no</text>
+  </svg>`;
+}
+
+/* ---------- exports ---------- */
+function dataset(){
+  const qs = liveQs();
+  const responses = S.responses.map((r,i) => ({respondent: roundLabel(r,i), secret: S.includeSecret ? (r.secret || undefined) : undefined, answers: (r.log||[]).length ? r.log.map(e => ({question:e.q, answer:e.answer})) : qs.filter(q => r.answers[q.id] !== undefined && r.answers[q.id] !== '').map(q => ({question:q.q, answer:String(r.answers[q.id])})), guesses: (r.guesses||[]).length ? r.guesses.map(g => ({guess:g.guess, by:g.by||undefined, correct:g.correct})) : undefined, guessed: r.done || undefined})).filter(r => r.answers.length || r.secret);
+  return {
+    title:'Guess the Furniture', course:'Knowledge Graph Foundations · Module 1 · Conceptual Modelling', exportedAt:new Date().toISOString(),
+    questions: qs.map((q,i) => ({n:i+1, question:q.q, answeredBy:typeName[q.type], allowedAnswers:q.type==='choice' ? (q.options||[]) : undefined})),
+    responses: responses.length ? responses : undefined,
+    againstTheComputer: S.play.history.length || S.play.asked.length ? {rounds: S.play.history.map((name,i) => ({round:i+1, itWas:name, points:S.play.banked[i]})), total:playScore(), maxPoints:ROUNDS*(START_POINTS+GUESS_BONUS), roundInProgress: (!S.play.done && S.play.asked.length) ? S.play.asked.map(e => ({question:e.q, answer:e.answer, threwOut:e.cut, left:e.left})) : undefined} : undefined,
+    sets: qs.map(q => { const p = partition(q); return {question:q.q, understoodAs:p.about, groups: p.groups || undefined, fromResponses: p.you.length ? p.you.map(y => ({who:y.label, answer:y.answer})) : undefined, note:p.note}; }),
+  };
+}
+const md = s => String(s??'').replace(/\|/g,'\\|').replace(/\n/g,' ');
+function exportMd(){
+  const D = dataset(); const L = [];
+  L.push(`# ${D.title}`, ``, `${D.course} · ${D.exportedAt.slice(0,10)}`, ``);
+  L.push(`## Questions`, ``, `| # | Question | Answered by | Allowed answers |`, `|---|---|---|---|`);
+  D.questions.forEach(q => L.push(`| ${q.n} | ${md(q.question)} | ${q.answeredBy} | ${(q.allowedAnswers||[]).map(md).join(', ')} |`));
+  (D.responses||[]).forEach(r => { L.push(``, `## Answers from ${md(r.respondent)}`, ``, `| Question | Answer |`, `|---|---|`); r.answers.forEach(a => L.push(`| ${md(a.question)} | ${md(a.answer)} |`)); if(r.guesses){ L.push(``, `Guesses: ${r.guesses.map(g => `${md(g.guess)}${g.by?' by '+md(g.by):''} (${g.correct?'right':'wrong'})`).join(', ')}`); } if(r.secret) L.push(``, `**Spoiler, the furniture:** ${md(r.secret)}`); });
+  if(D.againstTheComputer){ const G = D.againstTheComputer; L.push(``, `## Against the computer`, ``, `${G.total} of ${G.maxPoints} points.`, ``); G.rounds.forEach(r => L.push(`- Round ${r.round}: it was the ${r.itWas.toLowerCase()}, ${r.points} points`)); if(G.roundInProgress){ L.push(``, `Round in progress:`, ``); G.roundInProgress.forEach(e => L.push(`- ${md(e.question)} → ${md(e.answer)} (threw out ${e.threwOut}, ${e.left} left)`)); } }
+  L.push(``, `## The sets`, ``);
+  D.sets.forEach(s => { L.push(`### ${md(s.question)}`, ``); if(!s.groups){ L.push(`The computer could not place its pieces for this question.`); } else { Object.entries(s.groups).forEach(([k,v]) => L.push(`- **${md(k)}** (${v.length}): ${v.map(md).join(', ')}`)); } (s.fromResponses||[]).forEach(y => L.push(`- **${md(y.who)}:** ${md(y.answer)}`)); if(s.note) L.push(``, `_${md(s.note)}_`); L.push(``); });
+  return L.join('\n').trimEnd() + '\n';
+}
+function exportCsv(){
+  const D = dataset(); const rows = [['section','n','question','answered_by','allowed_answers','respondent','answer','note']];
+  D.questions.forEach(q => rows.push(['questions', q.n, q.question, q.answeredBy, (q.allowedAnswers||[]).join(' | '), '', '', '']));
+  (D.responses||[]).forEach(r => { r.answers.forEach((a,i) => rows.push(['answers', i+1, a.question, '', '', r.respondent, a.answer, ''])); (r.guesses||[]).forEach(g => rows.push(['guess', '', 'A classmate guessed', '', '', g.by || r.respondent, g.guess, g.correct ? 'right' : 'wrong'])); if(r.secret) rows.push(['secret', '', 'The furniture I was thinking of', '', '', r.respondent, r.secret, '']); });
+  (D.againstTheComputer?.rounds||[]).forEach(r => rows.push(['computer', r.round, 'Round '+r.round, '', '', 'the computer', r.itWas, r.points+' points']));
+  (D.againstTheComputer?.roundInProgress||[]).forEach((e,i) => rows.push(['computer-in-progress', i+1, e.question, '', '', 'the computer', e.answer, `threw out ${e.threwOut}, ${e.left} left`]));
+  D.sets.forEach((s,i) => { if(s.groups) Object.entries(s.groups).forEach(([k,v]) => rows.push(['sets', i+1, s.question, '', k, 'the computer', v.join(' | '), s.note||''])); (s.fromResponses||[]).forEach(y => rows.push(['sets', i+1, s.question, '', '', y.who, y.answer, ''])); });
+  return rows.map(r => r.map(v => { v = String(v??''); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }).join(',')).join('\n') + '\n';
+}
+/* Excel: one sheet per section, built in the browser with no library (a stored zip of the minimal OOXML parts). */
+function exportSheets(){
+  const D = dataset();
+  const sheets = [];
+  sheets.push({name:'Questions', rows:[['#','Question','Answered by','Allowed answers'], ...D.questions.map(q => [q.n, q.question, q.answeredBy, (q.allowedAnswers||[]).join(', ')])]});
+  const ans = [['Respondent','Question','Answer']];
+  (D.responses||[]).forEach(r => { r.answers.forEach(a => ans.push([r.respondent, a.question, a.answer])); if(r.secret) ans.push([r.respondent, 'The furniture (spoiler)', r.secret]); (r.guesses||[]).forEach(g => ans.push([g.by || r.respondent, 'Guessed', g.guess + (g.correct ? ' (right)' : ' (wrong)')])); });
+  sheets.push({name:'Answers', rows:ans});
+  if(D.againstTheComputer){ const G = D.againstTheComputer; const rows = [['Round','It was','Points']]; G.rounds.forEach(r => rows.push([r.round, r.itWas, r.points])); rows.push(['Total', '', G.total], ['Maximum', '', G.maxPoints]); if(G.roundInProgress){ rows.push([], ['Round in progress','Question','Answer','Threw out','Left']); G.roundInProgress.forEach(e => rows.push(['', e.question, e.answer, e.threwOut, e.left])); } sheets.push({name:'Computer rounds', rows}); }
+  const sets = [['Question','Group','Who','Members or answer']];
+  D.sets.forEach(s => { if(s.groups) Object.entries(s.groups).forEach(([k,v]) => sets.push([s.question, k, 'the computer', v.join(', ')])); (s.fromResponses||[]).forEach(y => sets.push([s.question, '', y.who, y.answer])); if(s.note) sets.push([s.question, '', 'note', s.note]); });
+  sheets.push({name:'Sets', rows:sets});
+  return sheets;
+}
+function colRef(i){ let s = ''; i++; while(i > 0){ const m = (i-1) % 26; s = String.fromCharCode(65+m) + s; i = Math.floor((i-1)/26); } return s; }
+const xml = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function sheetXml(rows){
+  const body = rows.map((r,ri) => `<row r="${ri+1}">` + r.map((v,ci) => { const ref = colRef(ci)+(ri+1); if(v === '' || v === null || v === undefined) return ''; if(typeof v === 'number') return `<c r="${ref}"><v>${v}</v></c>`; return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${xml(v)}</t></is></c>`; }).join('') + '</row>').join('');
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${body}</sheetData></worksheet>`;
+}
+function toXlsx(sheets){
+  const files = [];
+  const sheetName = n => n.replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31);
+  files.push(['[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${sheets.map((s,i) => `<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`]);
+  files.push(['_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`]);
+  files.push(['xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((s,i) => `<sheet name="${xml(sheetName(s.name))}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets></workbook>`]);
+  files.push(['xl/_rels/workbook.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((s,i) => `<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')}</Relationships>`]);
+  sheets.forEach((s,i) => files.push([`xl/worksheets/sheet${i+1}.xml`, sheetXml(s.rows)]));
+  return zipStored(files);
+}
+const CRC = (() => { const t = new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = c & 1 ? 0xEDB88320 ^ (c>>>1) : c>>>1; t[n]=c>>>0; } return t; })();
+function crc32(u8){ let c = 0xFFFFFFFF; for(let i=0;i<u8.length;i++) c = CRC[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStored(files){
+  const enc = new TextEncoder(); const parts = []; const central = []; let offset = 0;
+  const u16 = n => [n & 255, (n>>8) & 255], u32 = n => [n & 255, (n>>8) & 255, (n>>16) & 255, (n>>>24) & 255];
+  files.forEach(([name, text]) => {
+    const nameB = enc.encode(name), data = enc.encode(text), crc = crc32(data);
+    const local = new Uint8Array([...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nameB.length), ...u16(0), ...nameB]);
+    parts.push(local, data);
+    central.push(new Uint8Array([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nameB.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(offset), ...nameB]));
+    offset += local.length + data.length;
+  });
+  const cdSize = central.reduce((a,c) => a + c.length, 0);
+  const end = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(files.length), ...u16(files.length), ...u32(cdSize), ...u32(offset), ...u16(0)]);
+  return new Blob([...parts, ...central, end], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+function download(name, data, type){
+  const blob = data instanceof Blob ? data : new Blob([data], {type}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function setPreview(t){ const p = $('#preview'); if(p) p.value = t; }
+function doExport(kind, scope){
+  const round = scope === 'round'; const C = R();
+  const stem = round ? `guess-the-furniture-round-${S.cur+1}${C.author ? '-' + slug(C.author) : ''}-${today()}` : 'guess-the-furniture-all-' + today();
+  const MD = round ? roundMd : exportMd, CSV = round ? roundCsv : exportCsv, SHEETS = round ? roundSheets : exportSheets, JS = round ? roundData : dataset;
+  if(kind==='xlsx'){ setPreview(CSV()); download(stem+'.xlsx', toXlsx(SHEETS())); }
+  else if(kind==='md'){ const t = MD(); setPreview(t); download(stem+'.md', t, 'text/markdown'); }
+  else if(kind==='csv'){ const t = CSV(); setPreview(t); download(stem+'.csv', t, 'text/csv'); }
+  else if(kind==='json'){ const t = JSON.stringify(JS(), null, 2); setPreview(t); download(stem+'.json', t, 'application/json'); }
+  else if(kind==='copy'){ const t = MD(); setPreview(t); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(()=>toast('Markdown copied'), ()=>toast('Select the preview and copy it')); return; }
+  else if(kind==='print'){ setPreview(MD()); window.print(); return; }
+  toast('Downloaded ' + stem + '.' + kind);
+}
+/* ---------- confetti ---------- */
+function confetti(){
+  const c = $('#confetti'); const ctx = c.getContext('2d'); c.width = innerWidth; c.height = innerHeight;
+  const cols = ['#2456A6','#B98A12','#2F7D4F','#6B3FA0'];
+  const ps = Array.from({length:120}, () => ({x:Math.random()*c.width, y:-20-Math.random()*200, vy:2+Math.random()*3, vx:(Math.random()-.5)*2, s:6+Math.random()*6, col:cols[Math.floor(Math.random()*cols.length)], r:Math.random()*Math.PI}));
+  let t = 0;
+  (function f(){ ctx.clearRect(0,0,c.width,c.height); ps.forEach(p => { p.y += p.vy; p.x += p.vx; p.r += .1; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle = p.col; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6); ctx.restore(); }); if(++t < 140) requestAnimationFrame(f); else ctx.clearRect(0,0,c.width,c.height); })();
+}
+
+render();
+</script>
+</body>
+</html>

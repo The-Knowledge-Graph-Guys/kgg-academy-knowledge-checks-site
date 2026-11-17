@@ -1,0 +1,135 @@
+# Instruments in three layers: a SKOS taxonomy of instrument kinds and accessories (CBox),
+# an OWL ontology of musicians, physical instruments, makers and performances (TBox),
+# and the facts about three musicians and one concert (ABox).
+# Companion data for "Instruments in Three Layers", Knowledge Graph Academy.
+# Loads into the ABox Workbench, the SPARQL Practice Room and the SPARQL Playground.
+
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex:   <http://www.example.org/graph#> .
+
+# ---------------------------------------------------------------------------
+# TBox: the ontology. Classes are kinds of real thing; properties say how they connect.
+# ---------------------------------------------------------------------------
+<http://www.example.org/graph> a owl:Ontology ;
+    rdfs:label "Instruments in three layers"@en ;
+    owl:versionInfo "1.0.0" ;
+    rdfs:comment "Musicians, the physical instruments they own, the makers, and the performances; instrument kinds and accessories live in two SKOS schemes."@en .
+
+ex:musician a owl:Class ; rdfs:label "Musician"@en ;
+    skos:definition "A person who plays music."@en ;
+    skos:scopeNote "What a musician plays is a kind of instrument, a controlled value from Musical instruments. What a musician owns is a physical instrument, an instance."@en .
+ex:physical-instrument a owl:Class ; rdfs:label "Physical instrument"@en ;
+    skos:definition "One instrument you can hold: it has a maker, a year and a serial number."@en ;
+    skos:scopeNote "Not the kind. Paul's 1961 Höfner is a physical instrument; Bass guitar is its kind, a concept."@en ;
+    skos:example "Paul's 1961 Höfner 500/1 bass."@en .
+ex:maker a owl:Class ; rdfs:label "Maker"@en ; skos:definition "A company or workshop that makes instruments."@en .
+ex:performance a owl:Class ; rdfs:label "Performance"@en ; skos:definition "Musicians playing at a venue on a date."@en .
+ex:venue a owl:Class ; rdfs:label "Venue"@en ; skos:definition "A place where performances take place."@en .
+
+ex:plays a owl:ObjectProperty ; rdfs:label "plays"@en ; rdfs:domain ex:musician ; rdfs:range skos:Concept ;
+    rdfs:comment "A controlled value from the Musical instruments taxonomy: the kind of instrument the musician plays."@en .
+ex:owns a owl:ObjectProperty ; rdfs:label "owns"@en ; rdfs:domain ex:musician ; rdfs:range ex:physical-instrument .
+ex:kind a owl:ObjectProperty ; rdfs:label "is of kind"@en ; rdfs:domain ex:physical-instrument ; rdfs:range skos:Concept ;
+    rdfs:comment "A controlled value from the Musical instruments taxonomy: which kind this physical instrument is."@en .
+ex:made-by a owl:ObjectProperty ; rdfs:label "made by"@en ; rdfs:domain ex:physical-instrument ; rdfs:range ex:maker .
+ex:year-made a owl:DatatypeProperty ; rdfs:label "year made"@en ; rdfs:domain ex:physical-instrument ; rdfs:range xsd:integer .
+ex:serial-number a owl:DatatypeProperty ; rdfs:label "serial number"@en ; rdfs:domain ex:physical-instrument ; rdfs:range xsd:string .
+ex:performs-at a owl:ObjectProperty ; rdfs:label "performs at"@en ; rdfs:domain ex:musician ; rdfs:range ex:performance .
+ex:played-with a owl:ObjectProperty ; rdfs:label "played with"@en ; rdfs:domain ex:performance ; rdfs:range ex:physical-instrument ;
+    rdfs:comment "The physical instruments used in the performance."@en .
+ex:takes-place-at a owl:ObjectProperty ; rdfs:label "takes place at"@en ; rdfs:domain ex:performance ; rdfs:range ex:venue .
+ex:on-date a owl:DatatypeProperty ; rdfs:label "on date"@en ; rdfs:domain ex:performance ; rdfs:range xsd:date .
+
+# A relationship between concepts that SKOS does not have: declared in the TBox as a sub-property of skos:related,
+# so plain SKOS tools still see an associative link while this graph keeps the meaning and the direction.
+ex:requires a owl:ObjectProperty ; rdfs:subPropertyOf skos:related ; rdfs:label "requires accessory"@en ;
+    rdfs:domain skos:Concept ; rdfs:range skos:Concept ;
+    skos:definition "A kind of instrument needs this kind of accessory to be played."@en ;
+    skos:scopeNote "Between concepts only. A requirement stated on a broader kind is inherited by its narrower kinds through skos:broader in a query, never by inference."@en .
+
+# ---------------------------------------------------------------------------
+# CBox: two concept schemes. Concepts are controlled values, never classes and never instances of a class.
+# ---------------------------------------------------------------------------
+ex:instruments a skos:ConceptScheme ; skos:prefLabel "Musical instruments"@en ;
+    skos:definition "Kinds of instrument. A kind is a controlled value; the instrument in your hands is an instance of Physical instrument."@en ;
+    skos:hasTopConcept ex:string-instruments, ex:percussion-instruments, ex:keyboard-instruments .
+
+ex:string-instruments a skos:Concept ; skos:prefLabel "String instruments"@en ; skos:inScheme ex:instruments ; skos:topConceptOf ex:instruments ;
+    skos:definition "Instruments that produce sound from vibrating strings."@en ;
+    ex:requires ex:spare-strings .
+ex:violin a skos:Concept ; skos:prefLabel "Violin"@en ; skos:altLabel "Fiddle"@en ; skos:broader ex:string-instruments ; skos:inScheme ex:instruments ;
+    skos:definition "A bowed string instrument with four strings tuned in fifths."@en ;
+    ex:requires ex:bow, ex:rosin .
+ex:cello a skos:Concept ; skos:prefLabel "Cello"@en ; skos:altLabel "Violoncello"@en ; skos:broader ex:string-instruments ; skos:inScheme ex:instruments ;
+    skos:definition "A bass instrument of the violin family, played seated."@en ;
+    ex:requires ex:bow, ex:rosin .
+ex:double-bass a skos:Concept ; skos:prefLabel "Double bass"@en ; skos:altLabel "Upright bass"@en, "Contrabass"@en ; skos:broader ex:string-instruments ; skos:inScheme ex:instruments ;
+    skos:definition "The largest bowed string instrument, played standing or on a stool."@en ;
+    ex:requires ex:bow, ex:rosin .
+ex:guitar a skos:Concept ; skos:prefLabel "Guitar"@en ; skos:broader ex:string-instruments ; skos:inScheme ex:instruments ;
+    skos:definition "A fretted string instrument, plucked or strummed."@en .
+ex:acoustic-guitar a skos:Concept ; skos:prefLabel "Acoustic guitar"@en ; skos:broader ex:guitar ; skos:inScheme ex:instruments ;
+    skos:definition "A guitar with a hollow body that needs no amplifier."@en .
+ex:electric-guitar a skos:Concept ; skos:prefLabel "Electric guitar"@en ; skos:broader ex:guitar ; skos:inScheme ex:instruments ;
+    skos:definition "A guitar with pickups, heard through an amplifier."@en ;
+    ex:requires ex:amplifier, ex:instrument-cable, ex:strap, ex:plectrum .
+ex:bass-guitar a skos:Concept ; skos:prefLabel "Bass guitar"@en ; skos:altLabel "Electric bass"@en ; skos:broader ex:guitar ; skos:inScheme ex:instruments ;
+    skos:definition "A plucked string instrument tuned an octave below the guitar."@en ;
+    skos:scopeNote "Use for the electric bass. For the acoustic upright instrument, use Double bass."@en ;
+    ex:requires ex:amplifier, ex:instrument-cable, ex:strap .
+ex:percussion-instruments a skos:Concept ; skos:prefLabel "Percussion instruments"@en ; skos:inScheme ex:instruments ; skos:topConceptOf ex:instruments ;
+    skos:definition "Instruments that produce sound when struck or shaken."@en .
+ex:drum-kit a skos:Concept ; skos:prefLabel "Drum kit"@en ; skos:altLabel "Drums"@en, "Drum set"@en ; skos:broader ex:percussion-instruments ; skos:inScheme ex:instruments ;
+    skos:definition "A collection of drums and cymbals played by one performer."@en ;
+    ex:requires ex:drumsticks, ex:drum-key .
+ex:keyboard-instruments a skos:Concept ; skos:prefLabel "Keyboard instruments"@en ; skos:inScheme ex:instruments ; skos:topConceptOf ex:instruments ;
+    skos:definition "Instruments played from a keyboard."@en .
+ex:piano a skos:Concept ; skos:prefLabel "Piano"@en ; skos:altLabel "Pianoforte"@en ; skos:broader ex:keyboard-instruments ; skos:inScheme ex:instruments ;
+    skos:definition "A keyboard instrument whose hammers strike strings."@en ;
+    skos:scopeNote "Nothing to bring: the venue provides the piano."@en .
+
+ex:accessories a skos:ConceptScheme ; skos:prefLabel "Instrument accessories"@en ;
+    skos:definition "Kinds of accessory an instrument needs to be played."@en ;
+    skos:hasTopConcept ex:bow, ex:rosin, ex:spare-strings, ex:amplifier, ex:instrument-cable, ex:strap, ex:plectrum, ex:drumsticks, ex:drum-key .
+ex:bow a skos:Concept ; skos:prefLabel "Bow"@en ; skos:inScheme ex:accessories ; skos:topConceptOf ex:accessories ; skos:definition "A stick strung with hair, drawn across the strings."@en .
+ex:rosin a skos:Concept ; skos:prefLabel "Rosin"@en ; skos:inScheme ex:accessories ; skos:topConceptOf ex:accessories ; skos:definition "Resin rubbed on bow hair so it grips the string."@en .
+ex:spare-strings a skos:Concept ; skos:prefLabel "Spare strings"@en ; skos:inScheme ex:accessories ; skos:topConceptOf ex:accessories ; skos:definition "A replacement set of strings."@en .
+ex:amplifier a skos:Concept ; skos:prefLabel "Amplifier"@en ; skos:altLabel "Amp"@en ; skos:inScheme ex:accessories ; skos:topConceptOf ex:accessories ; skos:definition "Makes an electric instrument audible."@en .
+ex:instrument-cable a skos:Concept ; skos:prefLabel "Instrument cable"@en ; skos:altLabel "Jack lead"@en ; skos:inScheme ex:accessories ; skos:topConceptOf ex:accessories ; skos:definition "Connects an electric instrument to an amplifier."@en .
+ex:strap a skos:Concept ; skos:prefLabel "Strap"@en ; skos:inScheme ex:accessories ; skos:topConceptOf ex:accessories ; skos:definition "Supports a guitar or bass while standing."@en .
+ex:plectrum a skos:Concept ; skos:prefLabel "Plectrum"@en ; skos:altLabel "Pick"@en ; skos:inScheme ex:accessories ; skos:topConceptOf ex:accessories ; skos:definition "A small flat piece used to pluck strings."@en .
+ex:drumsticks a skos:Concept ; skos:prefLabel "Drumsticks"@en ; skos:inScheme ex:accessories ; skos:topConceptOf ex:accessories ; skos:definition "A pair of sticks for striking drums and cymbals."@en .
+ex:drum-key a skos:Concept ; skos:prefLabel "Drum key"@en ; skos:inScheme ex:accessories ; skos:topConceptOf ex:accessories ; skos:definition "The small key that tunes a drum head."@en .
+
+# ---------------------------------------------------------------------------
+# ABox: the facts. Typed with a class, tagged with concepts, linked to other instances, described with values.
+# ---------------------------------------------------------------------------
+ex:paul-mccartney a ex:musician ; rdfs:label "Paul McCartney"@en ;
+    ex:plays ex:bass-guitar, ex:piano ;
+    ex:owns ex:hofner-500-1 ;
+    ex:performs-at ex:concert-2026-09-25 .
+ex:hofner-500-1 a ex:physical-instrument ; rdfs:label "Paul's 1961 Höfner 500/1 bass"@en ;
+    ex:kind ex:bass-guitar ; ex:made-by ex:hofner ; ex:year-made 1961 ; ex:serial-number "H61-0427" .
+ex:ringo-starr a ex:musician ; rdfs:label "Ringo Starr"@en ;
+    ex:plays ex:drum-kit ;
+    ex:owns ex:ludwig-kit ;
+    ex:performs-at ex:concert-2026-09-25 .
+ex:ludwig-kit a ex:physical-instrument ; rdfs:label "Ringo's Ludwig kit"@en ;
+    ex:kind ex:drum-kit ; ex:made-by ex:ludwig ; ex:year-made 1963 ; ex:serial-number "LD-63-1188" .
+ex:mira-sato a ex:musician ; rdfs:label "Mira Sato"@en ;
+    ex:plays ex:violin ;
+    ex:owns ex:sato-violin ;
+    ex:performs-at ex:concert-2026-09-25 .
+ex:sato-violin a ex:physical-instrument ; rdfs:label "Mira's Lindqvist violin"@en ;
+    ex:kind ex:violin ; ex:made-by ex:lindqvist ; ex:year-made 1998 ; ex:serial-number "LQ-98-12" .
+ex:hofner a ex:maker ; rdfs:label "Höfner"@en .
+ex:ludwig a ex:maker ; rdfs:label "Ludwig"@en .
+ex:lindqvist a ex:maker ; rdfs:label "Lindqvist Atelier"@en .
+ex:concert-2026-09-25 a ex:performance ; rdfs:label "Strings and rhythm night, 25 September 2026"@en ;
+    ex:takes-place-at ex:wigmore-hall ; ex:on-date "2026-09-25"^^xsd:date ;
+    ex:played-with ex:hofner-500-1, ex:ludwig-kit, ex:sato-violin .
+ex:wigmore-hall a ex:venue ; rdfs:label "Wigmore Hall"@en .

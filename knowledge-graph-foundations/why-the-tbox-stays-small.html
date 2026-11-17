@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why the TBox Stays Small</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  /* Layout: one reading column on the academy's grid paper; the three boxes keep their course colours (TBox blue, ABox green, CBox purple). */
+  :root{
+    --paper:#F7F7F2; --grid:rgba(36,86,166,.07); --surface:#FFFFFF; --ink:#20283A;
+    --ink-soft:#5A6478; --accent:#2456A6; --accent-ink:#FFFFFF; --line:#DDDDD3;
+    --ok:#2F7D4F; --ok-bg:#EAF3ED; --miss:#B23B26; --miss-bg:#F7ECE8;
+    --gold:#B98A12; --chip:#EEEEE6; --extract-bg:#F1F3F8; --shadow:0 2px 10px rgba(32,40,58,.08);
+    --t:#2456A6; --t-bg:#E6EDF8; --a:#2F7D4F; --a-bg:#EAF3ED; --c:#6B3FA0; --c-bg:#EFE8F7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;color:var(--ink);font:400 17px/1.55 "Source Sans 3",system-ui,sans-serif;background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;min-height:100vh}
+  .wrap{max-width:760px;margin:0 auto;padding-block:28px 80px;padding-inline:20px;min-width:0}
+  header{margin-bottom:18px;position:relative;padding-right:106px}
+  .kgg-logo{position:absolute;top:0;right:0;height:88px;width:auto;background:#fff;border-radius:12px;padding:4px 8px;box-shadow:var(--shadow)}
+  @media (max-width:520px){header{padding-right:76px}.kgg-logo{height:62px}}
+  .eyebrow{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(32px,7vw,46px)/1.05 "Bricolage Grotesque","Source Sans 3",sans-serif;margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0}
+  .toc{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 14px}
+  .toc a{font:600 12.5px "IBM Plex Mono",monospace;color:var(--accent);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 11px;text-decoration:none}
+  .toc a:hover{border-color:var(--accent)}
+  .scorebar{display:flex;justify-content:space-between;align-items:baseline;font:600 13px "IBM Plex Mono",monospace;color:var(--ink-soft);margin-bottom:10px;gap:10px;flex-wrap:wrap}
+  .scorebar b{color:var(--gold);font-size:15px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:26px 24px;margin-bottom:18px;min-width:0}
+  .roundchip{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:6px 12px;margin-bottom:12px}
+  h2{font:800 26px/1.15 "Bricolage Grotesque",sans-serif;margin:0 0 10px;text-wrap:balance}
+  h3{font:800 17px "Bricolage Grotesque",sans-serif;margin:22px 0 8px}
+  p{margin:0 0 12px}
+  ul,ol{margin:0 0 12px;padding-left:22px} li{margin-bottom:5px}
+  code{font:400 14px "IBM Plex Mono",monospace;background:var(--chip);border-radius:5px;padding:1px 6px}
+  pre{font:400 13.5px/1.5 "IBM Plex Mono",monospace;background:var(--extract-bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+  pre .c{color:var(--ink-soft)} pre .k{color:var(--t);font-weight:600} pre .s{color:var(--a)} pre .d{color:var(--c);font-weight:600} pre .x{color:var(--miss);font-weight:600;text-decoration:line-through}
+  pre.t{border-left:4px solid var(--t)} pre.a{border-left:4px solid var(--a)} pre.cb{border-left:4px solid var(--c)}
+  .note{background:var(--extract-bg);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:12px 16px;font-size:15.5px;margin:12px 0}
+  .note .lab{display:block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  .tscroll{overflow-x:auto;margin:8px 0 14px}
+  table{border-collapse:collapse;width:100%;font-size:15px}
+  th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{font:600 11px/1.3 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+  .tag{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:5px 9px;white-space:nowrap}
+  .tag.t{background:var(--t-bg);color:var(--t)} .tag.a{background:var(--a-bg);color:var(--a)} .tag.c{background:var(--c-bg);color:var(--c)} .tag.ok{background:var(--ok-bg);color:var(--ok)} .tag.no{background:var(--miss-bg);color:var(--miss)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0 14px} @media (max-width:600px){.two{grid-template-columns:1fr}}
+  .two>*{min-width:0}
+  .box{border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--paper)} .box h4{margin:0 0 6px;font:800 15px "Bricolage Grotesque",sans-serif} .box p{margin:0;font-size:15px}
+  .box.t{border-color:var(--t)} .box.t h4{color:var(--t)} .box.c{border-color:var(--c)} .box.c h4{color:var(--c)} .box.a{border-color:var(--a)} .box.a h4{color:var(--a)}
+  .box.no{border-color:var(--miss)} .box.no h4{color:var(--miss)} .box.ok{border-color:var(--ok)} .box.ok h4{color:var(--ok)}
+  /* explosion counter */
+  .counter{background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0 14px}
+  .counter .dials{display:grid;grid-template-columns:repeat(3,1fr);gap:12px} @media (max-width:600px){.counter .dials{grid-template-columns:1fr}}
+  .counter label{display:block;font:600 12px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  .counter label b{display:block;font:800 22px "Bricolage Grotesque",sans-serif;color:var(--ink);letter-spacing:0;text-transform:none;margin:2px 0 4px}
+  .counter input[type=range]{width:100%;accent-color:var(--accent)}
+  .counter .out{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px} @media (max-width:600px){.counter .out{grid-template-columns:1fr}}
+  .counter .res{border-radius:10px;padding:12px 14px;border:1.5px solid}
+  .counter .res .big{font:800 clamp(30px,6vw,40px)/1 "Bricolage Grotesque",sans-serif;font-variant-numeric:tabular-nums;display:block;margin:4px 0}
+  .counter .res small{display:block;color:var(--ink-soft);font-size:13.5px}
+  .counter .res.no{border-color:var(--miss);background:var(--miss-bg)} .counter .res.no .big{color:var(--miss)}
+  .counter .res.ok{border-color:var(--ok);background:var(--ok-bg)} .counter .res.ok .big{color:var(--ok)}
+  .counter .res .lab{font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+  /* knowledge check */
+  .q{background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:18px 18px;margin-top:12px}
+  .qnum{font:800 14px "Bricolage Grotesque",sans-serif;color:var(--ink-soft);margin-bottom:4px}
+  .qtext{font:600 18.5px/1.35 "Source Sans 3",sans-serif;margin:0 0 12px;text-wrap:balance}
+  .qtext code{font-size:15px}
+  .answers{display:flex;flex-direction:column;gap:8px}
+  button.ans{text-align:left;font:400 16px/1.4 "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;cursor:pointer;transition:border-color .15s,transform .1s,background .15s}
+  button.ans:hover:not(:disabled){transform:translateY(-1px);border-color:var(--accent)}
+  button.ans:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  button.ans:disabled{cursor:default}
+  button.ans.right{background:var(--ok-bg);border-color:var(--ok)}
+  button.ans.wrong{background:var(--miss-bg);border-color:var(--miss)}
+  button.ans.dim{opacity:.45}
+  .verdict{font:700 17px "Bricolage Grotesque",sans-serif;margin:14px 0 0}
+  .verdict.ok{color:var(--ok)} .verdict.miss{color:var(--miss)}
+  .explain{margin:6px 0 0;color:var(--ink-soft);font-size:15.5px}
+  .explain a{font-size:14px}
+  .final{text-align:center;padding:10px 10px 4px}
+  .final .big{font:800 clamp(48px,12vw,76px)/1 "Bricolage Grotesque",sans-serif;color:var(--gold)}
+  .final .of{font:600 15px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  .final p{max-width:46ch;margin:10px auto 0;color:var(--ink-soft)}
+  button.next{font:700 15px "Bricolage Grotesque",sans-serif;color:var(--accent-ink);background:var(--accent);border:none;border-radius:10px;padding:11px 22px;cursor:pointer;margin-top:14px}
+  button.next:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+  a{color:var(--accent);font-weight:600}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Knowledge Checks</a></li><li aria-current="page">Why the TBox Stays Small</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="kgg-logo" src="../assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Knowledge Graph Academy · Modules 1 to 5 · the size of the schema</div>
+    <h1>Why the TBox Stays Small</h1>
+    <p class="sub">The TBox lists the types of thing. The ABox lists the things. Every adjective in a class name is a value that belongs in the ABox, and the class count shows it.</p>
+  </header>
+  <nav class="toc">
+    <a href="#s1">1 · Two boxes</a><a href="#s2">2 · The explosion</a><a href="#s3">3 · Subclasses</a><a href="#s4">4 · Object properties</a><a href="#s5">5 · Data properties</a><a href="#s6">6 · Three files</a><a href="#s7">7 · Knowledge check</a>
+  </nav>
+  <div class="scorebar"><span>read six sections, then ten questions</span><span>score <b id="score">0</b>/10</span></div>
+
+  <section class="card" id="s1">
+    <span class="roundchip">1 · Two boxes</span>
+    <h2>The TBox says what types of thing exist; the ABox says which things exist</h2>
+    <p>An ontology file has two layers that look alike in Turtle and do different jobs. The <b>TBox</b> (terminology) declares classes and properties: Person is a class, <i>plays instrument</i> is a property from a person to an instrument type. The <b>ABox</b> (assertions) states facts about individuals: Dana K is a person, Dana K plays guitar, Dana K was born on 14 March 1991. Between them sits the <b>CBox</b> (categories), the controlled lists the ABox picks values from: the instrument types, the genres, the occupations.</p>
+<pre><span class="c"># one namespace for the whole music graph; the prefix says what the terms are about</span>
+@prefix music: &lt;https://jesstalisman-ia.github.io/KGA-Knowledge-Checks/music#&gt; .
+@prefix skos:  &lt;http://www.w3.org/2004/02/skos/core#&gt; .
+@prefix owl:   &lt;http://www.w3.org/2002/07/owl#&gt; .
+@prefix xsd:   &lt;http://www.w3.org/2001/XMLSchema#&gt; .</pre>
+<pre class="t"><span class="c"># TBox: the types of thing, and the properties that connect them</span>
+music:person          <span class="k">a</span> owl:Class ; rdfs:label <span class="s">"Person"@en</span> .
+music:plays-instrument <span class="k">a</span> owl:ObjectProperty ; rdfs:domain music:person ; rdfs:range skos:Concept .
+music:date-of-birth   <span class="k">a</span> owl:DatatypeProperty ; rdfs:domain music:person ; rdfs:range xsd:date .</pre>
+<pre class="cb"><span class="c"># CBox: the values a person may pick</span>
+music:guitar <span class="k">a</span> skos:Concept ; skos:inScheme music:instruments ; skos:broader music:strings ; skos:prefLabel <span class="s">"Guitar"@en</span> .</pre>
+<pre class="a"><span class="c"># ABox: one person, three facts</span>
+music:dana-k <span class="k">a</span> music:person ; music:name <span class="s">"Dana K"</span> ; music:date-of-birth <span class="s">"1991-03-14"^^xsd:date</span> ; music:plays-instrument music:guitar .</pre>
+    <h3>Two questions sort any statement</h3>
+    <p><b>Could this have many members?</b> If yes, it describes a type. A type with its own properties and rules is a class in the TBox; a type that is one answer among a fixed list is a concept in the CBox. <b>Can you point at it, date it, give it a serial number?</b> If yes, it is one thing, and everything said about it goes in the ABox. "Guitarist" has members. "Dana K" has a birthday.</p>
+    <h3>The three layers change at different speeds</h3>
+    <div class="tscroll"><table>
+      <thead><tr><th>Layer</th><th>Changes when</th><th>How often</th><th>Edited by</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag t">TBox</span></td><td>a new type of thing, or a new type of relationship, enters the domain</td><td>a few times a year</td><td>the ontologist</td></tr>
+        <tr><td><span class="tag c">CBox</span></td><td>a new allowed value appears: a genre, an instrument, a city</td><td>monthly</td><td>the vocabulary editor</td></tr>
+        <tr><td><span class="tag a">ABox</span></td><td>a fact is learned: a new musician, a concert, a release</td><td>daily</td><td>whoever enters data</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><span class="lab">The prefix on this page</span>Every term from the music graph is written <code>music:</code>, for <i>https://jesstalisman-ia.github.io/KGA-Knowledge-Checks/music#</i>. The SPARQL Practice Room binds the same terms to a shorter prefix; the names after the colon are the ones that count.</div>
+    <p>A fact about one musician must never require an edit to the schema. That sentence is the whole argument of this page. Every rule below is a way of keeping it true.</p>
+  </section>
+
+  <section class="card" id="s2">
+    <span class="roundchip">2 · The explosion</span>
+    <h2>A value in a class name multiplies the TBox</h2>
+    <p>A student wants to record that Dana plays jazz. The quickest way in Protégé is a new class: <code>music:jazz-musician rdfs:subClassOf music:person</code>. Rock, punk, house and the other genres follow, one class each. Dana also plays guitar, so the student adds <code>music:jazz-guitarist</code>, and the genres and instruments multiply: 12 genres and 30 instruments give 360 classes. Dana is based in Portland, so Portland and Seattle double it to 720. Then a new genre is added. Before a single fact about any musician is written, the ontologist has to create one genre class, 30 genre-and-instrument classes and 60 genre-instrument-city classes: 91 edits to the schema, for one word.</p>
+    <p>Dana plays guitar and electric guitar, in jazz and in rock. Under the subclass scheme Dana needs four types at once, and every one of them is a schema object somebody has to maintain. That is class explosion: the TBox grows as the product of the dimensions, and every fact about an individual turns into a schema edit.</p>
+    <div class="counter" id="counter">
+      <div class="dials">
+        <label for="g">genres<b id="gv">12</b><input type="range" id="g" min="1" max="40" value="12"></label>
+        <label for="i">instruments<b id="iv">30</b><input type="range" id="i" min="1" max="60" value="30"></label>
+        <label for="ci">cities<b id="cv">2</b><input type="range" id="ci" min="1" max="30" value="2"></label>
+      </div>
+      <div class="out">
+        <div class="res no"><span class="lab">as subclasses</span><span class="big" id="nclass">720</span><small id="nclass-note">classes: Person, one per genre, one per genre and instrument, one per genre, instrument and city. Adding one genre adds <b id="addg">91</b> classes.</small></div>
+        <div class="res ok"><span class="lab">as values</span><span class="big" id="nval">44</span><small id="nval-note">concepts in three taxonomies, picked through three properties on one class. Adding one genre adds one concept.</small></div>
+      </div>
+    </div>
+    <h3>One class, three properties, three taxonomies</h3>
+    <div class="two">
+      <div class="box no"><h4>Before</h4><p><code>music:jazz-guitarist-in-portland rdfs:subClassOf music:jazz-guitarist</code>, which is a subclass of <code>music:jazz-musician</code>, which is a subclass of <code>music:person</code>. Dana gets four types. The genre list lives in class names.</p></div>
+      <div class="box ok"><h4>After</h4><p><code>music:dana-k a music:person ; music:performs-genre music:jazz, music:rock ; music:plays-instrument music:guitar, music:electric-guitar ; music:based-in music:portland .</code> One type. The genre list is a SKOS scheme.</p></div>
+    </div>
+    <p>The question the subclasses were meant to answer survives the change. "Which jazz guitarists are based in Portland?" is three triples in a WHERE clause, and the class <code>JazzGuitaristInPortland</code> never has to exist.</p>
+<pre>PREFIX music: &lt;https://jesstalisman-ia.github.io/KGA-Knowledge-Checks/music#&gt;
+
+SELECT ?name WHERE {
+  ?p music:performs-genre music:jazz ;
+     music:plays-instrument music:guitar ;
+     music:based-in music:portland ;
+     music:name ?name .
+}</pre>
+    <div class="note"><span class="lab">The adjective test</span>Read the class name aloud as "a person whose <i>something</i> is <i>something</i>". <code>JazzMusician</code> is "a person whose genre is jazz". The part after <i>whose</i> is a property; the part after <i>is</i> is a value. Both belong outside the class name: the property in the TBox, the value in the CBox, the fact in the ABox.</div>
+    <div class="note"><span class="lab">If the class is ever needed</span>OWL can define a class from a property: <code>JazzMusician</code> equivalent to <i>Person and performs-genre value jazz</i>. A reasoner then computes the members from the ABox facts, and nobody types the class on a person. The facts stay where they were. That is Module 6 material; this page keeps the values in the ABox.</div>
+  </section>
+
+  <section class="card" id="s3">
+    <span class="roundchip">3 · Subclasses</span>
+    <h2>A subclass earns its place by adding a property or a rule</h2>
+    <p><code>rdfs:subClassOf</code> is a promise about every member for all time. Stating that Loud Weekend is a festival makes it an event in every query and every inference, because every festival is an event. The promise is cheap to make and expensive to break, so each subclass has to pass three questions.</p>
+    <ol>
+      <li><b>Is every member of the subclass a member of the parent, always?</b> Every festival is an event. Every pianist is a person. Both pass; question 2 separates them.</li>
+      <li><b>Do members need a property or a rule the parent lacks?</b> A festival lasts several days, has a site and a line-up of headliners; a concert has one night and one headliner. Those are new properties and new rules, so Festival and Concert are classes under Event. A pianist has no property a person lacks. Pianist fails, and becomes a value of <i>plays instrument</i>.</li>
+      <li><b>Would one individual keep landing in several sibling classes at once?</b> Dana is a guitarist and an electric guitarist; Noor plays piano and synthesizer; Rafa is a musician and a producer. When members keep needing two or more siblings, the siblings are values of one property, and the property takes several values.</li>
+    </ol>
+    <div class="tscroll"><table>
+      <thead><tr><th>Candidate</th><th>Verdict</th><th>Because</th></tr></thead>
+      <tbody>
+        <tr><td>Festival under Event</td><td><span class="tag ok">class</span></td><td>new properties (days, site) and a new rule (several headliners)</td></tr>
+        <tr><td>Band beside Person</td><td><span class="tag ok">class</span></td><td>different properties altogether: members, founding year; a band is never a person</td></tr>
+        <tr><td>Pianist under Person</td><td><span class="tag no">value</span></td><td>no new property; Noor would need two sibling classes</td></tr>
+        <tr><td>JazzMusician under Person</td><td><span class="tag no">value</span></td><td>an adjective in the name: performs-genre jazz</td></tr>
+        <tr><td>Composer under Person</td><td><span class="tag no">value</span></td><td>an occupation; Sam is a musician and a composer, so has-occupation takes two values</td></tr>
+        <tr><td>StringInstrument under Instrument</td><td><span class="tag c">concept</span></td><td>a branch of the instrument taxonomy; <code>skos:broader</code>, climbed by a query</td></tr>
+      </tbody>
+    </table></div>
+    <p>The Module 5 music graph describes ten people, five bands, four venues, five events and four albums with twelve classes, fourteen properties and twenty-four concepts in three schemes. Its deepest hierarchy is two levels: Event with Concert and Festival under it. Depth in a TBox is rare; depth in a taxonomy is normal, because a taxonomy is where the types of types go.</p>
+  </section>
+
+  <section class="card" id="s4">
+    <span class="roundchip">4 · Object properties</span>
+    <h2>An object property is a promise about both of its ends</h2>
+    <p>A domain and a range in OWL are not checks. They are inferences. <code>music:held-at</code> has domain Event, so when somebody writes <code>music:dana-k music:held-at music:blue-door</code>, a reasoner concludes that Dana K is an event. No error appears; Dana is now an event in every query that asks for events. A property's domain and range therefore have to be true of every use of the property, for as long as the property exists. Three habits break that promise by multiplying properties.</p>
+    <div class="tscroll"><table>
+      <thead><tr><th>Habit</th><th>What it produces</th><th>Instead</th></tr></thead>
+      <tbody>
+        <tr><td>one property per pair of classes</td><td><code>performs-at-concert</code>, <code>performs-at-festival</code>, <code>performs-at-venue</code></td><td>one <code>music:performs-at</code> with range Event. The event already knows whether it is a concert or a festival.</td></tr>
+        <tr><td>one property per value</td><td><code>plays-piano</code>, <code>plays-guitar</code>, <code>plays-cello</code>: thirty properties, and a new instrument is a schema edit</td><td>one <code>music:plays-instrument</code>, with the instrument as the object and the list in a SKOS scheme</td></tr>
+        <tr><td>a relationship and its inverse both typed in by hand</td><td><code>member-of</code> and <code>has-member</code> as separate data, which drift apart the first time one is edited</td><td>assert one. Declare <code>owl:inverseOf</code> if <code>has-member</code> is wanted as well, and let the reasoner or a <code>^music:member-of</code> path supply it</td></tr>
+      </tbody>
+    </table></div>
+    <p>The first two habits share a tell: a class name or a value name inside the property name. <code>performs-at-festival</code> contains a class; <code>plays-piano</code> contains a value. Fold the class into the range and the value into the object, and the property is general again.</p>
+    <h3>A sub-property is the right tool when the special meaning is real</h3>
+    <p>A headliner performs at an event and also closes it. That is one property with extra meaning, so it is a sub-property: <code>music:headliner rdfs:subPropertyOf music:performs-at</code>. A query for performers then returns the headliners too, and a query for headliners returns only them. A sub-property adds meaning; a property per class or per value only adds names.</p>
+    <h3>Keep the domain as wide as the uses</h3>
+    <p>In the music graph <code>music:name</code> is used on people, bands, venues, events and albums, so it declares no domain. A domain of Person on <code>music:name</code> would turn every named venue into a person by inference. Declare a domain when every subject really is of that class; otherwise leave it open and let the class of the subject come from <code>rdf:type</code>.</p>
+  </section>
+
+  <section class="card" id="s5">
+    <span class="roundchip">5 · Data properties</span>
+    <h2>A data property ends the graph at a literal</h2>
+    <p>A data property's value is a literal: a string, a number, a date. Nothing can link to a literal, nothing can be said about it, and it cannot be picked from a list. That makes the choice between the two property types a question about the value. Measurements, dates, names and codes are literals, and they take a data property with an <code>xsd</code> type. Anything people pick from a list, or that other things need to link to, is a node: a concept in the CBox or an individual in the ABox, reached through an object property.</p>
+    <div class="two">
+      <div class="box no"><h4>City as a string</h4><p><code>music:blue-door music:city "Portland"</code> and, three rows later, <code>music:riverside-arena music:city "Portand"</code>. Two cities now exist, one of them misspelt, and neither has a population, a region or a link to anything.</p></div>
+      <div class="box ok"><h4>City as a node</h4><p><code>music:blue-door music:located-in music:portland</code>, where <code>music:portland</code> is one concept with one preferred label. A typo in a label is one fix; a query for venues in Portland finds both halls.</p></div>
+    </div>
+    <p>The Module 5 graph keeps <code>music:city</code> as a string because it is a small teaching set and the SPARQL lessons use <code>FILTER(?city = "Seattle")</code>. The moment a city needs a second fact, or a second spelling appears, it becomes a node.</p>
+    <h3>Three ways data properties multiply</h3>
+    <ul>
+      <li><b>One property per unit or format.</b> <code>price-usd</code>, <code>price-eur</code>, <code>price-text</code>; <code>date</code>, <code>date-string</code>, <code>year</code>. One property with one datatype: <code>music:ticket-price</code> as <code>xsd:decimal</code>, <code>music:date</code> as <code>xsd:date</code>. The year comes from <code>YEAR(?date)</code> in the query, as in lesson 3 of the SPARQL Practice Room.</li>
+      <li><b>A property named after another class.</b> <code>music:venue-name</code> and <code>music:venue-city</code> on an event copy the venue's facts onto every event held there, and the copies drift. The name belongs to the venue: give the venue a node, link the event to it with <code>music:held-at</code>, and ask for the name through the link.</li>
+      <li><b>An untyped literal.</b> <code>"2026-09-30"</code> is a string; <code>"2026-09-30"^^xsd:date</code> is a date. Only the second one compares as a date, sorts as a date, and answers <code>YEAR()</code>. Type every literal, and tag every label with its language.</li>
+    </ul>
+  </section>
+
+  <section class="card" id="s6">
+    <span class="roundchip">6 · Three files</span>
+    <h2>Three files, three owners, three speeds</h2>
+    <p>Separation of concerns in a knowledge graph means that each layer is edited by the people who own it, at the speed its content changes, without touching the others. The music graph ships as one file for teaching; a real project keeps three, and the boundary between them is the set of rules on this page.</p>
+    <div class="tscroll"><table>
+      <thead><tr><th>Layer</th><th>Contains</th><th>What breaks when it leaks into another layer</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag t">TBox</span></td><td>classes, properties with domain and range, the few subclass and sub-property links that add meaning</td><td>a class per value: data entry has to edit the schema; a property per class: every query has to list a dozen properties for one relationship</td></tr>
+        <tr><td><span class="tag c">CBox</span></td><td>concept schemes: one preferred label per language, <code>skos:broader</code>, definitions and scope notes</td><td>a concept used as a class: <code>rdf:type music:jazz</code> confuses every tool; a class used as a concept: <code>skos:broader</code> between classes is invisible to a reasoner</td></tr>
+        <tr><td><span class="tag a">ABox</span></td><td>individuals with <code>rdf:type</code>, their links to other individuals and to concepts, their literals</td><td>a string where a node should be: nothing can link to it, and spellings multiply; a fact typed in as a class: one-member classes everywhere</td></tr>
+      </tbody>
+    </table></div>
+    <h3>Seven mistakes to look for in any Turtle file</h3>
+    <ol>
+      <li>A class name with an adjective in it: <code>JazzMusician</code>, <code>PortlandVenue</code>, <code>SoldOutConcert</code>.</li>
+      <li>A class with one member, or a class whose members all share the parent's properties and nothing else.</li>
+      <li>A property whose name contains a class or a value: <code>performs-at-festival</code>, <code>plays-piano</code>.</li>
+      <li>A string where things need to link: a city, a genre, a label used as an identifier.</li>
+      <li>An individual typed with a concept, or a concept with <code>rdfs:subClassOf</code>.</li>
+      <li>A relationship and its inverse both typed in by hand.</li>
+      <li>A literal without a datatype or a language tag.</li>
+    </ol>
+    <p>Each of the seven is a layer boundary being crossed. The fix is the same every time: find which layer the content belongs to, move it there, and connect it back with a property.</p>
+  </section>
+
+  <section class="card" id="s7">
+    <span class="roundchip">7 · Knowledge check</span>
+    <h2>Ten questions, one point each</h2>
+    <p>Pick an answer; the explanation appears at once, with a link back to the section that teaches it.</p>
+    <div id="quiz"></div>
+    <div class="final" id="final" hidden>
+      <div class="big" id="fscore">0</div><div class="of">of 10</div>
+      <p id="fblurb"></p>
+      <button class="next" id="again">Try again</button>
+    </div>
+  </section>
+</div>
+
+<script>
+/* explosion counter */
+(function(){
+  const g=document.getElementById('g'), i=document.getElementById('i'), c=document.getElementById('ci');
+  function upd(){
+    const G=+g.value, I=+i.value, C=+c.value;
+    document.getElementById('gv').textContent=G; document.getElementById('iv').textContent=I; document.getElementById('cv').textContent=C;
+    const classes=1+G+G*I+G*I*C, values=G+I+C, add=1+I+I*C;
+    document.getElementById('nclass').textContent=classes.toLocaleString();
+    document.getElementById('nval').textContent=values.toLocaleString();
+    document.getElementById('addg').textContent=add.toLocaleString();
+  }
+  [g,i,c].forEach(el=>el.addEventListener('input',upd)); upd();
+})();
+
+/* knowledge check */
+const Q=[
+ {q:'A file declares <code>music:punk-guitarist rdfs:subClassOf music:person</code>. What is wrong here?', a:['Two values are hiding in a class name', 'The class should be under Musician, not Person', 'Nothing: a punk guitarist is a type of person'], r:0, s:'s2', why:'"A person whose genre is punk and whose instrument is guitar." Both adjectives are values: <code>music:performs-genre music:punk-rock</code> and <code>music:plays-instrument music:guitar</code>. Section 2.'},
+ {q:'Which of these is a property per value?', a:['<code>music:plays-cello</code>', '<code>music:plays-instrument</code>', '<code>music:headliner rdfs:subPropertyOf music:performs-at</code>'], r:0, s:'s4', why:'The value "cello" is inside the property name. With thirty instruments that is thirty properties, and each new instrument is a schema edit. Section 4.'},
+ {q:'Festival is declared under Event. Festivals run over several days, have a site and several headliners. Is the subclass earned?', a:['Yes: it adds properties and a rule the parent lacks', 'No: festival is a value of an event-type property', 'No: every subclass is a mistake'], r:0, s:'s3', why:'New properties (days, site) and a new rule (several headliners) are what a subclass is for. Section 3.'},
+ {q:'An event reads <code>music:late-set music:venue-city "Portland"</code>. What has gone wrong?', a:['A fact about the venue has been copied onto the event', 'The city should be upper case', 'Nothing: events have cities'], r:0, s:'s5', why:'The city belongs to the venue. Link the event to the venue with <code>music:held-at</code> and ask for the city through the link, so it is written once. Section 5.'},
+ {q:'A TBox has <code>music:performs-at-concert</code> and <code>music:performs-at-festival</code>. What should replace them?', a:['One <code>music:performs-at</code> with range Event', 'A third property, <code>music:performs-at-event</code>, beside them', 'A class <code>music:performer</code>'], r:0, s:'s4', why:'One relationship, one property. The event already says whether it is a concert or a festival through <code>rdf:type</code>. Section 4.'},
+ {q:'<code>music:late-set music:date "2026-09-30"</code>. What does <code>FILTER(YEAR(?date) = 2026)</code> return for it?', a:['Nothing: the literal is a string, so YEAR() has no date to read', 'The row: SPARQL reads the digits', 'An error that stops the query'], r:0, s:'s5', why:'Without <code>^^xsd:date</code> the literal is a string. Type every literal. Section 5.'},
+ {q:'<code>music:held-at</code> has domain Event. Somebody writes <code>music:dana-k music:held-at music:blue-door</code>. What does a reasoner do?', a:['Concludes that Dana K is an event', 'Rejects the triple with an error', 'Ignores the domain, since Dana is a person'], r:0, s:'s4', why:'Domain and range are inferences, not checks. Dana becomes an event in every query that asks for events, with no warning. Section 4.'},
+ {q:'An exploded TBox has one class per genre, per genre and instrument, and per genre, instrument and city, with 30 instruments and 2 cities. How many classes does one new genre add?', a:['91', '33', '1'], r:0, s:'s2', why:'One genre class, 30 genre-and-instrument classes, 60 genre-instrument-city classes. As values it would be one concept. Section 2.'},
+ {q:'A new musician joins Tidewater. Which file changes, and who edits it?', a:['The ABox only, by whoever enters data', 'The TBox, by the ontologist, to add the musician', 'The CBox, to add the band as a value'], r:0, s:'s6', why:'One individual, two facts: a type and a membership. Nothing about the types of thing has changed. Section 6.'},
+ {q:'A file has <code>music:guitar a owl:Class</code> and <code>music:dana-k music:plays-instrument music:guitar</code>. What is wrong here?', a:['A type of instrument is a value here, so it should be a concept, picked through the property', 'Dana should be typed <code>music:guitar</code>', 'Nothing: classes can be objects of properties'], r:0, s:'s6', why:'Dana picks guitar from a list; she is not an instance of it. A type people pick from a list is a SKOS concept in the CBox, with <code>skos:broader music:strings</code> for the hierarchy. Section 6, and Two Jobs for SKOS.'},
+];
+(function(){
+  const host=document.getElementById('quiz'); let score=0, done=0;
+  const shuffle=a=>{ const b=a.map((x,i)=>[Math.random(),i]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]); return b; };
+  function render(){
+    score=0; done=0; document.getElementById('score').textContent=0; document.getElementById('final').hidden=true;
+    host.innerHTML=Q.map((q,n)=>{ const order=shuffle(q.a); return `<div class="q" id="q${n}"><div class="qnum">Question ${n+1} of ${Q.length}</div><p class="qtext">${q.q}</p><div class="answers">${order.map(k=>`<button class="ans" data-q="${n}" data-k="${k}">${q.a[k]}</button>`).join('')}</div><div class="fb"></div></div>`; }).join('');
+    host.querySelectorAll('button.ans').forEach(b=>b.onclick=()=>pick(+b.dataset.q,+b.dataset.k));
+  }
+  function pick(n,k){
+    const q=Q[n], card=document.getElementById('q'+n), ok=k===q.r;
+    card.querySelectorAll('button.ans').forEach(b=>{ b.disabled=true; const kk=+b.dataset.k; if(kk===q.r) b.classList.add('right'); else if(kk===k) b.classList.add('wrong'); else b.classList.add('dim'); });
+    if(ok) score++; done++;
+    document.getElementById('score').textContent=score;
+    card.querySelector('.fb').innerHTML=`<div class="verdict ${ok?'ok':'miss'}">${ok?'✓ Right.':'✕ Not this one.'}</div><p class="explain">${q.why} <a href="#${q.s}">Back to the section →</a></p>`;
+    if(done===Q.length){ const f=document.getElementById('final'); f.hidden=false; document.getElementById('fscore').textContent=score; document.getElementById('fblurb').textContent= score===10?'Every mistake spotted. Your TBox will stay small.': score>=7?'Most of the boundaries are clear. Re-read the sections linked under the ones you missed.':'Go back through sections 2 to 5 with the music graph open, and run the explosion counter once more.'; f.scrollIntoView({block:'center'}); }
+  }
+  document.getElementById('again').onclick=()=>{ render(); document.getElementById('s7').scrollIntoView({block:'start'}); };
+  render();
+})();
+</script>
+</body>
+</html>

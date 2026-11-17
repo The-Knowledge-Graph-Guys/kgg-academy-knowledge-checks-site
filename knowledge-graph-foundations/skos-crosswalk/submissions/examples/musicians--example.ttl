@@ -1,0 +1,105 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix m: <https://jesstalisman-ia.github.io/KGA-Knowledge-Checks/music/musicians#> .
+
+m:scheme rdf:type skos:ConceptScheme ;
+    dct:title "Musicians"@en ;
+    dct:creator "Example group" ;
+    dct:description "Example scheme for the musicians subgraph."@en ;
+    skos:hasTopConcept m:performer-role, m:act-type, m:work .
+
+m:performer-role rdf:type skos:Concept ;
+    skos:inScheme m:scheme ;
+    skos:topConceptOf m:scheme ;
+    skos:prefLabel "Performer role"@en ;
+    skos:definition "A role a person takes in performing music."@en .
+
+m:guitarist rdf:type skos:Concept ;
+    skos:inScheme m:scheme ;
+    skos:prefLabel "Guitarist"@en ;
+    skos:broader m:performer-role ;
+    skos:definition "A performer role held by someone who plays the guitar."@en .
+
+m:bassist rdf:type skos:Concept ;
+    skos:inScheme m:scheme ;
+    skos:prefLabel "Bassist"@en ;
+    skos:altLabel "Bass player"@en ;
+    skos:altLabel "Bass"@en ;
+    skos:broader m:performer-role ;
+    skos:definition "A performer role held by someone who plays the bass guitar or double bass."@en .
+
+m:drummer rdf:type skos:Concept ;
+    skos:inScheme m:scheme ;
+    skos:prefLabel "Drummer"@en ;
+    skos:broader m:performer-role ;
+    skos:definition "A performer role held by someone who plays the drum kit."@en .
+
+m:disc-jockey rdf:type skos:Concept ;
+    skos:inScheme m:scheme ;
+    skos:prefLabel "Disc jockey"@en ;
+    skos:altLabel "DJ"@en ;
+    skos:broader m:performer-role ;
+    skos:definition "A performer role held by someone who selects and mixes recorded music for an audience."@en .
+
+m:singer rdf:type skos:Concept ;
+    skos:inScheme m:scheme ;
+    skos:prefLabel "Singer"@en ;
+    skos:altLabel "Vocalist"@en ;
+    skos:broader m:performer-role ;
+    skos:definition "A performer role held by someone who performs the vocal part."@en .
+
+m:lead-singer rdf:type skos:Concept ;
+    skos:inScheme m:scheme ;
+    skos:prefLabel "Lead singer"@en ;
+    skos:altLabel "Frontperson"@en ;
+    skos:broader m:singer ;
+    skos:definition "A singer who performs the main vocal line of an act."@en .
+
+m:act-type rdf:type skos:Concept ;
+    skos:inScheme m:scheme ;
+    skos:topConceptOf m:scheme ;
+    skos:prefLabel "Act type"@en ;
+    skos:definition "A category of performing act defined by how many people it has and how it is billed."@en .
+
+m:band rdf:type skos:Concept ;
+    skos:inScheme m:scheme ;
+    skos:prefLabel "Band"@en ;
+    skos:altLabel "Group"@en ;
+    skos:broader m:act-type ;
+    skos:definition "An act type made up of several musicians who perform under one name."@en .
+
+m:solo-artist rdf:type skos:Concept ;
+    skos:inScheme m:scheme ;
+    skos:prefLabel "Solo artist"@en ;
+    skos:broader m:act-type ;
+    skos:definition "An act type in which one person performs under their own name."@en .
+
+m:work rdf:type skos:Concept ;
+    skos:inScheme m:scheme ;
+    skos:topConceptOf m:scheme ;
+    skos:prefLabel "Musical work"@en ;
+    skos:definition "A piece of music released to the public."@en .
+
+m:album rdf:type skos:Concept ;
+    skos:inScheme m:scheme ;
+    skos:prefLabel "Album"@en ;
+    skos:altLabel "Record"@en ;
+    skos:broader m:work ;
+    skos:definition "A musical work that gathers several tracks into a single release."@en .
+
+m:live-recording rdf:type skos:Concept ;
+    skos:inScheme m:scheme ;
+    skos:prefLabel "Live recording"@en ;
+    skos:altLabel "Live album"@en ;
+    skos:broader m:work ;
+    skos:definition "A musical work captured during a performance in front of an audience."@en .
+
+m:cover-version rdf:type skos:Concept ;
+    skos:inScheme m:scheme ;
+    skos:prefLabel "Cover version"@en ;
+    skos:altLabel "Cover"@en ;
+    skos:broader m:work ;
+    skos:definition "A musical work recorded by an artist other than the one who first released it."@en .
+

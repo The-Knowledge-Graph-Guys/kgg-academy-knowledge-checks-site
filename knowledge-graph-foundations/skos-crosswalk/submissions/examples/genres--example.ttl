@@ -1,0 +1,95 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix g: <https://jesstalisman-ia.github.io/KGA-Knowledge-Checks/music/genres#> .
+
+g:scheme rdf:type skos:ConceptScheme ;
+    dct:title "Genres and musical works"@en ;
+    dct:creator "Example group" ;
+    dct:description "Example scheme for the genres and musical works subgraph."@en ;
+    skos:hasTopConcept g:genre, g:work-type .
+
+g:genre rdf:type skos:Concept ;
+    skos:inScheme g:scheme ;
+    skos:topConceptOf g:scheme ;
+    skos:prefLabel "Genre"@en ;
+    skos:definition "A category of music defined by shared style, form and tradition."@en .
+
+g:rock rdf:type skos:Concept ;
+    skos:inScheme g:scheme ;
+    skos:prefLabel "Rock"@en ;
+    skos:altLabel "Rock music"@en ;
+    skos:broader g:genre ;
+    skos:definition "A genre built on amplified guitar, bass and drums with a strong backbeat."@en .
+
+g:punk-rock rdf:type skos:Concept ;
+    skos:inScheme g:scheme ;
+    skos:prefLabel "Punk rock"@en ;
+    skos:altLabel "Punk"@en ;
+    skos:broader g:rock ;
+    skos:definition "A rock genre marked by short, fast songs and a stripped-down sound."@en .
+
+g:electronic-dance-music rdf:type skos:Concept ;
+    skos:inScheme g:scheme ;
+    skos:prefLabel "Electronic dance music"@en ;
+    skos:altLabel "EDM"@en ;
+    skos:hiddenLabel "electronic dance"@en ;
+    skos:broader g:genre ;
+    skos:definition "A genre of percussive electronic music produced for dancing in clubs and at festivals."@en .
+
+g:house rdf:type skos:Concept ;
+    skos:inScheme g:scheme ;
+    skos:prefLabel "House"@en ;
+    skos:altLabel "House music"@en ;
+    skos:broader g:electronic-dance-music ;
+    skos:scopeNote "The genre only. Not the audience area of a venue."@en ;
+    skos:definition "An electronic dance music genre with a steady four-on-the-floor beat, born in Chicago clubs."@en .
+
+g:hip-hop rdf:type skos:Concept ;
+    skos:inScheme g:scheme ;
+    skos:prefLabel "Hip hop"@en ;
+    skos:altLabel "Rap"@en ;
+    skos:broader g:genre ;
+    skos:definition "A genre built on rhythmic spoken vocals over beats, sampling and turntable technique."@en .
+
+g:jazz rdf:type skos:Concept ;
+    skos:inScheme g:scheme ;
+    skos:prefLabel "Jazz"@en ;
+    skos:broader g:genre ;
+    skos:definition "A genre rooted in improvisation, swing rhythm and blues harmony."@en .
+
+g:work-type rdf:type skos:Concept ;
+    skos:inScheme g:scheme ;
+    skos:topConceptOf g:scheme ;
+    skos:prefLabel "Musical work type"@en ;
+    skos:definition "A category of released musical work defined by its form and length."@en .
+
+g:album rdf:type skos:Concept ;
+    skos:inScheme g:scheme ;
+    skos:prefLabel "Album"@en ;
+    skos:altLabel "LP"@en ;
+    skos:altLabel "Long-player"@en ;
+    skos:broader g:work-type ;
+    skos:definition "A musical work type that collects several tracks into one release."@en .
+
+g:live-album rdf:type skos:Concept ;
+    skos:inScheme g:scheme ;
+    skos:prefLabel "Live album"@en ;
+    skos:broader g:album ;
+    skos:definition "An album recorded in front of an audience during a performance."@en .
+
+g:single rdf:type skos:Concept ;
+    skos:inScheme g:scheme ;
+    skos:prefLabel "Single"@en ;
+    skos:broader g:work-type ;
+    skos:definition "A musical work type released as one lead track, with or without extra tracks."@en .
+
+g:cover-version rdf:type skos:Concept ;
+    skos:inScheme g:scheme ;
+    skos:prefLabel "Cover version"@en ;
+    skos:altLabel "Cover"@en ;
+    skos:broader g:work-type ;
+    skos:scopeNote "The recording. Not the artwork on a sleeve."@en ;
+    skos:definition "A new recording of a work first released by another artist."@en .
+

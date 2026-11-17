@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The CQ Forge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --paper:#F7F7F2; --grid:rgba(36,86,166,.07); --surface:#FFFFFF; --ink:#20283A;
+    --ink-soft:#5A6478; --accent:#2456A6; --accent-ink:#FFFFFF; --line:#DDDDD3;
+    --ok:#2F7D4F; --ok-bg:#EAF3ED; --miss:#B23B26; --miss-bg:#F7ECE8;
+    --gold:#B98A12; --chip:#EEEEE6; --extract-bg:#F1F3F8; --shadow:0 2px 10px rgba(32,40,58,.08);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; color:var(--ink); font:400 17px/1.55 "Source Sans 3",system-ui,sans-serif;
+    background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:28px 28px; min-height:100vh;
+  }
+  .wrap{max-width:680px;margin:0 auto;padding:28px 20px 80px}
+  header{margin-bottom:18px;position:relative;padding-right:106px}
+  .kgg-logo{position:absolute;top:0;right:0;height:88px;width:auto;background:#fff;border-radius:12px;padding:4px 8px;box-shadow:var(--shadow)}
+  @media (max-width:520px){header{padding-right:76px}.kgg-logo{height:62px}}
+  .eyebrow{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(32px,7vw,46px)/1.05 "Bricolage Grotesque","Source Sans 3",sans-serif;margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0}
+  .progress{display:flex;gap:5px;margin:20px 0 24px}
+  .seg{flex:1;height:7px;border-radius:4px;background:var(--chip);transition:background .3s}
+  .seg.ok{background:var(--ok)} .seg.miss{background:var(--miss)} .seg.part{background:var(--gold)} .seg.now{background:var(--accent)}
+  .scorebar{display:flex;justify-content:space-between;align-items:baseline;font:600 13px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  .scorebar b{color:var(--gold);font-size:15px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:26px 24px}
+  .roundchip{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:6px 12px;margin-bottom:14px}
+  .qtext{font:600 21px/1.4 "Source Sans 3",sans-serif;margin:0 0 18px;text-wrap:balance}
+  .cq{
+    font:600 19px/1.5 "Source Sans 3",sans-serif;background:var(--extract-bg);
+    border-radius:10px;padding:16px 18px;margin:0 0 18px;
+  }
+  .cq .qm{color:var(--accent);font-family:"Bricolage Grotesque",sans-serif;font-weight:800}
+  .answers{display:flex;flex-direction:column;gap:10px}
+  .answers.row{flex-direction:row;flex-wrap:wrap}
+  button.ans{
+    text-align:left;font:400 16.5px/1.4 "Source Sans 3",sans-serif;color:var(--ink);
+    background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:13px 16px;
+    cursor:pointer;transition:border-color .15s,transform .1s,background .15s;
+  }
+  .answers.row button.ans{flex:1;min-width:130px;text-align:center;font-weight:600;font-size:18px}
+  button.ans:hover:not(:disabled){border-color:var(--accent);transform:translateY(-1px)}
+  button.ans:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  button.ans:disabled{cursor:default}
+  button.ans.right{background:var(--ok-bg);border-color:var(--ok)}
+  button.ans.wrong{background:var(--miss-bg);border-color:var(--miss)}
+  button.ans.dim{opacity:.45}
+  .shapehint{font:400 14px/1.45 "Source Sans 3",sans-serif;color:var(--ink-soft);margin:4px 0 0}
+  .frag{background:var(--chip);border-bottom:2px solid var(--accent);border-radius:4px;padding:1px 5px;white-space:nowrap}
+  .frag .n{font:600 11px "IBM Plex Mono",monospace;color:var(--accent)}
+  .match{display:flex;flex-direction:column;gap:14px}
+  .mrow{display:flex;flex-direction:column;gap:8px}
+  .mbox{font:600 15px "Source Sans 3",sans-serif}
+  .mbox .n{font:600 12px "IBM Plex Mono",monospace;color:var(--accent);margin-right:6px}
+  .mchips{display:flex;gap:8px;flex-wrap:wrap}
+  button.chip{
+    font:400 14.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--chip);
+    border:1.5px solid transparent;border-radius:999px;padding:8px 14px;cursor:pointer;transition:all .15s;
+  }
+  button.chip:hover:not(:disabled){border-color:var(--accent)}
+  button.chip:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  button.chip.sel{background:var(--accent);color:var(--accent-ink)}
+  button.chip.right{background:var(--ok-bg);color:var(--ink);border-color:var(--ok)}
+  button.chip.wrong{background:var(--miss-bg);color:var(--ink);border-color:var(--miss)}
+  button.chip:disabled{cursor:default;opacity:.85}
+  .verdict{font:700 18px "Bricolage Grotesque",sans-serif;margin:18px 0 0}
+  .verdict.ok{color:var(--ok)} .verdict.miss{color:var(--miss)} .verdict.part{color:var(--gold)}
+  .explain{margin:8px 0 0;color:var(--ink-soft)}
+  .extract{
+    margin-top:14px;background:var(--extract-bg);border-left:3px solid var(--accent);
+    border-radius:0 10px 10px 0;padding:14px 16px;font-size:15.5px;color:var(--ink);
+  }
+  .extract .lab{font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px}
+  .nav{display:flex;justify-content:flex-end;margin-top:20px}
+  button.next{
+    font:700 16px "Bricolage Grotesque",sans-serif;color:var(--accent-ink);background:var(--accent);
+    border:none;border-radius:10px;padding:13px 26px;cursor:pointer;transition:transform .12s;
+  }
+  button.next:hover{transform:translateY(-1px)}
+  button.next:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+  .intro h2{font:800 24px "Bricolage Grotesque",sans-serif;margin:0 0 10px}
+  .intro p{margin:0 0 14px}
+  .checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:14px 0 18px}
+  .check{background:var(--extract-bg);border-radius:10px;padding:10px 12px;text-align:center}
+  .check b{display:block;font:700 14px "Bricolage Grotesque",sans-serif;color:var(--accent)}
+  .check span{font-size:12.5px;color:var(--ink-soft)}
+  .shapes{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 4px}
+  .shapes span{font:600 12.5px "IBM Plex Mono",monospace;background:var(--chip);border-radius:999px;padding:6px 12px}
+  .final{text-align:center;padding:34px 20px 10px}
+  .final .big{font:800 clamp(56px,14vw,88px)/1 "Bricolage Grotesque",sans-serif;color:var(--gold)}
+  .final .of{font:600 15px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  .final h2{font:800 30px/1.15 "Bricolage Grotesque",sans-serif;margin:14px 0 6px;text-wrap:balance}
+  .final .blurb{color:var(--ink-soft);max-width:46ch;margin:0 auto}
+  .yourturn{text-align:left;margin-top:30px;background:var(--extract-bg);border-radius:12px;padding:20px 22px}
+  .yourturn h3{font:800 18px "Bricolage Grotesque",sans-serif;margin:0 0 8px;color:var(--accent)}
+  .yourturn p{margin:0 0 10px}
+  .yourturn ol{margin:0;padding-left:22px}
+  .yourturn li{margin-bottom:5px}
+  .restart{margin-top:26px;text-align:center}
+  canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:9}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Knowledge Checks</a></li><li aria-current="page">The CQ Forge</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="kgg-logo" src="data:image/webp;base64,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" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Knowledge Graph Academy · Competency Questions</div>
+    <h1>The CQ Forge</h1>
+    <p class="sub">Three rounds · about 5 minutes · forge questions worthy of a knowledge graph.</p>
+  </header>
+  <div class="scorebar"><span id="where"></span><span>score <b id="score">0</b>/13</span></div>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+  <div class="card" id="card"></div>
+</div>
+<canvas id="confetti"></canvas>
+
+<script>
+const SHAPES=["Lookup","Traversal","Aggregation","Inference"];
+const R1=[
+ {q:"What venues do we have?", strong:false,
+  why:"A flat lookup — a single spreadsheet answers it. No entities to connect, nothing to traverse.",
+  ex:"Rule of thumb: if a single row in a single spreadsheet answers it, it doesn't need a knowledge graph. The value shows up when the answer requires connecting things."},
+ {q:"Which active musicians have a primary genre of Blues — or any subgenre of Blues?", strong:true,
+  why:"Entities (musicians, genres) + a relationship (primary genre) + a hierarchy to traverse (subgenres) + a state (active). Testable and scoped.",
+  ex:"A competency question is ready when it is Grounded, Answerable, Structured — it implies specific entities and relationships, not a flat lookup — Testable, and Scoped."},
+ {q:"Tell me about the jazz scene.", strong:false,
+  why:"Vague and untestable — you couldn't tell a right answer from a wrong one, and its boundaries are undefined.",
+  ex:"Weak: “Tell me about our clients.” — vague and untestable. Strong questions are specific, scoped, and testable: you can tell a right answer from a wrong one."},
+ {q:"Which venues have never hosted an event in a genre that any of their featured musicians list as a primary genre?", strong:true,
+  why:"Traversal across venues, events, musicians, and genres — with negation. It even doubles as a data-quality check (this is CQ-X7 from the use case).",
+  ex:"Integrative questions require traversing two or more subgraphs. They are the hardest questions to answer correctly and the best test of whether your cross-subgraph properties are defined consistently. — City Music Heritage use case"},
+ {q:"Is the Maple Leaf Bar still open?", strong:false,
+  why:"A single-record lookup — one field on one venue. No model needed.",
+  ex:"Weak: “Is document X approved?” — single-record lookup, no model needed. Strong questions require connecting entities across relationships."}
+];
+const R2=[
+ {q:"Which Zydeco events were held in the city in the last three years?", s:0,
+  why:"Retrieve entities matching criteria and a time window — a classic lookup.",
+  ex:"Lookup: retrieve entities that match criteria or status. Example: which deliverables on a topic were published in the last three years?"},
+ {q:"Which musicians who play instruments associated with Jazz have performed at venues whose primary genre is Blues?", s:1,
+  why:"Musician → instrument → genre, and musician → event → venue → genre. Hops across relationships: traversal. (This is CQ-X1.)",
+  ex:"Traversal: follow relationships across hops to see how things connect. Example: for a topic, which people, projects, and documents are related — and how?"},
+ {q:"Which genre concepts have no events classified against them?", s:2,
+  why:"Counting coverage and surfacing a gap — aggregation.",
+  ex:"Aggregation: count, measure, or surface coverage gaps. Example: which taxonomy terms have no content classified against them?"},
+ {q:"Using the transitivity of “influenced by,” which living musicians can be traced back to a musician active before 1950?", s:3,
+  why:"The answer isn't stored anywhere — a reasoner must derive it through owl:TransitiveProperty. Inference. (This is CQ-X8.)",
+  ex:"Inference: derive answers not stored directly — a rule or reasoning is needed. Example: which experts are the sole holder of a skill an active project requires?"}
+];
+const R3={
+ pre:"Which ", frags:[
+  {t:"musicians",k:0},{t:" who ",k:-1},{t:"play instruments",k:1},{t:" are ",k:-1},
+  {t:"active",k:2},{t:" and play instruments linked to ",k:-1},{t:"more than one genre",k:3},{t:"?",k:-1}],
+ rows:["musicians","play instruments","active","more than one genre"],
+ keys:[0,1,2,3],
+ opts:["Class","Property","Controlled value","Inference rule"],
+ whys:[
+  "“Musicians” is a noun — it becomes a class (mus:Musician).",
+  "“Play instruments” is a relationship — it becomes a property (mus:playsInstrument).",
+  "“Active” is a state — it comes from a controlled value or date-range check (activeFrom / activeTo).",
+  "“More than one genre” isn't stored anywhere — it needs a counting rule or query: an inference."],
+ ex:"Every CQ decomposes into the ontology and taxonomy it will need: nouns → classes and taxonomy · relationships → properties · states → controlled values · and conditions like “sole holder” → a rule or query. This is the bridge from requirement to design."
+};
+const STEPS=1+R1.length+R2.length+1; // intro + 5 + 4 + decompose
+const MAX=13;
+const RANKS=[
+ [12,"Graph Virtuoso","Your questions could headline the festival. Go write CQs the reasoners will sweat over."],
+ [9,"Session Player","Solid chops — revisit the shapes and checks you missed and you're stage-ready."],
+ [6,"Open Mic","You've got the melody; the changes need practice. Reread the extracts below."],
+ [0,"Tuning Up","Every virtuoso started here. Revisit the competency question materials and run it again."]
+];
+const shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+let step=0, score=0, results=[], R1S, R2S;
+function reshuffle(){R1S=shuf(R1);R2S=shuf(R2)}
+reshuffle();
+const card=document.getElementById("card"), prog=document.getElementById("progress");
+for(let k=0;k<STEPS-1;k++){const s=document.createElement("div");s.className="seg";prog.appendChild(s)}
+const segs=[...prog.children];
+function setbar(){
+  segs.forEach((s,k)=>{s.className="seg"+(results[k]==="ok"?" ok":results[k]==="miss"?" miss":results[k]==="part"?" part":k===step-1?" now":"")});
+  document.getElementById("score").textContent=score;
+}
+function where(t){document.getElementById("where").textContent=t}
+
+function intro(){
+  where("warm-up");setbar();
+  card.innerHTML=`<div class="intro">
+    <div class="roundchip">Before you play</div>
+    <h2>A competency question is a requirement, not a query.</h2>
+    <p>It's a plain-English question your finished knowledge graph must be able to answer. You write the question first — the model, the data, and the SPARQL come after, shaped by the question.</p>
+    <p><strong>A CQ is ready when it passes five checks:</strong></p>
+    <div class="checks">
+      <div class="check"><b>Grounded</b><span>a real need</span></div>
+      <div class="check"><b>Answerable</b><span>data exists</span></div>
+      <div class="check"><b>Structured</b><span>entities + links</span></div>
+      <div class="check"><b>Testable</b><span>right ≠ wrong</span></div>
+      <div class="check"><b>Scoped</b><span>clear bounds</span></div>
+    </div>
+    <p><strong>And good CQ sets span four shapes:</strong></p>
+    <div class="shapes"><span>Lookup</span><span>Traversal</span><span>Aggregation</span><span>Inference</span></div>
+    <div class="nav"><button class="next">Enter the forge →</button></div>
+  </div>`;
+  card.querySelector(".next").addEventListener("click",()=>{step=1;render()});
+}
+function feedback(kind,heads,why,ex,extra){
+  const fb=document.getElementById("fb");
+  fb.innerHTML=
+   `<div class="verdict ${kind}">${heads}</div><p class="explain">${why}</p>`+
+   (kind!=="ok"?`<div class="extract"><span class="lab">📖 From the course materials</span>${ex}</div>`:"")+
+   (extra||"")+
+   `<div class="nav"><button class="next">${step<STEPS-1?"Next →":"See my standing →"}</button></div>`;
+  fb.querySelector(".next").addEventListener("click",()=>{step++;step<STEPS?render():finish()});
+  fb.querySelector(".next").focus();
+}
+function r1(idx){
+  const it=R1S[idx];
+  where(`round 1 · ${idx+1}/5 · strong or weak?`);setbar();
+  card.innerHTML=`<div class="roundchip">Round 1 · Strong or Weak?</div>
+    <p class="qtext">Judge this competency question:</p>
+    <div class="cq"><span class="qm">“</span>${it.q}<span class="qm">”</span></div>
+    <div class="answers row">
+      <button class="ans" data-v="1">💪 Strong</button>
+      <button class="ans" data-v="0">🫥 Weak</button>
+    </div><div id="fb"></div>`;
+  card.querySelectorAll(".ans").forEach(b=>b.addEventListener("click",()=>{
+    const guess=b.dataset.v==="1", good=guess===it.strong;
+    results[step-1]=good?"ok":"miss"; if(good)score++;
+    card.querySelectorAll(".ans").forEach(x=>{
+      x.disabled=true;
+      const v=x.dataset.v==="1";
+      if(v===it.strong)x.classList.add("right"); else if(x===b)x.classList.add("wrong"); else x.classList.add("dim");
+    });
+    feedback(good?"ok":"miss", good?"✓ Called it.":"✗ Not quite.",
+      `This one is <strong>${it.strong?"strong":"weak"}</strong>. ${it.why}`, it.ex);
+  }));
+}
+function r2(idx){
+  const it=R2S[idx];
+  where(`round 2 · ${idx+1}/4 · name the shape`);setbar();
+  card.innerHTML=`<div class="roundchip">Round 2 · Name the Shape</div>
+    <p class="qtext">What shape of question is this?</p>
+    <div class="cq"><span class="qm">“</span>${it.q}<span class="qm">”</span></div>
+    <div class="answers">`+SHAPES.map((s,k)=>`<button class="ans" data-k="${k}"><strong>${s}</strong></button>`).join("")+
+    `</div><div id="fb"></div>`;
+  card.querySelectorAll(".ans").forEach(b=>b.addEventListener("click",()=>{
+    const k=+b.dataset.k, good=k===it.s;
+    results[step-1]=good?"ok":"miss"; if(good)score++;
+    card.querySelectorAll(".ans").forEach(x=>{
+      x.disabled=true;const xk=+x.dataset.k;
+      if(xk===it.s)x.classList.add("right"); else if(xk===k)x.classList.add("wrong"); else x.classList.add("dim");
+    });
+    feedback(good?"ok":"miss", good?`✓ ${SHAPES[it.s]} it is.`:"✗ Not quite.",
+      `<strong>${SHAPES[it.s]}.</strong> ${it.why}`, it.ex);
+  }));
+}
+function r3(){
+  where("round 3 · break it down");setbar();
+  const cqHtml=R3.frags.map((f,i)=>f.k<0?f.t:`<span class="frag"><span class="n">${f.k+1}</span> ${f.t}</span>`).join("");
+  card.innerHTML=`<div class="roundchip">Round 3 · Break It Down</div>
+    <p class="qtext">Every CQ decomposes into the model it needs. Tag each highlighted part:</p>
+    <div class="cq"><span class="qm">“</span>${R3.pre}${cqHtml}<span class="qm">”</span></div>
+    <div class="match">`+R3.rows.map((r,ri)=>
+      `<div class="mrow"><span class="mbox"><span class="n">${ri+1}</span>${r}</span><div class="mchips">`+
+      shuf(R3.opts.map((o,oi)=>({o,oi}))).map(({o,oi})=>`<button class="chip" data-r="${ri}" data-o="${oi}">${o}</button>`).join("")+
+      `</div></div>`).join("")+
+    `</div><div id="fb"></div>`;
+  const picks=[null,null,null,null];
+  card.querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{
+    const r=+ch.dataset.r;
+    card.querySelectorAll(`.chip[data-r="${r}"]`).forEach(c=>c.classList.remove("sel"));
+    ch.classList.add("sel");picks[r]=+ch.dataset.o;
+    if(picks.every(p=>p!==null)){
+      let got=0;
+      card.querySelectorAll(".chip").forEach(c=>{
+        c.disabled=true;const cr=+c.dataset.r,co=+c.dataset.o;
+        if(co===R3.keys[cr])c.classList.add("right");
+        else if(c.classList.contains("sel"))c.classList.add("wrong");
+        c.classList.remove("sel");
+      });
+      picks.forEach((p,r2)=>{if(p===R3.keys[r2])got++});
+      score+=got;
+      results[step-1]=got===4?"ok":got>0?"part":"miss";
+      const detail=`<div class="extract"><span class="lab">The decomposition</span>`+
+        R3.whys.map((w,i)=>`<div style="margin-bottom:6px"><strong>${i+1}. ${R3.opts[R3.keys[i]]}</strong> — ${w}</div>`).join("")+`</div>`;
+      feedback(got===4?"ok":got>0?"part":"miss",
+        got===4?"✓ All four — the full bridge from question to model.":`${got}/4 — see the full decomposition below.`,
+        got===4?R3.whys[3]:R3.ex, R3.ex, detail);
+    }
+  }));
+}
+function render(){
+  if(step===0)return intro();
+  if(step<=R1.length)return r1(step-1);
+  if(step<=R1.length+R2.length)return r2(step-1-R1.length);
+  return r3();
+}
+function finish(){
+  where("done");
+  segs.forEach((s,k)=>{s.className="seg "+(results[k]==="ok"?"ok":results[k]==="part"?"part":"miss")});
+  document.getElementById("score").textContent=score;
+  const rank=RANKS.find(r=>score>=r[0]);
+  card.innerHTML=`<div class="final">
+    <div class="big">${score}</div><div class="of">out of ${MAX}</div>
+    <h2>${rank[1]}</h2><p class="blurb">${rank[2]}</p>
+  </div>
+  <div class="yourturn">
+    <h3>🎷 Your turn — for real this time</h3>
+    <p>Head to the <strong>Your Competency Questions</strong> assignment and draft CQs for your subgraph (Genres, Instruments, Events &amp; Venues, or Musicians). For each one:</p>
+    <ol>
+      <li>Run it through the five checks: <strong>Grounded · Answerable · Structured · Testable · Scoped</strong></li>
+      <li>Aim for coverage across the four shapes — not eight versions of the same lookup</li>
+      <li>Decompose it: nouns → classes · relationships → properties · states → controlled values · conditions → rules</li>
+    </ol>
+    <p style="margin-top:10px;margin-bottom:0"><em>Remember: a CQ your ontology can't answer isn't a failure — it's a finding. Document the gap.</em></p>
+  </div>
+  <div class="restart"><button class="next" id="again">Run it again</button></div>`;
+  document.getElementById("again").addEventListener("click",()=>{step=0;score=0;results=[];reshuffle();render()});
+  if(score>=12 && !matchMedia("(prefers-reduced-motion: reduce)").matches) confetti();
+}
+function confetti(){
+  const cv=document.getElementById("confetti"),ctx=cv.getContext("2d");
+  cv.width=innerWidth;cv.height=innerHeight;
+  const cols=["#2456A6","#B98A12","#2F7D4F","#B23B26","#7FA6E8"];
+  const ps=Array.from({length:140},()=>({x:Math.random()*cv.width,y:-20-Math.random()*cv.height*.5,
+    v:2+Math.random()*3,w:6+Math.random()*6,a:Math.random()*6.28,s:(Math.random()-.5)*.2,c:cols[Math.random()*cols.length|0]}));
+  let t=0;
+  (function tick(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ps.forEach(p=>{p.y+=p.v;p.a+=p.s;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a);
+      ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.w/4,p.w,p.w/2);ctx.restore()});
+    if(++t<260)requestAnimationFrame(tick); else ctx.clearRect(0,0,cv.width,cv.height);
+  })();
+}
+render();
+</script>
+</body>
+</html>

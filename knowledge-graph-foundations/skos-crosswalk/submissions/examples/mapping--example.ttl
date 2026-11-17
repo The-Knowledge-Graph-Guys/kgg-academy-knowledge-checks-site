@@ -1,0 +1,12 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix g: <https://jesstalisman-ia.github.io/KGA-Knowledge-Checks/music/genres#> .
+@prefix e: <https://jesstalisman-ia.github.io/KGA-Knowledge-Checks/music/events#> .
+@prefix i: <https://jesstalisman-ia.github.io/KGA-Knowledge-Checks/music/instruments#> .
+@prefix m: <https://jesstalisman-ia.github.io/KGA-Knowledge-Checks/music/musicians#> .
+
+# Example crosswalk between the four example schemes.
+g:album skos:exactMatch m:album .            # Album = Album
+g:live-album skos:closeMatch m:live-recording .   # Live album ~ Live recording
+m:disc-jockey skos:relatedMatch i:turntables .    # Disc jockey -- Turntables

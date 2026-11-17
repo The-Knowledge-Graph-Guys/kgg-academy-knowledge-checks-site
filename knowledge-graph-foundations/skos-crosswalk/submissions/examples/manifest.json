@@ -1,0 +1,29 @@
+{
+ "files": [
+  {
+   "file": "events--example.ttl",
+   "group": "events",
+   "by": "Example"
+  },
+  {
+   "file": "genres--example.ttl",
+   "group": "genres",
+   "by": "Example"
+  },
+  {
+   "file": "instruments--example.ttl",
+   "group": "instruments",
+   "by": "Example"
+  },
+  {
+   "file": "mapping--example.ttl",
+   "group": "mapping",
+   "by": "Example"
+  },
+  {
+   "file": "musicians--example.ttl",
+   "group": "musicians",
+   "by": "Example"
+  }
+ ]
+}

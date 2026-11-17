@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Requires, Two Ways</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  /* Layout: one reading column; every comparison is two columns, SKOS (purple, the CBox colour) beside pure OWL (blue, the TBox colour), stacking on a phone. */
+  :root{
+    --paper:#F7F7F2; --grid:rgba(36,86,166,.07); --surface:#FFFFFF; --ink:#20283A;
+    --ink-soft:#5A6478; --accent:#2456A6; --accent-ink:#FFFFFF; --line:#DDDDD3;
+    --ok:#2F7D4F; --ok-bg:#EAF3ED; --miss:#B23B26; --miss-bg:#F7ECE8;
+    --gold:#B98A12; --chip:#EEEEE6; --extract-bg:#F1F3F8; --shadow:0 2px 10px rgba(32,40,58,.08);
+    --t:#2456A6; --t-bg:#E6EDF8; --a:#2F7D4F; --a-bg:#EAF3ED; --c:#6B3FA0; --c-bg:#EFE8F7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;color:var(--ink);font:400 17px/1.55 "Source Sans 3",system-ui,sans-serif;background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;min-height:100vh}
+  .wrap{max-width:880px;margin:0 auto;padding-block:28px 80px;padding-inline:20px;min-width:0}
+  header{margin-bottom:18px;position:relative;padding-right:106px}
+  .kgg-logo{position:absolute;top:0;right:0;height:88px;width:auto;background:#fff;border-radius:12px;padding:4px 8px;box-shadow:var(--shadow)}
+  @media (max-width:520px){header{padding-right:76px}.kgg-logo{height:62px}}
+  .eyebrow{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(32px,7vw,46px)/1.05 "Bricolage Grotesque","Source Sans 3",sans-serif;margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0}
+  .toc{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 14px}
+  .toc a{font:600 12.5px "IBM Plex Mono",monospace;color:var(--accent);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 11px;text-decoration:none}
+  .toc a:hover{border-color:var(--accent)}
+  .scorebar{display:flex;justify-content:space-between;align-items:baseline;font:600 13px "IBM Plex Mono",monospace;color:var(--ink-soft);margin-bottom:10px;gap:10px;flex-wrap:wrap}
+  .scorebar b{color:var(--gold);font-size:15px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:26px 24px;margin-bottom:18px;min-width:0}
+  .roundchip{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:6px 12px;margin-bottom:12px}
+  h2{font:800 26px/1.15 "Bricolage Grotesque",sans-serif;margin:0 0 10px;text-wrap:balance}
+  h3{font:800 17px "Bricolage Grotesque",sans-serif;margin:22px 0 8px}
+  p{margin:0 0 12px}
+  ul,ol{margin:0 0 12px;padding-left:22px} li{margin-bottom:5px}
+  code{font:400 14px "IBM Plex Mono",monospace;background:var(--chip);border-radius:5px;padding:1px 6px}
+  pre{font:400 13px/1.5 "IBM Plex Mono",monospace;background:var(--extract-bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+  pre .c{color:var(--ink-soft)} pre .k{color:var(--t);font-weight:600} pre .s{color:var(--a)} pre .d{color:var(--c);font-weight:600} pre .h{background:#FFF3C4;border-radius:3px}
+  .note{background:var(--extract-bg);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:12px 16px;font-size:15.5px;margin:12px 0}
+  .note .lab{display:block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  .tscroll{overflow-x:auto;margin:8px 0 14px}
+  table{border-collapse:collapse;width:100%;font-size:15px}
+  th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{font:600 11px/1.3 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+  th.sk{color:var(--c)} th.ow{color:var(--t)}
+  .tag{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:5px 9px;white-space:nowrap}
+  .tag.t{background:var(--t-bg);color:var(--t)} .tag.a{background:var(--a-bg);color:var(--a)} .tag.c{background:var(--c-bg);color:var(--c)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0 14px} @media (max-width:680px){.two{grid-template-columns:1fr}}
+  .two>*{min-width:0}
+  .col{border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--paper)}
+  .col h4{margin:0 0 8px;font:800 16px "Bricolage Grotesque",sans-serif}
+  .col.sk{border-color:var(--c)} .col.sk h4{color:var(--c)} .col.ow{border-color:var(--t)} .col.ow h4{color:var(--t)}
+  .col p{font-size:15px;margin:0 0 8px} .col pre{margin:8px 0 0}
+  /* knowledge check */
+  .q{background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:18px 18px;margin-top:12px}
+  .qnum{font:800 14px "Bricolage Grotesque",sans-serif;color:var(--ink-soft);margin-bottom:4px}
+  .qtext{font:600 18.5px/1.35 "Source Sans 3",sans-serif;margin:0 0 12px;text-wrap:balance}
+  .qtext code{font-size:15px}
+  .answers{display:flex;flex-direction:column;gap:8px}
+  .answers.row{flex-direction:row;flex-wrap:wrap}
+  button.ans{text-align:left;font:400 16px/1.4 "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;cursor:pointer;transition:border-color .15s,transform .1s,background .15s}
+  .answers.row button.ans{flex:1;min-width:150px;text-align:center;font:700 17px "Bricolage Grotesque",sans-serif}
+  button.ans.sk{border-color:var(--c)} button.ans.ow{border-color:var(--t)} button.ans.both{border-color:var(--gold)}
+  button.ans:hover:not(:disabled){transform:translateY(-1px);border-color:var(--accent)}
+  button.ans:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  button.ans:disabled{cursor:default}
+  button.ans.right{background:var(--ok-bg);border-color:var(--ok)}
+  button.ans.wrong{background:var(--miss-bg);border-color:var(--miss)}
+  button.ans.dim{opacity:.45}
+  .verdict{font:700 17px "Bricolage Grotesque",sans-serif;margin:14px 0 0}
+  .verdict.ok{color:var(--ok)} .verdict.miss{color:var(--miss)}
+  .explain{margin:6px 0 0;color:var(--ink-soft);font-size:15.5px}
+  .explain a{font-size:14px}
+  .final{text-align:center;padding:10px 10px 4px}
+  .final .big{font:800 clamp(48px,12vw,76px)/1 "Bricolage Grotesque",sans-serif;color:var(--gold)}
+  .final .of{font:600 15px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  .final p{max-width:46ch;margin:10px auto 0;color:var(--ink-soft)}
+  button.next{font:700 15px "Bricolage Grotesque",sans-serif;color:var(--accent-ink);background:var(--accent);border:none;border-radius:10px;padding:11px 22px;cursor:pointer;margin-top:14px}
+  button.next:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+  a{color:var(--accent);font-weight:600}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Knowledge Checks</a></li><li aria-current="page">Requires, Two Ways</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="kgg-logo" src="../assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Knowledge Graph Academy · Modules 3 to 5 · one rule, two models</div>
+    <h1>Requires, Two Ways</h1>
+    <p class="sub">"An electric guitar requires an amplifier." Modelled with SKOS concepts as values, and modelled with no SKOS at all. The same facts, the same question, two places for the rule to live.</p>
+  </header>
+  <nav class="toc">
+    <a href="#s1">1 · The sentence</a><a href="#s2">2 · The types</a><a href="#s3">3 · The rule</a><a href="#s4">4 · The things</a><a href="#s5">5 · The reasoner</a><a href="#s6">6 · Side by side</a><a href="#s7">7 · Knowledge check</a>
+  </nav>
+  <div class="scorebar"><span>read six sections, then twelve questions</span><span>score <b id="score">0</b>/12</span></div>
+
+  <section class="card" id="s1">
+    <span class="roundchip">1 · The sentence</span>
+    <h2>One sentence hides a rule and a fact</h2>
+    <p>"An electric guitar requires an amplifier" says two things. The <b>rule</b> is about every electric guitar there will ever be: each one needs some amplifier. The <b>fact</b> is about one guitar: Dana's 1962 Stratocaster is played through Dana's Fender Deluxe. The fact is the same in both models below, an object property between two things you can hold. The rule is what changes between them.</p>
+<pre class="a"><span class="c"># the fact, identical in both models: thing to thing, in the ABox</span>
+data:dana-strat <span class="k">io:requires</span> data:dana-deluxe .</pre>
+    <div class="note"><span class="lab">Prefixes on this page</span><code>inst:</code> is the Instruments concept scheme, <code>io:</code> the classes and properties, <code>data:</code> the things. Your own file binds the scheme to the empty prefix; the names after the colon are the same.</div>
+  </section>
+
+  <section class="card" id="s2">
+    <span class="roundchip">2 · The types</span>
+    <h2>With SKOS the types are values; without SKOS the types are classes</h2>
+    <div class="two">
+      <div class="col sk"><h4>With SKOS as values</h4>
+        <p>Electric Guitar is a <span class="tag c">concept</span> in the Instruments scheme. Its hierarchy is <code>skos:broader</code>. A concept is never the subject of a relation of your own and never the object of <code>rdf:type</code>. Everything you can hold is typed with one of two classes, Instrument or Musical Accessory, and says which entry in the scheme it is through a property whose range is <code>skos:Concept</code>.</p>
+<pre>inst:ElectricGuitar <span class="k">a</span> skos:Concept ;
+    skos:prefLabel <span class="s">"Electric Guitar"@en</span> ;
+    skos:broader inst:Guitar .
+
+io:hasInstrumentType <span class="k">a</span> owl:ObjectProperty ;
+    rdfs:domain io:Instrument ;
+    rdfs:range  skos:Concept .</pre></div>
+      <div class="col ow"><h4>Without SKOS</h4>
+        <p>Electric Guitar is a <span class="tag t">class</span>. Its hierarchy is <code>rdfs:subClassOf</code>, and a reasoner propagates membership up it. The words go on <code>rdfs:label</code> and <code>rdfs:comment</code>. A thing says what it is with <code>rdf:type</code> alone; there is no second property for the type.</p>
+<pre>io:ElectricGuitar <span class="k">a</span> owl:Class ;
+    rdfs:subClassOf io:Guitar ;
+    rdfs:label <span class="s">"Electric Guitar"@en</span> .
+
+io:Guitar <span class="k">a</span> owl:Class ;
+    rdfs:subClassOf io:StringInstrument .</pre></div>
+    </div>
+    <p>Adding a baritone guitar is one concept in the scheme on the left, no schema edit. On the right it is a new class, and the schema changes. With forty instrument types the right-hand tree has forty classes; that is a list, not a product, so it is not the explosion from <a href="why-the-tbox-stays-small.html">Why the TBox Stays Small</a>. It is still the ontologist's file every time a type is added.</p>
+  </section>
+
+  <section class="card" id="s3">
+    <span class="roundchip">3 · The rule</span>
+    <h2>With SKOS the rule is a thing with two values; without SKOS it is a restriction on the class</h2>
+    <div class="two">
+      <div class="col sk"><h4>With SKOS as values</h4>
+        <p>A concept cannot be the subject of a relation, so the rule cannot be written on Electric Guitar. It becomes an individual of a class made for rules, <span class="tag a">Accessory Requirement</span>, with two properties whose values are concepts. The rules are rows in a table; the scheme supplies the words. They live in the ABox and are entered as data.</p>
+<pre>io:AccessoryRequirement <span class="k">a</span> owl:Class .
+io:forInstrumentType     <span class="k">a</span> owl:ObjectProperty ;
+    rdfs:domain io:AccessoryRequirement ; rdfs:range skos:Concept .
+io:requiresAccessoryType <span class="k">a</span> owl:ObjectProperty ;
+    rdfs:domain io:AccessoryRequirement ; rdfs:range skos:Concept .
+
+<span class="h">data:req-1 <span class="k">a</span> io:AccessoryRequirement ;
+    io:forInstrumentType     inst:ElectricGuitar ;
+    io:requiresAccessoryType inst:Amplifier .</span></pre></div>
+      <div class="col ow"><h4>Without SKOS</h4>
+        <p>Electric Guitar is a class, so the rule is a statement about the class: every member requires some Amplifier. That is an OWL <span class="tag t">restriction</span>, written once on the class with <code>owl:someValuesFrom</code>. It lives in the TBox and is written by the ontologist.</p>
+<pre>io:Amplifier <span class="k">a</span> owl:Class ;
+    rdfs:subClassOf io:MusicalAccessory .
+
+<span class="h">io:ElectricGuitar rdfs:subClassOf [
+    <span class="k">a</span> owl:Restriction ;
+    owl:onProperty      io:requires ;
+    owl:someValuesFrom  io:Amplifier ] .</span></pre></div>
+    </div>
+    <p>The yellow lines are the rule. On the left it is three triples about a new individual. On the right it is an anonymous class, "things that require some amplifier", and Electric Guitar is declared a subclass of it.</p>
+  </section>
+
+  <section class="card" id="s4">
+    <span class="roundchip">4 · The things</span>
+    <h2>Dana's gear is typed through a property on the left and through rdf:type on the right</h2>
+    <div class="two">
+      <div class="col sk"><h4>With SKOS as values</h4>
+<pre>data:dana-strat <span class="k">a</span> io:Instrument ;
+    schema:name <span class="s">"Dana's 1962 Stratocaster"</span> ;
+    <span class="h">io:hasInstrumentType inst:ElectricGuitar</span> ;
+    io:requires data:dana-deluxe .
+
+data:dana-deluxe <span class="k">a</span> io:MusicalAccessory ;
+    schema:name <span class="s">"Dana's Fender Deluxe Reverb"</span> ;
+    <span class="h">io:hasAccessoryType inst:Amplifier</span> .</pre></div>
+      <div class="col ow"><h4>Without SKOS</h4>
+<pre>data:dana-strat <span class="k">a</span> <span class="h">io:ElectricGuitar</span> ;
+    schema:name <span class="s">"Dana's 1962 Stratocaster"</span> ;
+    io:requires data:dana-deluxe .
+
+data:dana-deluxe <span class="k">a</span> <span class="h">io:Amplifier</span> ;
+    schema:name <span class="s">"Dana's Fender Deluxe Reverb"</span> .</pre></div>
+    </div>
+    <p>Two classes and a value on the left; one class each on the right. The fact, <code>io:requires</code> from the guitar to the amplifier, is the same triple in both.</p>
+  </section>
+
+  <section class="card" id="s5">
+    <span class="roundchip">5 · The reasoner</span>
+    <h2>Each model lets a reasoner infer something different, and neither flags a missing cable</h2>
+    <div class="two">
+      <div class="col sk"><h4>With SKOS as values</h4>
+        <p>A property chain follows the guitar to its type, the type back to the rule, and the rule to the accessory type. The reasoner then adds <code>data:dana-strat io:needsAccessoryType inst:Amplifier</code>. Nobody types it in. Without a reasoner the same walk is one SPARQL query.</p>
+<pre>io:needsAccessoryType <span class="k">a</span> owl:ObjectProperty ;
+    owl:propertyChainAxiom (
+        io:hasInstrumentType
+        [ owl:inverseOf io:forInstrumentType ]
+        io:requiresAccessoryType ) .</pre></div>
+      <div class="col ow"><h4>Without SKOS</h4>
+        <p>From <code>rdf:type io:ElectricGuitar</code> the reasoner adds Guitar, String Instrument, Instrument and Music Equipment. The restriction tells it that some amplifier exists for the Stratocaster, and that is all it concludes. It never says which amplifier, and it never complains when none is listed.</p>
+<pre><span class="c"># inferred from the subclass tree</span>
+data:dana-strat <span class="k">a</span> io:Guitar, io:StringInstrument,
+                  io:Instrument, io:MusicEquipment .</pre></div>
+    </div>
+    <div class="note"><span class="lab">Open world, both sides</span>Dana's Stratocaster lists an amplifier and no cable. An OWL reasoner treats the missing cable as unknown, not absent, in either model. The gap is found by a query, or by a SHACL shape, never by the reasoner.</div>
+<pre><span class="c"># the gap query, SKOS-as-values model: which required accessory type has no matching accessory?</span>
+SELECT ?accessoryType WHERE {
+  data:dana-strat io:hasInstrumentType ?type .
+  ?rule io:forInstrumentType ?type ; io:requiresAccessoryType ?accessoryType .
+  FILTER NOT EXISTS { data:dana-strat io:requires ?a . ?a io:hasAccessoryType ?accessoryType }
+}
+<span class="c"># the same question, no-SKOS model: read the restrictions up the class tree</span>
+SELECT ?accessoryClass WHERE {
+  data:dana-strat a ?type . ?type rdfs:subClassOf* ?c .
+  ?c rdfs:subClassOf [ owl:onProperty io:requires ; owl:someValuesFrom ?accessoryClass ] .
+  FILTER NOT EXISTS { data:dana-strat io:requires ?a . ?a a ?accessoryClass }
+}</pre>
+  </section>
+
+  <section class="card" id="s6">
+    <span class="roundchip">6 · Side by side</span>
+    <h2>Eight rows decide between the models</h2>
+    <div class="tscroll"><table>
+      <thead><tr><th>Question</th><th class="sk">With SKOS as values</th><th class="ow">Without SKOS</th></tr></thead>
+      <tbody>
+        <tr><td>What is Electric Guitar?</td><td>a concept, a value</td><td>a class</td></tr>
+        <tr><td>Where is the hierarchy?</td><td><code>skos:broader</code>, climbed by a query</td><td><code>rdfs:subClassOf</code>, propagated by a reasoner</td></tr>
+        <tr><td>How does a thing say its type?</td><td><code>rdf:type io:Instrument</code> plus <code>io:hasInstrumentType inst:ElectricGuitar</code></td><td><code>rdf:type io:ElectricGuitar</code></td></tr>
+        <tr><td>Where does the rule live?</td><td><span class="tag a">ABox</span> an Accessory Requirement individual with two values</td><td><span class="tag t">TBox</span> a restriction on the class</td></tr>
+        <tr><td>Who writes the rule?</td><td>whoever enters data</td><td>the ontologist</td></tr>
+        <tr><td>What does a reasoner add?</td><td>the needed accessory type, through a property chain</td><td>the superclasses of the thing</td></tr>
+        <tr><td>Adding an instrument type</td><td>one concept, no schema edit</td><td>one class, a schema edit</td></tr>
+        <tr><td>Labels, synonyms, definitions</td><td><code>skos:prefLabel</code>, <code>skos:altLabel</code>, <code>skos:definition</code>, one preferred label per language</td><td><code>rdfs:label</code>, <code>rdfs:comment</code>; synonyms need extra labels with no rule about them</td></tr>
+        <tr><td>Where is the fact?</td><td colspan="2"><span class="tag a">ABox</span> <code>data:dana-strat io:requires data:dana-deluxe</code>, the same in both</td></tr>
+      </tbody>
+    </table></div>
+    <p>Choose the SKOS model when the list of types is long, changes often, has synonyms, or is maintained by people who do not edit ontologies. Choose the pure OWL model when the types are few and stable and the rules about them must be read by a reasoner from the class alone. The music graph in this course uses the first; a small, fixed domain can use the second.</p>
+  </section>
+
+  <section class="card" id="s7">
+    <span class="roundchip">7 · Knowledge check</span>
+    <h2>Twelve questions, one point each</h2>
+    <p>Some questions ask which model a statement belongs to. Pick an answer; the explanation appears at once.</p>
+    <div id="quiz"></div>
+    <div class="final" id="final" hidden>
+      <div class="big" id="fscore">0</div><div class="of">of 12</div>
+      <p id="fblurb"></p>
+      <button class="next" id="again">Try again</button>
+    </div>
+  </section>
+</div>
+
+<script>
+const MODEL={sk:'With SKOS as values', ow:'Without SKOS', both:'Both models'};
+const Q=[
+ {form:'model', q:'<code>inst:ElectricGuitar a skos:Concept ; skos:broader inst:Guitar .</code>', r:'sk', s:'s2', why:'A concept with a broader concept is the SKOS scheme. The no-SKOS model has no concepts at all.'},
+ {form:'model', q:'<code>io:ElectricGuitar rdfs:subClassOf io:Guitar .</code>', r:'ow', s:'s2', why:'Electric Guitar as a class under Guitar is the pure OWL tree. In the SKOS model Electric Guitar is a value and never a class.'},
+ {form:'model', q:'<code>data:dana-strat io:requires data:dana-deluxe .</code>', r:'both', s:'s1', why:'The fact is thing to thing and lives in the ABox of both models unchanged.'},
+ {form:'model', q:'<code>data:dana-strat a io:ElectricGuitar .</code>', r:'ow', s:'s4', why:'Typing a thing with Electric Guitar makes Electric Guitar a class. In the SKOS model the thing is an Instrument and its type is a value of io:hasInstrumentType.'},
+ {form:'model', q:'<code>data:req-1 a io:AccessoryRequirement ; io:forInstrumentType inst:ElectricGuitar ; io:requiresAccessoryType inst:Amplifier .</code>', r:'sk', s:'s3', why:'The rule as a thing with two concept values. Only the SKOS model needs it; the no-SKOS model writes the rule on the class.'},
+ {form:'model', q:'<code>io:ElectricGuitar rdfs:subClassOf [ owl:onProperty io:requires ; owl:someValuesFrom io:Amplifier ] .</code>', r:'ow', s:'s3', why:'A restriction on a class. Electric Guitar and Amplifier are classes here, so this is the no-SKOS model.'},
+ {form:'choice', q:'In the SKOS-as-values model, where does "every electric guitar requires an amplifier" live?', a:['In the ABox, as an individual of Accessory Requirement with two values','In the TBox, as a restriction on inst:ElectricGuitar','In the scheme, as inst:ElectricGuitar skos:related inst:Amplifier'], r:0, s:'s3', why:'A concept cannot be the subject of a relation in this model, so the rule becomes a thing with two values, entered as data. The third option puts a relation between concepts, which the model forbids.'},
+ {form:'choice', q:'Dana\'s Stratocaster lists an amplifier and no cable, and both models say an electric guitar requires a cable. What does an OWL reasoner report?', a:['Nothing: a missing cable is unknown, not absent, under the open world assumption','An inconsistency in the no-SKOS model only','An inconsistency in both models'], r:0, s:'s5', why:'Neither a restriction nor a property chain can say "and nothing else is there". The gap is found by a query or a SHACL shape.'},
+ {form:'choice', q:'A baritone guitar is added as a new instrument type. Which is true?', a:['SKOS model: one concept, no schema edit. No-SKOS model: one class, a schema edit.','Both models need a schema edit','Neither model needs a schema edit'], r:0, s:'s2', why:'A concept is data in the scheme; a class is schema. That difference is the main reason to pick one model over the other.'},
+ {form:'choice', q:'In the SKOS-as-values model, what gives Dana\'s Stratocaster the triple <code>io:needsAccessoryType inst:Amplifier</code> without anyone typing it?', a:['A property chain through io:hasInstrumentType, the inverse of io:forInstrumentType and io:requiresAccessoryType','rdfs:subClassOf from io:Instrument','skos:broader from inst:ElectricGuitar'], r:0, s:'s5', why:'The chain walks thing, type, rule, accessory type. Subclass and broader links do not reach the rule individual.'},
+ {form:'choice', q:'In the no-SKOS model, which of these does a reasoner add for <code>data:dana-strat a io:ElectricGuitar</code>?', a:['data:dana-strat a io:Guitar, io:StringInstrument, io:Instrument, io:MusicEquipment','data:dana-strat io:requires data:dana-deluxe','data:dana-strat io:hasInstrumentType io:ElectricGuitar'], r:0, s:'s5', why:'Membership propagates up rdfs:subClassOf. The fact was typed in, and the no-SKOS model has no type property.'},
+ {form:'choice', q:'Which statement breaks the rule "SKOS only as values"?', a:['<code>inst:ElectricGuitar io:requiresAccessoryType inst:Amplifier</code>','<code>data:req-1 io:forInstrumentType inst:ElectricGuitar</code>','<code>data:dana-deluxe io:hasAccessoryType inst:Amplifier</code>'], r:0, s:'s3', why:'The first puts a concept in the subject position of a property of your own. The other two use concepts as values of properties on things, which is the rule.'},
+];
+(function(){
+  const host=document.getElementById('quiz'); let score=0, done=0;
+  const shuffle=n=>[...Array(n).keys()].map(i=>[Math.random(),i]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+  function render(){
+    score=0; done=0; document.getElementById('score').textContent=0; document.getElementById('final').hidden=true;
+    host.innerHTML=Q.map((q,n)=>{
+      if(q.form==='model') return `<div class="q" id="q${n}"><div class="qnum">Question ${n+1} of ${Q.length} · which model?</div><p class="qtext">${q.q}</p><div class="answers row">${['sk','ow','both'].map(k=>`<button class="ans ${k}" data-q="${n}" data-k="${k}">${MODEL[k]}</button>`).join('')}</div><div class="fb"></div></div>`;
+      const order=shuffle(q.a.length);
+      return `<div class="q" id="q${n}"><div class="qnum">Question ${n+1} of ${Q.length}</div><p class="qtext">${q.q}</p><div class="answers">${order.map(k=>`<button class="ans" data-q="${n}" data-k="${k}">${q.a[k]}</button>`).join('')}</div><div class="fb"></div></div>`;
+    }).join('');
+    host.querySelectorAll('button.ans').forEach(b=>b.onclick=()=>pick(+b.dataset.q,b.dataset.k));
+  }
+  function pick(n,k){
+    const q=Q[n], card=document.getElementById('q'+n), right=String(q.r), ok=k===right;
+    card.querySelectorAll('button.ans').forEach(b=>{ b.disabled=true; if(b.dataset.k===right) b.classList.add('right'); else if(b.dataset.k===k) b.classList.add('wrong'); else b.classList.add('dim'); });
+    if(ok) score++; done++;
+    document.getElementById('score').textContent=score;
+    card.querySelector('.fb').innerHTML=`<div class="verdict ${ok?'ok':'miss'}">${ok?'✓ Right.':'✕ Not this one.'}</div><p class="explain">${q.why} <a href="#${q.s}">Back to the section →</a></p>`;
+    if(done===Q.length){ const f=document.getElementById('final'); f.hidden=false; document.getElementById('fscore').textContent=score; document.getElementById('fblurb').textContent= score===Q.length?'Both models are clear, and so is the difference between the rule and the fact.': score>=8?'Most of it is in place. Re-read the sections linked under the ones you missed.':'Go back to sections 3 and 4 with the two Turtle files open side by side.'; f.scrollIntoView({block:'center'}); }
+  }
+  document.getElementById('again').onclick=()=>{ render(); document.getElementById('s7').scrollIntoView({block:'start'}); };
+  render();
+})();
+</script>
+</body>
+</html>
