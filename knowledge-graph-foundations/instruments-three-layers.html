@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instruments in Three Layers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --paper:#F7F7F2; --grid:rgba(36,86,166,.07); --surface:#FFFFFF; --ink:#20283A;
+    --ink-soft:#5A6478; --accent:#2456A6; --accent-ink:#FFFFFF; --line:#DDDDD3;
+    --ok:#2F7D4F; --ok-bg:#EAF3ED; --miss:#B23B26; --miss-bg:#F7ECE8;
+    --gold:#B98A12; --chip:#EEEEE6; --extract-bg:#F1F3F8; --shadow:0 2px 10px rgba(32,40,58,.08);
+    --t:#2456A6; --t-bg:#E6EDF8; --a:#2F7D4F; --a-bg:#EAF3ED; --c:#6B3FA0; --c-bg:#EFE8F7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;color:var(--ink);font:400 17px/1.55 "Source Sans 3",system-ui,sans-serif;background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;min-height:100vh}
+  .wrap{max-width:760px;margin:0 auto;padding:28px 20px 80px;min-width:0}
+  header{margin-bottom:18px;position:relative;padding-right:106px}
+  .kgg-logo{position:absolute;top:0;right:0;height:88px;width:auto;background:#fff;border-radius:12px;padding:4px 8px;box-shadow:var(--shadow)}
+  @media (max-width:520px){header{padding-right:76px}.kgg-logo{height:62px}}
+  .eyebrow{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(32px,7vw,46px)/1.05 "Bricolage Grotesque","Source Sans 3",sans-serif;margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0}
+  nav.toc{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 10px}
+  nav.toc a{font:700 13px "Bricolage Grotesque",sans-serif;color:var(--ink);background:var(--chip);border-radius:999px;padding:8px 13px;text-decoration:none}
+  nav.toc a:hover{background:var(--surface);box-shadow:var(--shadow)}
+  .scorebar{display:flex;justify-content:space-between;align-items:baseline;font:600 13px "IBM Plex Mono",monospace;color:var(--ink-soft);margin-bottom:10px}
+  .scorebar b{color:var(--gold);font-size:15px}
+  section.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:26px 24px;margin-bottom:18px;scroll-margin-top:16px;overflow-wrap:anywhere;min-width:0}
+  .roundchip{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:6px 12px;margin-bottom:12px}
+  h2{font:800 26px "Bricolage Grotesque",sans-serif;margin:0 0 10px;text-wrap:balance}
+  h3{font:800 17px "Bricolage Grotesque",sans-serif;margin:22px 0 8px}
+  p{margin:0 0 12px} .muted{color:var(--ink-soft)} .small{font-size:14.5px}
+  a{color:var(--accent);font-weight:600}
+  code{font:400 14px "IBM Plex Mono",monospace;background:var(--chip);border-radius:5px;padding:1px 6px}
+  pre{font:400 13.5px/1.5 "IBM Plex Mono",monospace;background:var(--extract-bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+  pre .c{color:var(--ink-soft)} pre .k{color:var(--t);font-weight:600} pre .s{color:var(--a)} pre .d{color:var(--c);font-weight:600} pre .x{color:var(--miss);font-weight:600;text-decoration:line-through}
+  .note{background:var(--extract-bg);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:12px 16px;font-size:15.5px;margin:12px 0}
+  .note .lab{display:block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  table{border-collapse:collapse;width:100%;font-size:15px;margin:8px 0 14px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font:700 13px "Bricolage Grotesque",sans-serif;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em}
+  td code{white-space:normal;overflow-wrap:anywhere}
+  @media (max-width:600px){ table,tbody,tr,td{display:block;width:100%} thead,th{display:none} tr{border-bottom:2px solid var(--line);padding:8px 0} td{border:none;padding:3px 0} td:first-child{font-weight:700} }
+  .tag{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:5px 9px;white-space:nowrap}
+  .tag.t{background:var(--t-bg);color:var(--t)} .tag.a{background:var(--a-bg);color:var(--a)} .tag.c{background:var(--c-bg);color:var(--c)} .tag.ok{background:var(--ok-bg);color:var(--ok)} .tag.no{background:var(--miss-bg);color:var(--miss)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0 14px} @media (max-width:600px){.two{grid-template-columns:1fr}}
+  .box{border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--paper)} .box h4{margin:0 0 6px;font:800 15px "Bricolage Grotesque",sans-serif} .box p{margin:0;font-size:15px}
+  .box.t{border-color:var(--t)} .box.c{border-color:var(--c)} .box.a{border-color:var(--a)}
+  .tree{font:600 15px "Source Sans 3",sans-serif;background:var(--extract-bg);border-radius:10px;padding:14px 18px;margin:10px 0}
+  .tree ul{list-style:none;margin:0;padding-left:22px;border-left:2px solid var(--line)} .tree > ul{padding-left:0;border:none}
+  .tree li{padding:3px 0} .tree .lbl{font:600 11px "IBM Plex Mono",monospace;color:var(--ink-soft);margin-left:6px}
+  /* quiz */
+  .progress{display:flex;gap:5px;margin:16px 0 20px}
+  .seg{flex:1;height:7px;border-radius:4px;background:var(--chip);transition:background .3s}
+  .seg.ok{background:var(--ok)} .seg.miss{background:var(--miss)} .seg.now{background:var(--accent)}
+  .qcard{background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:20px 20px;margin-top:10px}
+  .partchip{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:6px 12px;margin-bottom:14px}
+  .qnum{font:800 15px "Bricolage Grotesque",sans-serif;color:var(--ink-soft);margin-bottom:4px}
+  .qtext{font:600 20px/1.35 "Source Sans 3",sans-serif;margin:0 0 16px;text-wrap:balance}
+  .qtext code{font-size:16px}
+  .answers{display:flex;flex-direction:column;gap:10px}
+  button.ans{text-align:left;font:400 16px/1.4 "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px 15px;cursor:pointer;transition:border-color .15s,transform .1s,background .15s;display:flex;gap:12px;align-items:baseline}
+  button.ans:hover:not(:disabled){border-color:var(--accent);transform:translateX(3px)}
+  button.ans:focus-visible,button.chip:focus-visible,button.next:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  button.ans:disabled{cursor:default}
+  button.ans .key{font:600 13px "IBM Plex Mono",monospace;color:var(--accent);flex-shrink:0}
+  button.ans code{font-size:14px}
+  button.ans.right{background:var(--ok-bg);border-color:var(--ok)} button.ans.wrong{background:var(--miss-bg);border-color:var(--miss)} button.ans.dim{opacity:.45}
+  .match{display:flex;flex-direction:column;gap:14px}
+  .mrow{display:flex;flex-direction:column;gap:8px}
+  .mbox{font:600 15px "IBM Plex Mono",monospace;overflow-wrap:anywhere}
+  .mchips{display:flex;gap:8px;flex-wrap:wrap}
+  button.chip{font:400 14.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:999px;padding:8px 14px;cursor:pointer;transition:all .15s;text-align:left}
+  button.chip:hover:not(:disabled){border-color:var(--accent)}
+  button.chip.sel{background:var(--accent);color:var(--accent-ink)}
+  button.chip.right{background:var(--ok-bg);color:var(--ink);border-color:var(--ok)} button.chip.wrong{background:var(--miss-bg);color:var(--ink);border-color:var(--miss)}
+  button.chip:disabled{cursor:default;opacity:.85}
+  .verdict{display:flex;align-items:center;gap:10px;font:700 18px "Bricolage Grotesque",sans-serif;margin:18px 0 0}
+  .verdict.ok{color:var(--ok)} .verdict.miss{color:var(--miss)}
+  .explain{margin:8px 0 0;color:var(--ink-soft)}
+  .extract{margin-top:14px;background:var(--extract-bg);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 16px;font-size:15.5px;color:var(--ink)}
+  .extract .lab{font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px}
+  .extract a{font-size:14px;display:inline-block;margin-top:8px}
+  .nav{display:flex;justify-content:flex-end;margin-top:20px}
+  button.next{font:700 16px "Bricolage Grotesque",sans-serif;color:var(--accent-ink);background:var(--accent);border:none;border-radius:10px;padding:12px 24px;cursor:pointer;transition:transform .12s}
+  button.next:hover{transform:translateY(-1px)}
+  .final{text-align:center;padding:30px 10px 10px}
+  .final .big{font:800 clamp(56px,14vw,88px)/1 "Bricolage Grotesque",sans-serif;color:var(--gold)}
+  .final .of{font:600 15px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  .final h3{font:800 28px/1.15 "Bricolage Grotesque",sans-serif;margin:14px 0 6px;text-wrap:balance}
+  .final .blurb{color:var(--ink-soft);max-width:44ch;margin:0 auto}
+  .review{text-align:left;margin-top:30px;border-top:1px solid var(--line);padding-top:22px}
+  .review h4{font:600 13px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 14px}
+  .review .item{margin-bottom:18px} .review .item p{margin:0 0 6px;font-weight:600}
+  .restart{margin-top:28px}
+  canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:9}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+  @media print{ body{background:none} nav.toc,.kgg-logo,button{display:none!important} section.card{box-shadow:none;border:none;padding:0 0 20px} }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Knowledge Checks</a></li><li aria-current="page">Instruments in Three Layers</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="kgg-logo" src="../assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Knowledge Graph Academy · Modules 3 to 5 · SKOS with the TBox and the ABox · instruments</div>
+    <h1>Instruments in Three Layers</h1>
+    <p class="sub">A taxonomy of instrument kinds and accessories, an ontology of musicians, physical instruments, makers and performances, and the facts about one concert: built up layer by layer until one question needs all three.</p>
+  </header>
+  <nav class="toc">
+    <a href="#s1">1 · Kinds</a><a href="#s2">2 · Classes</a><a href="#s3">3 · Required accessories</a><a href="#s4">4 · Facts</a><a href="#s5">5 · One question, three layers</a><a href="#s6">6 · Where everything goes</a><a href="#s7">7 · Same word, three layers</a><a href="#s8">8 · Knowledge check</a>
+  </nav>
+  <div class="scorebar"><span>read seven sections, then fourteen questions</span><span>score <b id="score">0</b>/14</span></div>
+
+  <section class="card" id="s1">
+    <span class="roundchip">1 · Kinds · CBox</span>
+    <h2>A taxonomy of instrument kinds is the first layer, and every kind is a value</h2>
+    <p>Every music graph needs the list of kinds of instrument. A kind is a term people pick from a list. It has a preferred name and the other names people use (Fiddle for Violin, Electric bass for Bass guitar), a definition, and a place among the other kinds: Bass guitar sits under Guitar, which sits under String instruments. That is a SKOS concept scheme, and the Module 3 rules apply to it unchanged: one <code>skos:prefLabel</code> per language, the other names as <code>skos:altLabel</code>, <code>skos:broader</code> to the parent, <code>skos:inScheme</code> on every concept, <code>skos:topConceptOf</code> on the roots.</p>
+<pre><span class="c"># the Musical instruments scheme: twelve kinds in three branches (four shown)</span>
+ex:instruments <span class="k">a</span> skos:ConceptScheme ; <span class="d">skos:prefLabel</span> <span class="s">"Musical instruments"@en</span> ;
+    <span class="d">skos:definition</span> <span class="s">"Kinds of instrument. A kind is a controlled value; the instrument in your hands is an instance of Physical instrument."@en</span> ;
+    <span class="k">skos:hasTopConcept</span> ex:string-instruments, ex:percussion-instruments, ex:keyboard-instruments .
+
+ex:string-instruments <span class="k">a</span> skos:Concept ; <span class="d">skos:prefLabel</span> <span class="s">"String instruments"@en</span> ;
+    <span class="k">skos:inScheme</span> ex:instruments ; <span class="k">skos:topConceptOf</span> ex:instruments ;
+    <span class="d">skos:definition</span> <span class="s">"Instruments that produce sound from vibrating strings."@en</span> .
+ex:guitar <span class="k">a</span> skos:Concept ; <span class="d">skos:prefLabel</span> <span class="s">"Guitar"@en</span> ; <span class="k">skos:broader</span> ex:string-instruments ; <span class="k">skos:inScheme</span> ex:instruments .
+ex:bass-guitar <span class="k">a</span> skos:Concept ; <span class="d">skos:prefLabel</span> <span class="s">"Bass guitar"@en</span> ; <span class="d">skos:altLabel</span> <span class="s">"Electric bass"@en</span> ;
+    <span class="k">skos:broader</span> ex:guitar ; <span class="k">skos:inScheme</span> ex:instruments ;
+    <span class="d">skos:scopeNote</span> <span class="s">"Use for the electric bass. For the acoustic upright instrument, use Double bass."@en</span> .
+ex:violin <span class="k">a</span> skos:Concept ; <span class="d">skos:prefLabel</span> <span class="s">"Violin"@en</span> ; <span class="d">skos:altLabel</span> <span class="s">"Fiddle"@en</span> ;
+    <span class="k">skos:broader</span> ex:string-instruments ; <span class="k">skos:inScheme</span> ex:instruments .</pre>
+    <div class="tree"><ul><li>String instruments<ul><li>Violin <span class="lbl">also: Fiddle</span></li><li>Cello <span class="lbl">also: Violoncello</span></li><li>Double bass <span class="lbl">also: Upright bass, Contrabass</span></li><li>Guitar<ul><li>Acoustic guitar</li><li>Electric guitar</li><li>Bass guitar <span class="lbl">also: Electric bass</span></li></ul></li></ul></li><li>Percussion instruments<ul><li>Drum kit <span class="lbl">also: Drums, Drum set</span></li></ul></li><li>Keyboard instruments<ul><li>Piano <span class="lbl">also: Pianoforte</span></li></ul></li></ul></div>
+    <p>A kind is a value. Nothing in this layer is a class, and no concept will ever be the object of <code>rdf:type</code>. The scheme's definition says so in words, because the next layer has a class whose name a reader could confuse with it.</p>
+  </section>
+
+  <section class="card" id="s2">
+    <span class="roundchip">2 · Classes · TBox</span>
+    <h2>A kind is a concept; the instrument in your hands is an instance of a class</h2>
+    <p>Paul McCartney plays bass guitar, and Paul McCartney owns one particular bass: a 1961 Höfner 500/1 with a serial number. "Bass guitar" is a kind, so it stays a concept. The Höfner is one object with a maker, a year and a serial number, so it is an instance of a class. The class is named <b>Physical instrument</b> on purpose: a different name for a different layer, so nobody writes <code>rdf:type ex:bass-guitar</code> by mistake. Section 7 shows the other ways to keep a shared word apart across layers.</p>
+    <p>The ontology has five classes and ten properties. Two of the properties take a controlled value from the Musical instruments scheme: <i>plays</i>, for the kind a musician plays, and <i>is of kind</i>, for the kind a physical instrument is. Both have the range <code>skos:Concept</code>. Every other object property links instances of classes, and the datatype properties take literals.</p>
+    <table>
+      <thead><tr><th>Property</th><th>Domain → range</th><th>The value is</th></tr></thead>
+      <tbody>
+        <tr><td><code>ex:plays</code></td><td>Musician → <code>skos:Concept</code></td><td><span class="tag c">concept</span> a kind from Musical instruments</td></tr>
+        <tr><td><code>ex:owns</code></td><td>Musician → Physical instrument</td><td><span class="tag a">instance</span> one object</td></tr>
+        <tr><td><code>ex:kind</code></td><td>Physical instrument → <code>skos:Concept</code></td><td><span class="tag c">concept</span> which kind this object is</td></tr>
+        <tr><td><code>ex:made-by</code></td><td>Physical instrument → Maker</td><td><span class="tag a">instance</span> a company or workshop</td></tr>
+        <tr><td><code>ex:year-made</code>, <code>ex:serial-number</code></td><td>Physical instrument → <code>xsd:integer</code>, <code>xsd:string</code></td><td>a literal</td></tr>
+        <tr><td><code>ex:performs-at</code></td><td>Musician → Performance</td><td><span class="tag a">instance</span></td></tr>
+        <tr><td><code>ex:played-with</code></td><td>Performance → Physical instrument</td><td><span class="tag a">instance</span> the objects on stage</td></tr>
+        <tr><td><code>ex:takes-place-at</code>, <code>ex:on-date</code></td><td>Performance → Venue, <code>xsd:date</code></td><td><span class="tag a">instance</span>, a literal</td></tr>
+      </tbody>
+    </table>
+<pre><span class="c"># the classes, documented with SKOS notes (annotations: they change nothing for a reasoner)</span>
+ex:musician <span class="k">a</span> owl:Class ; <span class="k">rdfs:label</span> <span class="s">"Musician"@en</span> ;
+    <span class="d">skos:scopeNote</span> <span class="s">"What a musician plays is a kind, a controlled value. What a musician owns is a physical instrument, an instance."@en</span> .
+ex:physical-instrument <span class="k">a</span> owl:Class ; <span class="k">rdfs:label</span> <span class="s">"Physical instrument"@en</span> ;
+    <span class="d">skos:definition</span> <span class="s">"One instrument you can hold: it has a maker, a year and a serial number."@en</span> ;
+    <span class="d">skos:example</span> <span class="s">"Paul's 1961 Höfner 500/1 bass."@en</span> .
+
+<span class="c"># two properties draw their values from the taxonomy; the rest link instances or take literals</span>
+ex:plays <span class="k">a</span> owl:ObjectProperty ; <span class="k">rdfs:domain</span> ex:musician ; <span class="k">rdfs:range</span> skos:Concept ;
+    <span class="k">rdfs:comment</span> <span class="s">"A controlled value from the Musical instruments taxonomy."@en</span> .
+ex:kind  <span class="k">a</span> owl:ObjectProperty ; <span class="k">rdfs:domain</span> ex:physical-instrument ; <span class="k">rdfs:range</span> skos:Concept .
+ex:owns  <span class="k">a</span> owl:ObjectProperty ; <span class="k">rdfs:domain</span> ex:musician ; <span class="k">rdfs:range</span> ex:physical-instrument .
+ex:year-made <span class="k">a</span> owl:DatatypeProperty ; <span class="k">rdfs:domain</span> ex:physical-instrument ; <span class="k">rdfs:range</span> xsd:integer .</pre>
+    <div class="two">
+      <div class="box c"><h4><span class="tag c">concept</span> which kind</h4><p>Bass guitar. Picked from a list, with synonyms and a definition, under Guitar in the taxonomy. The value of <code>ex:plays</code> and of <code>ex:kind</code>.</p></div>
+      <div class="box a"><h4><span class="tag a">instance</span> which one</h4><p>Paul's 1961 Höfner 500/1. Typed <code>ex:physical-instrument</code>, with a maker, a year, a serial number, and an owner. The value of <code>ex:owns</code> and of <code>ex:played-with</code>.</p></div>
+    </div>
+  </section>
+
+  <section class="card" id="s3">
+    <span class="roundchip">3 · Required accessories · CBox + TBox</span>
+    <h2>SKOS can say related; your TBox can say what the relation is</h2>
+    <p>A violin needs a bow and rosin. An electric bass needs an amplifier, a cable and a strap. Every string instrument needs spare strings. That is knowledge about kinds, so it links concept to concept, and the accessories are a second scheme: Bow, Rosin, Spare strings, Amplifier, Instrument cable, Strap, Plectrum, Drumsticks, Drum key.</p>
+    <p>SKOS offers one associative link between concepts, <code>skos:related</code>, which says "these two are connected" and nothing about which one needs the other. ISO 25964, the thesaurus standard, allows custom relationship types, and the way to write one in SKOS is a sub-property. Declare <code>ex:requires</code> in the TBox as a sub-property of <code>skos:related</code>, with domain and range <code>skos:Concept</code>. A plain SKOS tool still sees a related link; your graph keeps which kind needs which accessory.</p>
+<pre><span class="c"># TBox: a relationship type SKOS does not have, declared as a sub-property of skos:related</span>
+ex:requires <span class="k">a</span> owl:ObjectProperty ; <span class="k">rdfs:subPropertyOf</span> skos:related ;
+    <span class="k">rdfs:label</span> <span class="s">"requires accessory"@en</span> ; <span class="k">rdfs:domain</span> skos:Concept ; <span class="k">rdfs:range</span> skos:Concept ;
+    <span class="d">skos:scopeNote</span> <span class="s">"Between concepts only. A requirement stated on a broader kind is inherited by its narrower kinds through skos:broader in a query, never by inference."@en</span> .
+
+<span class="c"># CBox: the accessories scheme, and the requirements stated on kinds</span>
+ex:accessories <span class="k">a</span> skos:ConceptScheme ; <span class="d">skos:prefLabel</span> <span class="s">"Instrument accessories"@en</span> .
+ex:bow <span class="k">a</span> skos:Concept ; <span class="d">skos:prefLabel</span> <span class="s">"Bow"@en</span> ; <span class="k">skos:inScheme</span> ex:accessories ; <span class="k">skos:topConceptOf</span> ex:accessories .
+ex:spare-strings <span class="k">a</span> skos:Concept ; <span class="d">skos:prefLabel</span> <span class="s">"Spare strings"@en</span> ; <span class="k">skos:inScheme</span> ex:accessories ; <span class="k">skos:topConceptOf</span> ex:accessories .
+
+ex:string-instruments <span class="k">ex:requires</span> ex:spare-strings .                      <span class="c"># stated once, on the branch</span>
+ex:violin      <span class="k">ex:requires</span> ex:bow, ex:rosin .
+ex:bass-guitar <span class="k">ex:requires</span> ex:amplifier, ex:instrument-cable, ex:strap .
+ex:drum-kit    <span class="k">ex:requires</span> ex:drumsticks, ex:drum-key .</pre>
+    <h3>Three consequences of the sub-property</h3>
+    <p><b>The reasoner adds the symmetric link, and only that.</b> <code>skos:related</code> is symmetric (condition S23), so from <code>ex:violin ex:requires ex:bow</code> a reasoner concludes <code>ex:violin skos:related ex:bow</code> and <code>ex:bow skos:related ex:violin</code>. It never concludes that a bow requires a violin: the sub-property still goes from the kind to the accessory.</p>
+    <p><b>Never between a kind and its own branch.</b> <code>skos:related</code> is disjoint with <code>skos:broaderTransitive</code> (S27). <code>ex:string-instruments ex:requires ex:violin</code> would relate a kind to its own narrower kind, and the graph becomes inconsistent. Requirements go from a kind to an accessory, across schemes.</p>
+    <p><b>Inheritance is the query's job.</b> Spare strings are stated on String instruments once. Nothing copies the statement down to Bass guitar; the query climbs <code>skos:broader*</code> from the kind to its branch and collects what each level requires. Section 5 shows the climb.</p>
+    <div class="note"><span class="lab">When the reasoner has to check it</span>If a reasoner must verify that every violin instance comes with a bow instance, that is an OWL restriction over classes, and the kinds would have to be classes. This module keeps kinds as concepts, states requirements between them, and lets the query do the climbing. The reasoner's check is Module 6 territory.</div>
+  </section>
+
+  <section class="card" id="s4">
+    <span class="roundchip">4 · Facts · ABox</span>
+    <h2>The ABox puts real musicians, real instruments and real dates on both layers</h2>
+    <p>Three musicians, three physical instruments, three makers, one concert, one venue. Every line is one of four kinds of fact: a type (<code>rdf:type</code> to a class), a controlled value (<code>ex:plays</code>, <code>ex:kind</code> to a concept), a link (<code>ex:owns</code>, <code>ex:made-by</code>, <code>ex:performs-at</code>, <code>ex:played-with</code>, <code>ex:takes-place-at</code> to an instance), or a value (<code>ex:year-made</code>, <code>ex:serial-number</code>, <code>ex:on-date</code>, a literal).</p>
+<pre>ex:paul-mccartney <span class="k">a</span> ex:musician ; <span class="k">rdfs:label</span> <span class="s">"Paul McCartney"@en</span> ;
+    <span class="k">ex:plays</span> ex:bass-guitar, ex:piano ;                      <span class="c"># controlled values</span>
+    <span class="k">ex:owns</span> ex:hofner-500-1 ;                                <span class="c"># a link to an instance</span>
+    <span class="k">ex:performs-at</span> ex:concert-2026-09-25 .
+ex:hofner-500-1 <span class="k">a</span> ex:physical-instrument ; <span class="k">rdfs:label</span> <span class="s">"Paul's 1961 Höfner 500/1 bass"@en</span> ;
+    <span class="k">ex:kind</span> ex:bass-guitar ;                                 <span class="c"># which kind: a controlled value</span>
+    <span class="k">ex:made-by</span> ex:hofner ; <span class="k">ex:year-made</span> <span class="s">1961</span> ; <span class="k">ex:serial-number</span> <span class="s">"H61-0427"</span> .
+ex:hofner <span class="k">a</span> ex:maker ; <span class="k">rdfs:label</span> <span class="s">"Höfner"@en</span> .
+
+ex:ringo-starr <span class="k">a</span> ex:musician ; <span class="k">rdfs:label</span> <span class="s">"Ringo Starr"@en</span> ; <span class="k">ex:plays</span> ex:drum-kit ; <span class="k">ex:owns</span> ex:ludwig-kit ; <span class="k">ex:performs-at</span> ex:concert-2026-09-25 .
+ex:ludwig-kit <span class="k">a</span> ex:physical-instrument ; <span class="k">rdfs:label</span> <span class="s">"Ringo's Ludwig kit"@en</span> ; <span class="k">ex:kind</span> ex:drum-kit ; <span class="k">ex:made-by</span> ex:ludwig ; <span class="k">ex:year-made</span> <span class="s">1963</span> .
+ex:mira-sato <span class="k">a</span> ex:musician ; <span class="k">rdfs:label</span> <span class="s">"Mira Sato"@en</span> ; <span class="k">ex:plays</span> ex:violin ; <span class="k">ex:owns</span> ex:sato-violin ; <span class="k">ex:performs-at</span> ex:concert-2026-09-25 .
+ex:sato-violin <span class="k">a</span> ex:physical-instrument ; <span class="k">rdfs:label</span> <span class="s">"Mira's Lindqvist violin"@en</span> ; <span class="k">ex:kind</span> ex:violin ; <span class="k">ex:made-by</span> ex:lindqvist ; <span class="k">ex:year-made</span> <span class="s">1998</span> .
+
+ex:concert-2026-09-25 <span class="k">a</span> ex:performance ; <span class="k">rdfs:label</span> <span class="s">"Strings and rhythm night, 25 September 2026"@en</span> ;
+    <span class="k">ex:takes-place-at</span> ex:wigmore-hall ; <span class="k">ex:on-date</span> <span class="s">"2026-09-25"^^xsd:date</span> ;
+    <span class="k">ex:played-with</span> ex:hofner-500-1, ex:ludwig-kit, ex:sato-violin .</pre>
+    <table>
+      <thead><tr><th>Fact about Paul</th><th>Kind of fact</th><th>Layer it points into</th></tr></thead>
+      <tbody>
+        <tr><td><code>a ex:musician</code></td><td>type</td><td><span class="tag t">TBox</span> a class</td></tr>
+        <tr><td><code>ex:plays ex:bass-guitar</code></td><td>controlled value</td><td><span class="tag c">CBox</span> a concept, picked</td></tr>
+        <tr><td><code>ex:owns ex:hofner-500-1</code></td><td>link</td><td><span class="tag a">ABox</span> another instance</td></tr>
+        <tr><td><code>ex:hofner-500-1 ex:year-made 1961</code></td><td>value</td><td>a literal, typed by the TBox range</td></tr>
+      </tbody>
+    </table>
+    <p>Mira Sato and her maker are invented; the Beatles and their instruments are the module's running example. The ABox never adds a class or a concept: when a violinist joins the band, three facts are written and nothing in the other layers changes.</p>
+  </section>
+
+  <section class="card" id="s5">
+    <span class="roundchip">5 · One question, three layers</span>
+    <h2>One question needs all three layers, and the query shows which line uses which</h2>
+    <p>"What must each musician bring to the concert?" The answer joins who performs (ABox), what they own and which kind it is (ABox facts over TBox properties), which branch that kind sits in (CBox), and what each level of the branch requires (the sub-property from Section 3).</p>
+<pre>SELECT ?musician ?kind ?accessory WHERE {
+  ?musician <span class="k">rdf:type</span> ex:musician ;                  <span class="c"># ABox: typed with a TBox class</span>
+            <span class="k">ex:performs-at</span> ex:concert-2026-09-25 ;  <span class="c"># ABox: a link</span>
+            <span class="k">ex:owns</span> ?instrument .                   <span class="c"># ABox: a link to a physical instrument</span>
+  ?instrument <span class="k">ex:kind</span> ?kind .                       <span class="c"># ABox: a controlled value from the CBox</span>
+  ?kind <span class="k">skos:broader*</span> ?branch .                     <span class="c"># CBox: climb from the kind to its branch</span>
+  ?branch <span class="k">ex:requires</span> ?accessory .                  <span class="c"># CBox: what each level requires</span>
+} ORDER BY ?musician ?accessory</pre>
+    <table>
+      <thead><tr><th>musician</th><th>kind</th><th>accessory</th><th>stated on</th></tr></thead>
+      <tbody>
+        <tr><td>Mira Sato</td><td>Violin</td><td>Bow</td><td>Violin</td></tr>
+        <tr><td>Mira Sato</td><td>Violin</td><td>Rosin</td><td>Violin</td></tr>
+        <tr><td>Mira Sato</td><td>Violin</td><td>Spare strings</td><td>String instruments, one step up</td></tr>
+        <tr><td>Paul McCartney</td><td>Bass guitar</td><td>Amplifier</td><td>Bass guitar</td></tr>
+        <tr><td>Paul McCartney</td><td>Bass guitar</td><td>Instrument cable</td><td>Bass guitar</td></tr>
+        <tr><td>Paul McCartney</td><td>Bass guitar</td><td>Spare strings</td><td>String instruments, two steps up</td></tr>
+        <tr><td>Paul McCartney</td><td>Bass guitar</td><td>Strap</td><td>Bass guitar</td></tr>
+        <tr><td>Ringo Starr</td><td>Drum kit</td><td>Drum key</td><td>Drum kit</td></tr>
+        <tr><td>Ringo Starr</td><td>Drum kit</td><td>Drumsticks</td><td>Drum kit</td></tr>
+      </tbody>
+    </table>
+    <p>Take any layer away and the question dies. Without the TBox, <code>ex:owns</code> and <code>ex:kind</code> have no declared meaning and no range to check. Without the CBox, Bass guitar is a string with no branch above it, and spare strings never reach Paul. Without the ABox, there is nobody on stage.</p>
+    <h3>Two more questions, one layer each doing the climbing</h3>
+<pre><span class="c"># Which musicians play a string instrument? The CBox climbs; Paul (bass guitar) and Mira (violin) answer.</span>
+SELECT ?musician ?kind WHERE { ?musician <span class="k">rdf:type</span> ex:musician ; <span class="k">ex:plays</span> ?kind . ?kind <span class="k">skos:broader*</span> ex:string-instruments . }
+
+<span class="c"># Which instruments on stage were made before 1965? The ABox answers with a literal; the Höfner (1961) and the Ludwig kit (1963).</span>
+SELECT ?instrument ?year ?maker WHERE { ex:concert-2026-09-25 <span class="k">ex:played-with</span> ?instrument . ?instrument <span class="k">ex:year-made</span> ?year ; <span class="k">ex:made-by</span> ?maker . FILTER(?year &lt; 1965) }</pre>
+    <div class="note"><span class="lab">Try it</span><a href="instruments-three-layers.ttl" download>Download the whole graph as Turtle</a>: all three layers in one file, in the deck's <code>ex:</code> namespace. It loads into the <a href="sparql-tutorial/">SPARQL Practice Room</a> and the SPARQL Playground for the queries above, and into the <a href="abox-workbench/">ABox Workbench</a> to add a fourth musician, draw the graph, and watch the questions answer.</div>
+  </section>
+
+  <section class="card" id="s6">
+    <span class="roundchip">6 · Where everything goes</span>
+    <h2>Everything in the music world lands in one layer, and the questions decide which</h2>
+    <p>A kind of thing people pick from a list is a concept. A particular thing with its own properties is an instance of a class. A fact about a kind links concepts; a fact about a particular thing links instances or gives a value. The table applies that to the things a music graph meets once instruments are involved.</p>
+    <table>
+      <thead><tr><th>Thing</th><th>Layer</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Bass guitar</td><td><span class="tag c">concept</span> in Musical instruments</td><td>A kind, picked as the value of <i>plays</i> and <i>is of kind</i>.</td></tr>
+        <tr><td>Paul's 1961 Höfner 500/1</td><td><span class="tag a">instance</span> of Physical instrument</td><td>One object with a maker, a year and a serial number.</td></tr>
+        <tr><td>Höfner, the company</td><td><span class="tag a">instance</span> of Maker</td><td>A particular company; a question asks who made the bass.</td></tr>
+        <tr><td>1961</td><td>literal</td><td>The value of <i>year made</i>; nothing is asked about the year itself.</td></tr>
+        <tr><td>"Electric bass"</td><td><span class="tag c">altLabel</span> on Bass guitar</td><td>Another name for the same kind.</td></tr>
+        <tr><td>Bow</td><td><span class="tag c">concept</span> in Instrument accessories</td><td>A kind of accessory; a question asks which kinds need one.</td></tr>
+        <tr><td>"A violin needs a bow"</td><td><span class="tag c">ex:requires</span> between concepts</td><td>Knowledge about kinds, stated once on the kind.</td></tr>
+        <tr><td>Paul McCartney</td><td><span class="tag a">instance</span> of Musician</td><td>A particular person who plays, owns and performs.</td></tr>
+        <tr><td>Wigmore Hall, the concert</td><td><span class="tag a">instances</span> of Venue and Performance</td><td>Particular things with dates, places and links.</td></tr>
+        <tr><td>Rock</td><td><span class="tag c">concept</span> in a Genres scheme</td><td>A kind of music, picked through a property such as <i>plays genre</i>.</td></tr>
+        <tr><td>Lead guitar, as a role in a band</td><td><span class="tag c">concept</span> in a Roles scheme</td><td>A kind of role; the person filling it is an instance.</td></tr>
+        <tr><td>A music lesson</td><td><span class="tag a">instance</span> of a Lesson class</td><td>Only if a question asks about lessons; a class with no question is maintenance.</td></tr>
+        <tr><td>Physical instrument and Musical instruments</td><td><span class="tag t">class</span> and <span class="tag c">scheme</span></td><td>Two names for two layers, so the kind and the object are never confused.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card" id="s7">
+    <span class="roundchip">7 · Same word, three layers</span>
+    <h2>The same word can live in all three layers; the IRIs are what must differ</h2>
+    <p>A label is for people; an IRI is for machines. A query matches IRIs and never reads a label, and nothing in RDF, OWL or SKOS stops two resources from sharing a name: condition S14 limits one resource to one preferred label per language and says nothing about two resources with the same one. So the word Musician can be a class in the TBox, an occupation in the CBox and part of a person's name in the ABox, as long as each has its own IRI. This page chose two different labels, Physical instrument and Musical instruments, because beginners read labels before IRIs. That is one option among four.</p>
+<pre><span class="c"># one word, three IRIs: a namespace per layer makes the layer visible in every line</span>
+@prefix ont:  &lt;http://www.example.org/ontology#&gt; .     <span class="c"># TBox</span>
+@prefix kind: &lt;http://www.example.org/kinds/&gt; .         <span class="c"># CBox</span>
+@prefix data: &lt;http://www.example.org/data/&gt; .          <span class="c"># ABox</span>
+
+ont:Musician  <span class="k">a</span> owl:Class ;    <span class="k">rdfs:label</span>     <span class="s">"Musician"@en</span> .                                  <span class="c"># the class of people who play</span>
+kind:musician <span class="k">a</span> skos:Concept ; <span class="d">skos:prefLabel</span> <span class="s">"Musician"@en</span> ; <span class="k">skos:inScheme</span> kind:occupations . <span class="c"># the occupation, a value</span>
+data:paul-mccartney <span class="k">a</span> ont:Musician ; <span class="k">rdfs:label</span> <span class="s">"Paul McCartney"@en</span> ; <span class="k">ont:has-occupation</span> kind:musician .</pre>
+    <table>
+      <thead><tr><th>Option</th><th>How it looks</th><th>What it costs</th></tr></thead>
+      <tbody>
+        <tr><td>1. A namespace per layer</td><td><code>ont:Musician</code>, <code>kind:musician</code>, <code>data:paul-mccartney</code>. The prefix says the layer in every line, and each layer can be versioned and published on its own. The ABox Workbench's "Namespace for instances" setting is this option for the ABox.</td><td>Three prefixes to declare and keep straight. The usual choice once a graph is shared beyond one file.</td></tr>
+        <tr><td>2. One namespace, an IRI convention</td><td><code>ex:Musician</code> for the class, <code>ex:musician</code> for the concept, <code>ex:paul-mccartney</code> for the instance: UpperCamelCase for classes, lowerCamelCase for properties, lowercase with hyphens for concepts and instances. IRIs are case-sensitive, so the two are different resources.</td><td>Relies on discipline, and on readers noticing one capital letter. One slip and two layers share an IRI.</td></tr>
+        <tr><td>3. Different labels, one namespace</td><td><code>ex:physical-instrument</code> "Physical instrument" beside the scheme "Musical instruments": what this page does. A homograph qualifier does the same in a thesaurus: "Musician (occupation)".</td><td>The labels drift from the words people use, and a label can still be reused by accident in a third place.</td></tr>
+        <tr><td>4. One IRI for two layers (punning)</td><td><code>ex:musician</code> as both a class and a concept, which OWL 2 allows.</td><td>Not an option in this course. A tool shows one thing with two natures, and a student writes <code>rdf:type</code> to it within the hour.</td></tr>
+      </tbody>
+    </table>
+    <h3>The clash that namespaces prevent</h3>
+    <p>This page's file declares <code>ex:musician</code> as a class. The Module 5 music graph declares <code>ex:musician</code> as a concept, the occupation in its Occupations taxonomy, in the same <code>ex:</code> namespace. Load both files into one store and the IRI <code>http://www.example.org/graph#musician</code> is a class and a concept at once, with nobody having chosen that. Option 1 makes the collision impossible; option 2 makes it unlikely; option 3 does nothing against it, because the clash is in the IRI, never in the label.</p>
+    <div class="note"><span class="lab">Choose once, write it down</span>Whichever option a project takes, it belongs in the ontology's header as a comment, next to the namespace declarations, so the next person who adds a class, a concept or an instance follows it. Rule 7 of the ABox Workbench says the rest: labels are for people, IRIs are for machines, and an IRI never changes to match a label.</div>
+  </section>
+
+  <section class="card" id="s8">
+    <span class="roundchip">8 · Knowledge check</span>
+    <h2>Fourteen questions, one point each</h2>
+    <p class="small muted">Pick an answer and the explanation appears, with a link back to the section that teaches it. The matching questions award the point only when every row is right.</p>
+    <div class="scorebar"><span id="where"></span><span>score <b id="score2">0</b>/14</span></div>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <div class="qcard" id="card"></div>
+  </section>
+</div>
+<canvas id="confetti"></canvas>
+
+<script>
+const QUIZ = [
+{part:"Kinds", s:"s1", q:"In this graph, what is <code>ex:bass-guitar</code>?", a:[
+ "A concept in the Musical instruments scheme, picked as a value",
+ "A class whose instances are bass guitars",
+ "An instance of Physical instrument",
+ "A literal string"], c:0,
+ ok:"A kind is a term people pick from a list: a SKOS concept with labels, a definition and a place under Guitar. It is never a class and never the object of rdf:type.",
+ ex:"A kind is a value. Nothing in this layer is a class, and no concept will ever be the object of rdf:type."},
+{part:"Classes", s:"s2", q:"And Paul's 1961 Höfner 500/1?", a:[
+ "A concept narrower than Bass guitar",
+ "An instance of the class Physical instrument, linked to the kind Bass guitar through ex:kind",
+ "A value of ex:plays",
+ "A subclass of Physical instrument"], c:1,
+ ok:"One object with a maker, a year and a serial number: an instance of a class. Its kind is a controlled value, reached through ex:kind.",
+ ex:"The Höfner is one object with a maker, a year and a serial number, so it is an instance of a class. The class is named Physical instrument on purpose: a different name for a different layer."},
+{part:"Classes", s:"s2", q:"Which statement records that Paul plays bass guitar?", a:[
+ "<code>ex:paul-mccartney rdf:type ex:bass-guitar .</code>",
+ "<code>ex:bass-guitar rdfs:subClassOf ex:musician .</code>",
+ "<code>ex:paul-mccartney ex:plays ex:bass-guitar .</code>",
+ "<code>ex:paul-mccartney ex:owns ex:bass-guitar .</code>"], c:2,
+ ok:"A controlled value goes through a property with range skos:Concept. rdf:type would make the kind a class; owns takes a physical instrument, not a kind.",
+ ex:"Two of the properties take a controlled value from the Musical instruments scheme: plays, for the kind a musician plays, and is of kind, for the kind a physical instrument is. Both have the range skos:Concept."},
+{part:"Required accessories", s:"s3", q:"Why is <code>ex:requires</code> declared as a sub-property of <code>skos:related</code>?", a:[
+ "Because SKOS forbids any other property between concepts",
+ "So plain SKOS tools still see an associative link while this graph keeps which kind needs which accessory",
+ "So the reasoner copies requirements down the hierarchy",
+ "Because skos:related is transitive"], c:1,
+ ok:"ISO 25964 allows custom relationship types, and in SKOS a custom type is a sub-property. Consumers that know only SKOS see related; your graph sees requires.",
+ ex:"Declare ex:requires in the TBox as a sub-property of skos:related, with domain and range skos:Concept. A plain SKOS tool still sees a related link; your graph keeps which kind needs which accessory."},
+{part:"Required accessories", s:"s3", q:"The file says <code>ex:violin ex:requires ex:bow .</code> What does a reasoner add?", a:[
+ "<code>ex:bow ex:requires ex:violin</code>",
+ "<code>ex:violin skos:related ex:bow</code> and <code>ex:bow skos:related ex:violin</code>, nothing more",
+ "<code>ex:bow skos:broader ex:violin</code>",
+ "Nothing; ex:requires is an annotation"], c:1,
+ ok:"The sub-property entails the super-property, and skos:related is symmetric. Requires itself still goes from the kind to the accessory.",
+ ex:"skos:related is symmetric (condition S23), so from ex:violin ex:requires ex:bow a reasoner concludes ex:violin skos:related ex:bow and ex:bow skos:related ex:violin. It never concludes that a bow requires a violin."},
+{part:"Required accessories", s:"s3", q:"Spare strings are stated on String instruments, not on Bass guitar. How does the gear-list query reach them for Paul?", a:[
+ "The reasoner copies the requirement down to Bass guitar",
+ "The query climbs from the kind to its branch with <code>?kind skos:broader* ?branch</code>, then reads what each level requires",
+ "Bass guitar is a subclass of String instruments",
+ "It cannot; the requirement must be repeated on every kind"], c:1,
+ ok:"Inheritance is the query's job. The climb collects what every level of the branch requires.",
+ ex:"Spare strings are stated on String instruments once. Nothing copies the statement down to Bass guitar; the query climbs skos:broader* from the kind to its branch and collects what each level requires."},
+{part:"Where everything goes", s:"s6", match:true, q:"Match each thing to where it lives. (One point when all three are right)",
+ rows:["Höfner, the company","Bass guitar","1961"], opts:["an instance of Maker","a concept in Musical instruments","a literal, the value of year made"], key:[0,1,2],
+ ok:"A particular company is an instance; a kind is a concept; a year nobody asks about on its own is a literal.",
+ ex:"A kind of thing people pick from a list is a concept. A particular thing with its own properties is an instance of a class. A fact about a particular thing links instances or gives a value."},
+{part:"Required accessories", s:"s3", q:"What is wrong with <code>ex:string-instruments ex:requires ex:violin .</code>?", a:[
+ "Nothing; a branch can require its own kinds",
+ "requires is a sub-property of related, and related is disjoint with broaderTransitive (S27): Violin is narrower than String instruments, so the graph is inconsistent",
+ "Violin should be the subject",
+ "requires only takes accessories as objects because of its range"], c:1,
+ ok:"A requirement between a kind and its own narrower kind breaks S27. Requirements go from a kind to an accessory, across schemes.",
+ ex:"skos:related is disjoint with skos:broaderTransitive (S27). ex:string-instruments ex:requires ex:violin would relate a kind to its own narrower kind, and the graph becomes inconsistent."},
+{part:"One question, three layers", s:"s5", q:"In the gear-list query, which line is answered by the taxonomy alone?", a:[
+ "<code>?musician ex:owns ?instrument</code>",
+ "<code>?instrument ex:kind ?kind</code>",
+ "<code>?kind skos:broader* ?branch</code>",
+ "<code>?musician rdf:type ex:musician</code>"], c:2,
+ ok:"The climb from a kind to its branch reads only skos:broader statements in the CBox. The other lines read facts in the ABox.",
+ ex:"?kind skos:broader* ?branch: CBox, climb from the kind to its branch. ?musician ex:owns ?instrument: ABox, a link to a physical instrument."},
+{part:"Same word, three layers", s:"s7", q:"The class could be labelled \"Instrument\", and a concept in the taxonomy could be labelled \"Instrument\" too. What must differ, and what may be the same?", a:[
+ "The labels must differ; the IRIs may be the same",
+ "The IRIs must differ; the labels may be the same, and the namespace, the local name or a qualifier in the label shows the layer",
+ "Both must differ; RDF forbids two resources with one label",
+ "Nothing must differ; OWL merges resources that share a label"], c:1,
+ ok:"A query matches IRIs, never labels. Two resources may share a name; one IRI may not serve two layers. This page chose different labels as one of four options.",
+ ex:"A label is for people; an IRI is for machines. A query matches IRIs and never reads a label, and nothing in RDF, OWL or SKOS stops two resources from sharing a name. So the word Musician can be a class in the TBox, an occupation in the CBox and part of a person's name in the ABox, as long as each has its own IRI."},
+{part:"One question, three layers", s:"s5", match:true, q:"Match each question to the layer that does the deciding work. (One point when all three are right)",
+ rows:["Which kinds of instrument need a bow?","Which instruments on stage were made before 1965?","What is the range of ex:plays?"], opts:["CBox: ex:requires between concepts","ABox: facts, with a literal filtered by value","TBox: a property declaration"], key:[0,1,2],
+ ok:"A question about kinds reads the taxonomy; a question about particular things reads the facts; a question about the model reads the ontology.",
+ ex:"Without the TBox, ex:owns and ex:kind have no declared meaning and no range to check. Without the CBox, Bass guitar is a string with no branch above it. Without the ABox, there is nobody on stage."},
+{part:"Facts", s:"s4", q:"A cellist joins the band for the next concert. What gets written?", a:[
+ "A new class Cellist, a new concept Cello, and the facts",
+ "Only facts in the ABox: a Musician instance that plays Cello, owns a physical instrument of kind Cello, and performs at the concert",
+ "A new scheme for cellos",
+ "A subclass of Musician for string players"], c:1,
+ ok:"Cello is already a kind and Musician is already a class. Three or four facts, and nothing in the other layers changes.",
+ ex:"The ABox never adds a class or a concept: when a violinist joins the band, three facts are written and nothing in the other layers changes."},
+{part:"Same word, three layers", s:"s7", q:"This page's file declares <code>ex:musician</code> as a class. The Module 5 music graph declares <code>ex:musician</code> as a concept. Both use the <code>ex:</code> namespace. What happens when both files load into one store, and which option prevents it?", a:[
+ "The store rejects the second file",
+ "One IRI becomes a class and a concept at once; a namespace per layer (ont:Musician, kind:musician) makes that impossible",
+ "The two labels merge into one; a qualifier in the label prevents it",
+ "Nothing, because the labels are the same"], c:1,
+ ok:"The clash is in the IRI. Option 1 makes it impossible, option 2 unlikely; different labels do nothing against it.",
+ ex:"Load both files into one store and the IRI http://www.example.org/graph#musician is a class and a concept at once, with nobody having chosen that. Option 1 makes the collision impossible; option 2 makes it unlikely; option 3 does nothing against it, because the clash is in the IRI, never in the label."},
+{part:"Same word, three layers", s:"s7", match:true, q:"Under a namespace per layer, match each IRI to its layer. (One point when all three are right)",
+ rows:["ont:Musician","kind:musician","data:paul-mccartney"], opts:["TBox: the class of people who play","CBox: the occupation, a controlled value","ABox: one person"], key:[0,1,2],
+ ok:"The prefix says the layer in every line, which is the reason to give each layer its own namespace.",
+ ex:"ont:Musician a owl:Class: the class of people who play. kind:musician a skos:Concept: the occupation, a value. data:paul-mccartney a ont:Musician: a person. One word, three IRIs."},
+];
+const RANKS = [
+ [13,"Gear list complete","Kinds as concepts, objects as instances, requirements between kinds, one IRI per thing, and the query climbing the branch."],
+ [10,"Tuned","The layers are apart. Re-read the sections linked below for the edges."],
+ [6,"Missing a string","Kinds and objects are trading places in a few answers. Sections 2, 3 and 7 again."],
+ [0,"Unstrung","Start at Section 1 and read each Turtle line as type, value, link or literal."]
+];
+const SECTION_NAMES = {s1:"Section 1 · Kinds", s2:"Section 2 · Classes", s3:"Section 3 · Required accessories", s4:"Section 4 · Facts", s5:"Section 5 · One question, three layers", s6:"Section 6 · Where everything goes", s7:"Section 7 · Same word, three layers"};
+const shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+let i=0, score=0, results=[];
+const card=document.getElementById("card"), prog=document.getElementById("progress");
+QUIZ.forEach(()=>{const s=document.createElement("div");s.className="seg";prog.appendChild(s)});
+const segs=[...prog.children];
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const setScore=()=>{document.getElementById("score").textContent=score;document.getElementById("score2").textContent=score};
+const extract=Q=>`<div class="extract"><span class="lab">From the explainer</span>${esc(Q.ex)}<br><a href="#${Q.s}">↑ ${SECTION_NAMES[Q.s]}</a></div>`;
+
+function render(){
+  segs.forEach((s,k)=>{s.className="seg"+(results[k]===true?" ok":results[k]===false?" miss":k===i?" now":"")});
+  setScore();
+  document.getElementById("where").textContent=(i+1)+" / "+QUIZ.length+" · "+QUIZ[i].part;
+  const Q=QUIZ[i];
+  let h=`<div class="partchip">${esc(Q.part)}</div><div class="qnum">Question ${i+1}</div><p class="qtext">${Q.q}</p>`;
+  if(Q.match){
+    h+=`<div class="match">`+Q.rows.map((r,ri)=>
+      `<div class="mrow"><span class="mbox">${esc(r)}</span><div class="mchips">`+
+      shuf(Q.opts.map((o,oi)=>({o,oi}))).map(({o,oi})=>`<button class="chip" data-r="${ri}" data-o="${oi}">${esc(o)}</button>`).join("")+
+      `</div></div>`).join("")+`</div>`;
+  } else {
+    h+=`<div class="answers">`+shuf(Q.a.map((a,k)=>({a,k}))).map(({a,k},pos)=>
+      `<button class="ans" data-k="${k}"><span class="key">${"ABCD"[pos]}</span><span>${a}</span></button>`).join("")+`</div>`;
+  }
+  h+=`<div id="fb"></div>`;
+  card.innerHTML=h;
+  if(Q.match){
+    const picks=Q.rows.map(()=>null);
+    card.querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{
+      const r=+ch.dataset.r;
+      card.querySelectorAll(`.chip[data-r="${r}"]`).forEach(c=>c.classList.remove("sel"));
+      ch.classList.add("sel"); picks[r]=+ch.dataset.o;
+      if(picks.every(p=>p!==null)) settleMatch(Q,picks);
+    }));
+  } else {
+    card.querySelectorAll(".ans").forEach(b=>b.addEventListener("click",()=>settle(Q,+b.dataset.k)));
+  }
+}
+function feedback(Q,good){
+  const fb=document.getElementById("fb");
+  fb.innerHTML=
+   `<div class="verdict ${good?"ok":"miss"}">${good?"✓ Right.":"✗ Not this one."}</div>`+
+   `<p class="explain">${esc(Q.ok)}</p>`+
+   (good?"":extract(Q))+
+   `<div class="nav"><button class="next">${i<QUIZ.length-1?"Next question →":"See my standing →"}</button></div>`;
+  fb.querySelector(".next").addEventListener("click",()=>{i++; i<QUIZ.length?render():finish()});
+  fb.querySelector(".next").focus();
+}
+function settle(Q,k){
+  const good=k===Q.c; results[i]=good; if(good)score++;
+  card.querySelectorAll(".ans").forEach(b=>{
+    b.disabled=true; const bk=+b.dataset.k;
+    if(bk===Q.c)b.classList.add("right"); else if(bk===k)b.classList.add("wrong"); else b.classList.add("dim");
+  });
+  segs[i].className="seg "+(good?"ok":"miss"); setScore();
+  feedback(Q,good);
+}
+function settleMatch(Q,picks){
+  const good=picks.every((p,r)=>p===Q.key[r]); results[i]=good; if(good)score++;
+  card.querySelectorAll(".chip").forEach(ch=>{
+    ch.disabled=true; const r=+ch.dataset.r,o=+ch.dataset.o;
+    if(o===Q.key[r])ch.classList.add("right");
+    else if(ch.classList.contains("sel"))ch.classList.add("wrong");
+    ch.classList.remove("sel");
+  });
+  segs[i].className="seg "+(good?"ok":"miss"); setScore();
+  feedback(Q,good);
+}
+function finish(){
+  document.getElementById("where").textContent="done";
+  segs.forEach((s,k)=>{s.className="seg "+(results[k]?"ok":"miss")});
+  const rank=RANKS.find(r=>score>=r[0]);
+  const missed=QUIZ.map((q,k)=>({q,k})).filter(x=>!results[x.k]);
+  card.innerHTML=`<div class="final">
+    <div class="big">${score}</div><div class="of">out of ${QUIZ.length}</div>
+    <h3>${esc(rank[1])}</h3><p class="blurb">${esc(rank[2])}</p>
+    ${missed.length?`<div class="review"><h4>Read up on what you missed</h4>`+
+      missed.map(x=>`<div class="item"><p>Q${x.k+1} · ${x.q.q}</p>${extract(x.q)}</div>`).join("")+`</div>`:""}
+    <div class="restart"><button class="next" id="again">Take it again</button></div>
+  </div>`;
+  document.getElementById("again").addEventListener("click",()=>{i=0;score=0;results=[];render();card.scrollIntoView({behavior:"smooth",block:"start"})});
+  if(score>=QUIZ.length-1 && !matchMedia("(prefers-reduced-motion: reduce)").matches) confetti();
+}
+function confetti(){
+  const c=document.getElementById("confetti"),x=c.getContext("2d");c.width=innerWidth;c.height=innerHeight;
+  const cols=["#2456A6","#2F7D4F","#B98A12","#6B3FA0","#B23B26"];
+  const ps=Array.from({length:140},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height*.5,r:4+Math.random()*5,v:2+Math.random()*3,w:Math.random()*2-1,col:cols[Math.random()*cols.length|0]}));
+  let t=0;
+  (function tick(){
+    x.clearRect(0,0,c.width,c.height);
+    ps.forEach(p=>{p.y+=p.v;p.x+=p.w;x.fillStyle=p.col;x.fillRect(p.x,p.y,p.r,p.r*1.6)});
+    if(++t<220)requestAnimationFrame(tick);else x.clearRect(0,0,c.width,c.height);
+  })();
+}
+window.__quiz={QUIZ,get score(){return score},get i(){return i},get results(){return results}};
+render();
+</script>
+</body>
+</html>

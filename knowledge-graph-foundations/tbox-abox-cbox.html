@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What Goes Where</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --paper:#F7F7F2; --grid:rgba(36,86,166,.07); --surface:#FFFFFF; --ink:#20283A;
+    --ink-soft:#5A6478; --accent:#2456A6; --accent-ink:#FFFFFF; --line:#DDDDD3;
+    --ok:#2F7D4F; --ok-bg:#EAF3ED; --miss:#B23B26; --miss-bg:#F7ECE8;
+    --gold:#B98A12; --chip:#EEEEE6; --extract-bg:#F1F3F8; --shadow:0 2px 10px rgba(32,40,58,.08);
+    --t:#2456A6; --t-bg:#E6EDF8; --a:#2F7D4F; --a-bg:#EAF3ED; --c:#6B3FA0; --c-bg:#EFE8F7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;color:var(--ink);font:400 17px/1.55 "Source Sans 3",system-ui,sans-serif;background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;min-height:100vh}
+  .wrap{max-width:700px;margin:0 auto;padding:28px 20px 80px}
+  header{margin-bottom:18px;position:relative;padding-right:106px}
+  .kgg-logo{position:absolute;top:0;right:0;height:88px;width:auto;background:#fff;border-radius:12px;padding:4px 8px;box-shadow:var(--shadow)}
+  @media (max-width:520px){header{padding-right:76px}.kgg-logo{height:62px}}
+  .eyebrow{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(32px,7vw,46px)/1.05 "Bricolage Grotesque","Source Sans 3",sans-serif;margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0}
+  .progress{display:flex;gap:5px;margin:20px 0 24px}
+  .seg{flex:1;height:7px;border-radius:4px;background:var(--chip);transition:background .3s}
+  .seg.ok{background:var(--ok)} .seg.miss{background:var(--miss)} .seg.now{background:var(--accent)}
+  .scorebar{display:flex;justify-content:space-between;align-items:baseline;font:600 13px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  .scorebar b{color:var(--gold);font-size:15px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:26px 24px}
+  .roundchip{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:6px 12px;margin-bottom:14px}
+  .qtext{font:600 20px/1.4 "Source Sans 3",sans-serif;margin:0 0 14px;text-wrap:balance}
+  .stmt{font:600 21px/1.45 "Bricolage Grotesque",sans-serif;background:var(--extract-bg);border-radius:10px;padding:18px 20px;margin:0 0 18px}
+  .stmt .kind{display:block;font:600 11px "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:8px}
+  .answers{display:flex;flex-direction:column;gap:10px}
+  .answers.row{flex-direction:row;flex-wrap:wrap}
+  button.ans{text-align:left;font:400 16.5px/1.4 "Source Sans 3",sans-serif;color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:13px 16px;cursor:pointer;transition:border-color .15s,transform .1s,background .15s}
+  .answers.row button.ans{flex:1;min-width:150px;text-align:center;font-weight:700;font-size:18px;font-family:"Bricolage Grotesque",sans-serif}
+  .answers.row button.ans small{display:block;font:400 13px "Source Sans 3",sans-serif;color:var(--ink-soft);margin-top:3px}
+  button.ans.t{border-color:var(--t)} button.ans.a{border-color:var(--a)} button.ans.c{border-color:var(--c)}
+  button.ans:hover:not(:disabled){transform:translateY(-1px);background:var(--surface)}
+  button.ans:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  button.ans:disabled{cursor:default}
+  button.ans.right{background:var(--ok-bg);border-color:var(--ok)}
+  button.ans.wrong{background:var(--miss-bg);border-color:var(--miss)}
+  button.ans.dim{opacity:.45}
+  .verdict{font:700 18px "Bricolage Grotesque",sans-serif;margin:18px 0 0}
+  .verdict.ok{color:var(--ok)} .verdict.miss{color:var(--miss)}
+  .explain{margin:8px 0 0;color:var(--ink-soft)}
+  .extract{margin-top:14px;background:var(--extract-bg);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 16px;font-size:15.5px}
+  .extract .lab{font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:8px}
+  .nav{display:flex;justify-content:flex-end;margin-top:20px}
+  button.next{font:700 16px "Bricolage Grotesque",sans-serif;color:var(--accent-ink);background:var(--accent);border:none;border-radius:10px;padding:13px 26px;cursor:pointer;transition:transform .12s}
+  button.next:hover{transform:translateY(-1px)}
+  button.next:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+  .intro h2{font:800 24px "Bricolage Grotesque",sans-serif;margin:0 0 10px}
+  .intro p{margin:0 0 14px}
+  .boxes{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:14px 0 18px}
+  .box{border-radius:12px;padding:12px 14px;border:1.5px solid}
+  .box b{display:block;font:800 16px "Bricolage Grotesque",sans-serif;margin-bottom:4px}
+  .box span{font-size:14px;color:var(--ink-soft)}
+  .box.t{background:var(--t-bg);border-color:var(--t)} .box.t b{color:var(--t)}
+  .box.a{background:var(--a-bg);border-color:var(--a)} .box.a b{color:var(--a)}
+  .box.c{background:var(--c-bg);border-color:var(--c)} .box.c b{color:var(--c)}
+  .final{text-align:center;padding:34px 20px 10px}
+  .final .big{font:800 clamp(56px,14vw,88px)/1 "Bricolage Grotesque",sans-serif;color:var(--gold)}
+  .final .of{font:600 15px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  .final h2{font:800 30px/1.15 "Bricolage Grotesque",sans-serif;margin:14px 0 6px;text-wrap:balance}
+  .final .blurb{color:var(--ink-soft);max-width:46ch;margin:0 auto}
+  .bybox{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:22px 0 0;text-align:left}
+  .bybox div{border-radius:10px;padding:10px 12px;font-size:14px}
+  .bybox b{display:block;font:800 15px "Bricolage Grotesque",sans-serif}
+  .yourturn{text-align:left;margin-top:30px;background:var(--extract-bg);border-radius:12px;padding:20px 22px}
+  .yourturn h3{font:800 18px "Bricolage Grotesque",sans-serif;margin:0 0 8px;color:var(--accent)}
+  .yourturn p{margin:0 0 10px} .yourturn ol{margin:0;padding-left:22px} .yourturn li{margin-bottom:5px}
+  .restart{margin-top:26px;text-align:center}
+  a{color:var(--accent);font-weight:600}
+  canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:9}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Knowledge Checks</a></li><li aria-current="page">What Goes Where</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="kgg-logo" src="../assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Knowledge Graph Academy · Module 1 · TBox, ABox, CBox · the music domain</div>
+    <h1>What Goes Where</h1>
+    <p class="sub">Five rounds · about 8 minutes · every statement belongs in one box.</p>
+  </header>
+  <div class="scorebar"><span id="where"></span><span>score <b id="score">0</b>/<span id="max"></span></span></div>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+  <div class="card" id="card"></div>
+</div>
+<canvas id="confetti"></canvas>
+
+<script>
+const BOX = {
+  t:{key:'t', name:'TBox', sub:'terminology: classes and properties'},
+  a:{key:'a', name:'ABox', sub:'assertions: instances and their facts'},
+  c:{key:'c', name:'CBox', sub:'categories: controlled vocabularies'},
+};
+const THREE = ['t','a','c'];
+/* Round 1: sort the statement. The music domain: genres, instruments, musicians, events and venues. */
+const SORT = [
+  {s:'Every Reggaeton artist is a Musician.', kind:'statement', ans:'t', why:'A subclass axiom. It talks about the class of Reggaeton artists as a whole, not about any one of them. Class relationships live in the TBox.'},
+  {s:'Bad Bunny is a Musician.', kind:'statement', ans:'a', why:'A membership assertion about one individual. Bad Bunny exists in the data, so this is ABox. The class he is placed in, Musician, is defined in the TBox.'},
+  {s:'Genres: Reggaeton, Latin trap, Salsa, Bachata, Pop.', kind:'statement', ans:'c', why:'A fixed list of allowed values. Nothing here is a class of things or an individual: it is the vocabulary a genre answer must be drawn from. That is the CBox.'},
+  {s:'performsAt is a property linking a Musician to a Venue.', kind:'statement', ans:'t', why:'A property declaration with its domain and range. Properties and what they connect are terminology, so TBox.'},
+  {s:'Bad Bunny was born in Vega Baja, Puerto Rico, in 1994.', kind:'statement', ans:'a', why:'Attribute values on one individual: a birthplace and a year. Facts about a specific person are assertions, so ABox.'},
+  {s:'Instrument families: Wind, String, Percussion, Keyboard, Electronic.', kind:'statement', ans:'c', why:'A closed set of categories an instrument is filed under. The families are terms for describing instruments, so the list is CBox.'},
+  {s:'A Headliner is a Musician who closes a Festival.', kind:'statement', ans:'t', why:'A concept definition: it says what it takes to count as a Headliner. Definitions of classes are TBox.'},
+  {s:'Bad Bunny headlined Coachella in 2023.', kind:'statement', ans:'a', why:'A relation between individuals: one musician, one event, one year. Relations between specific things are ABox assertions.'},
+  {s:'Latin trap is a narrower term than Trap.', kind:'statement', ans:'c', why:'A hierarchy of terms inside a vocabulary, the SKOS broader/narrower kind. It is not a subclass axiom about musicians: "Latin trap" is a value a genre field can take. Term hierarchies belong to the CBox.'},
+  {s:'Nothing can be both a Venue and a Musician.', kind:'statement', ans:'t', why:'A disjointness axiom between two classes. It constrains every individual at once, which is what TBox statements do.'},
+  {s:'Un Verano Sin Ti was released in 2022 and has 23 tracks.', kind:'statement', ans:'a', why:'One individual, two attributes, two values. ABox. The properties "release year" and "track count" would be declared in the TBox.'},
+  {s:'"Reggaetón", "Reggaeton" and "Urbano" are gathered under one preferred term, Reggaeton.', kind:'statement', ans:'c', why:'Reconciling synonyms and spellings under a preferred label is vocabulary control, the CBox\'s job (ANSI Z39.19: consistency in description, easier retrieval). No class is defined and no individual is described.'},
+  {s:'Every Concert takes place at exactly one Venue.', kind:'statement', ans:'t', why:'A rule about every Concert, not about a particular night. Cardinality constraints on a class are TBox axioms.'},
+  {s:'Coachella takes place in Indio, California.', kind:'statement', ans:'a', why:'A fact about one particular event. ABox. "Takes place in" is the TBox property; Indio is another individual.'},
+  {s:'Wind and String instruments must not overlap, and with the other families must cover every instrument in the list.', kind:'statement', ans:'c', why:'Ranganathan\'s canons of exclusiveness and exhaustiveness, MECE for short, are rules for an array of categories in a controlled vocabulary. They shape the CBox. (A disjointness axiom on classes would be the TBox echo of the same idea.)'},
+];
+/* Round 2: the Guess the Musician questionnaire from Exercise 2. Which box does each question reveal? */
+const QUIZ = [
+  {s:'Is this musician from Latin America?', kind:'answered by yes or no', ans:'t', why:'A yes/no question splits the set of musicians in two: Latin American acts and the rest. That boundary is a class distinction, so it reveals TBox structure. Bad Bunny lands on the yes side.'},
+  {s:'Which genre? Reggaeton, Latin trap, Salsa or Pop.', kind:'answered from a list', ans:'c', why:'The answer must come from a fixed list. The list is a controlled vocabulary: CBox. The property "genre" itself is TBox, and "Bad Bunny has genre Reggaeton" would be ABox.'},
+  {s:'What year were they born?', kind:'answered with anything', ans:'a', why:'An open answer is a free value attached to one particular musician: 1994 for Bad Bunny. That is data about an instance: ABox.'},
+  {s:'Do they perform solo?', kind:'answered by yes or no', ans:'t', why:'Another partition of the set: solo acts versus groups. Yes/no questions carve out subclasses, so TBox.'},
+  {s:'How many studio albums have they released?', kind:'answered with a number', ans:'a', why:'A number typed for one act is a value on an instance: ABox. If the questionnaire fixed the choices to "1, 2 to 5, more than 5", that list would be CBox.'},
+];
+/* Round 3: which kind of controlled vocabulary is this? From Module 2. */
+const KINDS = [
+  {key:'flat', name:'Flat list', def:'Terms, no structure'},
+  {key:'glossary', name:'Glossary', def:'Terms with definitions'},
+  {key:'taxonomy', name:'Taxonomy', def:'Parent and child terms'},
+  {key:'thesaurus', name:'Thesaurus', def:'Taxonomy plus related terms and synonyms'},
+];
+const KIND = [
+  {s:'Reggaeton, Latin trap, Salsa, Bachata, Pop, Dembow.', ans:'flat', why:'Authorised terms and nothing else. A flat list is the simplest controlled vocabulary, and where every CBox starts.'},
+  {s:'Reggaeton: a genre from Puerto Rico blending dancehall, hip hop and Latin rhythms. Dembow: the drum pattern under most reggaeton tracks.', ans:'glossary', why:'Each term carries a definition that fixes its scope. Defining the meaning of terms is the first step of vocabulary control.'},
+  {s:'Latin music, with Reggaeton, Salsa and Bachata beneath it; Reggaeton, with Latin trap and Neoperreo beneath it.', ans:'taxonomy', why:'Broader and narrower terms in a tree. Parent and child relations make it a taxonomy, which Module 3 writes in SKOS.'},
+  {s:'Reggaeton, use for Reggaetón and Urbano; broader term Latin music; related term Dembow.', ans:'thesaurus', why:'A hierarchy plus synonyms ("use for") plus related terms. That extra layer of broadly defined relationships makes it a thesaurus.'},
+];
+/* Round 4: where the boxes meet. Match the situation to the reasoning task. */
+const OPS = [
+  {key:'instance', name:'Instance checking', def:'Is this individual a member of that class?'},
+  {key:'realization', name:'Realization', def:'What is the most specific class this individual fits?'},
+  {key:'consistency', name:'Consistency checking', def:'Can every class have at least one member without contradiction?'},
+  {key:'subsumption', name:'Subsumption', def:'Is one class contained in another?'},
+];
+const MEET = [
+  {s:'Given everything we know about Bad Bunny, is he a Headliner?', ans:'instance', why:'One individual, one class, a yes-or-no verdict. That is instance checking: the ABox individual tested against a TBox concept. He closed Coachella 2023, so yes.'},
+  {s:'An act with a solo career, a Coachella closing slot and three Grammys. Which class describes it most precisely?', ans:'realization', why:'Realization starts from the facts about an individual and finds the most specific TBox concept that fits: here, Headliner rather than just Musician.'},
+  {s:'The ontology says the Acoustic and Electronic instrument families are disjoint, and defines "AcousticElectronicAct" as a Musician who plays only acoustic and only electronic instruments. Can it ever have a member?', ans:'consistency', why:'A class that can never have an individual is unsatisfiable. Checking that every concept admits at least one individual without contradiction is consistency checking.'},
+  {s:'Is every Reggaeton artist also a Musician?', ans:'subsumption', why:'Two classes, no individuals in sight. Whether one class is contained in another is subsumption, a purely TBox question.'},
+];
+/* Round 5: why keep them separate. */
+const WHY = [
+  {key:'reuse', name:'Reuse data across world views'},
+  {key:'simpler', name:'Simpler ontology management'},
+  {key:'flex', name:'Architectural flexibility'},
+  {key:'interop', name:'Improved interoperability'},
+];
+const SEP = [
+  {s:"A streaming service classifies Bad Bunny's catalogue by mood, a musicologist classifies it by rhythm. The same 200 tracks serve both without being re-entered.", ans:'reuse', why:'Instance data stays constant and is re-mapped to different conceptual perspectives. Two TBoxes, one ABox.'},
+  {s:'The ontology describes Musician, Venue, Event, Instrument and Genre in fifty lines. It never lists a single song.', ans:'simpler', why:'Keeping specific data points out of the ontology keeps it clean and purely about conceptual relationships.'},
+  {s:'A full-text index finds every lyric that mentions Puerto Rico, while a reasoner works out which acts count as headliners.', ans:'flex', why:'Different parts of the system can use different analysis methods when schema and data are separate.'},
+  {s:'The venue table from the ticketing database loads straight in as instances, with the ontology written afterwards.', ans:'interop', why:'Simple structures and massive existing relational data convert easily into an ABox when they do not have to carry the schema with them.'},
+];
+const ROUNDS = [
+  {id:'sort', title:'Sort the statement', items:SORT, choices:THREE.map(k => ({key:k, name:BOX[k].name, sub:BOX[k].sub})), kind:'box'},
+  {id:'quiz', title:'The questionnaire', items:QUIZ, choices:THREE.map(k => ({key:k, name:BOX[k].name, sub:BOX[k].sub})), kind:'box'},
+  {id:'kind', title:'Inside the CBox', items:KIND, choices:KINDS, kind:'kind'},
+  {id:'meet', title:'Where they meet', items:MEET, choices:OPS, kind:'op'},
+  {id:'sep', title:'Why keep them separate', items:SEP, choices:WHY, kind:'why'},
+];
+const ALL = ROUNDS.flatMap((r,ri) => r.items.map((it,ii) => ({...it, round:ri, idx:ii})));
+const MAX = ALL.length;
+
+let state = {i:-1, score:0, results:[], done:false, byBox:{t:[0,0],a:[0,0],c:[0,0]}};
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+$('#max').textContent = MAX;
+
+function progress(){
+  $('#progress').innerHTML = ALL.map((_,i) => `<div class="seg ${i < state.results.length ? (state.results[i] ? 'ok' : 'miss') : i === state.i ? 'now' : ''}"></div>`).join('');
+  $('#score').textContent = state.score;
+}
+function render(){
+  progress();
+  const card = $('#card');
+  if(state.i < 0) return intro(card);
+  if(state.i >= MAX) return final(card);
+  const it = ALL[state.i]; const R = ROUNDS[it.round];
+  $('#where').textContent = `round ${it.round+1} of ${ROUNDS.length} · ${it.idx+1} of ${R.items.length}`;
+  const row = R.kind === 'box';
+  card.innerHTML = `
+    <span class="roundchip">Round ${it.round+1} · ${esc(R.title)}</span>
+    <p class="qtext">${R.kind==='box' ? (R.id==='quiz' ? 'Which box does this question reveal?' : 'Which box does this belong in?') : R.kind==='kind' ? 'Which kind of controlled vocabulary is this?' : R.kind==='op' ? 'Which reasoning task is this?' : 'Which benefit of the split is this?'}</p>
+    <div class="stmt">${it.kind ? `<span class="kind">${esc(it.kind)}</span>` : ''}${esc(it.s)}</div>
+    <div class="answers ${row ? 'row' : ''}">${R.choices.map(c => `<button class="ans ${row ? c.key : ''}" data-k="${c.key}">${esc(c.name)}${c.sub ? `<small>${esc(c.sub)}</small>` : c.def ? `<small style="display:block;font-weight:400;color:var(--ink-soft);font-size:14px">${esc(c.def)}</small>` : ''}</button>`).join('')}</div>
+    <div id="fb"></div>`;
+  card.querySelectorAll('button.ans').forEach(b => b.addEventListener('click', () => answer(it, R, b.dataset.k)));
+}
+function answer(it, R, k){
+  const right = k === it.ans;
+  state.results.push(right); if(right) state.score++;
+  if(R.kind === 'box'){ state.byBox[it.ans][1]++; if(right) state.byBox[it.ans][0]++; }
+  document.querySelectorAll('button.ans').forEach(b => { b.disabled = true; if(b.dataset.k === it.ans) b.classList.add('right'); else if(b.dataset.k === k) b.classList.add('wrong'); else b.classList.add('dim'); });
+  const name = (R.choices.find(c => c.key === it.ans) || {}).name;
+  $('#fb').innerHTML = `<p class="verdict ${right?'ok':'miss'}">${right ? 'Right.' : `Not quite. It is ${esc(name)}.`}</p><p class="explain">${esc(it.why)}</p>
+    <div class="nav"><button class="next" id="next">${state.i + 1 >= MAX ? 'See the score →' : 'Next →'}</button></div>`;
+  $('#next').addEventListener('click', () => { state.i++; render(); window.scrollTo({top:0}); });
+  $('#next').focus();
+  progress();
+}
+function intro(card){
+  $('#where').textContent = 'start';
+  card.innerHTML = `<div class="intro">
+    <span class="roundchip">Module 1 · Knowledge check</span>
+    <h2>Three boxes, one rule each</h2>
+    <p>You have played Guess the X and started modelling the music domain: genres, instruments, musicians, events and venues. Now the names. Every statement about that domain lands in one of three boxes, and the shape of the statement tells you which. Bad Bunny is the running example.</p>
+    <div class="boxes">
+      <div class="box t"><b>TBox</b><span>Terminology. Classes, properties, and the axioms between them. "Every Reggaeton artist is a Musician." Talks about kinds of things, never a particular one.</span></div>
+      <div class="box a"><b>ABox</b><span>Assertions. Individuals and the facts about them. "Bad Bunny was born in 1994." Talks about one particular thing.</span></div>
+      <div class="box c"><b>CBox</b><span>Categories. The controlled vocabulary: authorised terms, their synonyms and definitions, in flat lists, taxonomies or thesauri. "Genres: Reggaeton, Salsa, Bachata." It negotiates between the other two boxes.</span></div>
+    </div>
+    <p>Five rounds: sort statements, read the questionnaire, look inside the CBox, spot the reasoning tasks where the boxes meet, and name the reasons to keep them apart. ${MAX} points.</p>
+    <div class="nav"><button class="next" id="start">Start →</button></div></div>`;
+  $('#start').addEventListener('click', () => { state.i = 0; render(); });
+}
+function final(card){
+  $('#where').textContent = 'done';
+  const s = state.score;
+  const line = s === MAX ? 'Every statement in its box.' : s >= MAX*0.8 ? 'Clear on the split. Read the ones you missed.' : s >= MAX*0.5 ? 'The boxes are taking shape. The misses tell you which edge is blurry.' : 'Go back to your Guess the X questionnaire and sort its questions by hand, then try again.';
+  const bb = k => { const [r,n] = state.byBox[k]; return `${r}/${n}`; };
+  card.innerHTML = `<div class="final">
+    <div class="big">${s}</div><div class="of">of ${MAX}</div>
+    <h2>${esc(line)}</h2>
+    <p class="blurb">A quick rule of thumb: a statement about a kind of thing is TBox, about one particular thing is ABox, about the words an answer may use is CBox.</p>
+    <div class="bybox">
+      <div style="background:var(--t-bg)"><b style="color:var(--t)">TBox ${bb('t')}</b>kinds of things</div>
+      <div style="background:var(--a-bg)"><b style="color:var(--a)">ABox ${bb('a')}</b>particular things</div>
+      <div style="background:var(--c-bg)"><b style="color:var(--c)">CBox ${bb('c')}</b>allowed words</div>
+    </div>
+    <div class="yourturn">
+      <h3>Your turn</h3>
+      <p>Open your group's Guess the X questionnaire for the music domain and go through it line by line.</p>
+      <ol>
+        <li>Each question that could only be answered yes or no: what class of musician, instrument, event or venue was it drawing a line around? Write the class name.</li>
+        <li>Each question answered from a list: write the list out. That is a CBox you already built without noticing.</li>
+        <li>Each open answer: that is an ABox value. Which property would hold it, and which box declares the property? Test it on Bad Bunny.</li>
+        <li>Find one question where the answer type was wrong for the job, and say which box it should have fed.</li>
+        <li>Take the lists from step 2 and shape them MECE: no overlap, nothing left out. That is the start of your Module 2 vocabulary for your subgraph.</li>
+      </ol>
+    </div>
+    <div class="restart"><button class="next" id="again">Try again</button></div></div>`;
+  $('#again').addEventListener('click', () => { state = {i:0, score:0, results:[], done:false, byBox:{t:[0,0],a:[0,0],c:[0,0]}}; render(); window.scrollTo({top:0}); });
+  if(s >= MAX*0.8) confetti();
+}
+function confetti(){
+  const c = $('#confetti'); const ctx = c.getContext('2d'); c.width = innerWidth; c.height = innerHeight;
+  const cols = ['#2456A6','#B98A12','#2F7D4F','#6B3FA0'];
+  const ps = Array.from({length:120}, () => ({x:Math.random()*c.width, y:-20-Math.random()*200, vy:2+Math.random()*3, vx:(Math.random()-.5)*2, s:6+Math.random()*6, col:cols[Math.floor(Math.random()*cols.length)], r:Math.random()*Math.PI}));
+  let t = 0;
+  (function f(){ ctx.clearRect(0,0,c.width,c.height); ps.forEach(p => { p.y += p.vy; p.x += p.vx; p.r += .1; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle = p.col; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6); ctx.restore(); }); if(++t < 140) requestAnimationFrame(f); else ctx.clearRect(0,0,c.width,c.height); })();
+}
+render();
+</script>
+</body>
+</html>

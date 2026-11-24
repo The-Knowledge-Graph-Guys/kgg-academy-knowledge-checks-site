@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knowledge Checks</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+  :root {
+    --bg: #F7F7F2; --paper: #FFFFFF; --ink: #20283A; --ink-2: #5A6478; --ink-3: #8C94A6;
+    --line: #DDDDD3; --accent: #2456A6; --accent-ink: #FFFFFF; --accent-soft: #E6EDF8;
+    --shadow: 0 1px 2px rgba(32,40,58,.06), 0 8px 24px rgba(32,40,58,.06);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Source Sans 3", "Helvetica Neue", Arial, sans-serif; font-size: 16px; line-height: 1.5; }
+  h1, h2, h3 { font-family: "Bricolage Grotesque", sans-serif; margin: 0; text-wrap: balance; }
+  a { color: var(--accent); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 36px 20px 64px; }
+  header { margin-bottom: 28px; position: relative; padding-right: 110px; }
+  .logo { position: absolute; top: 0; right: 0; height: 72px; width: auto; background: #fff; border-radius: 12px; padding: 4px 8px; }
+  .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  h1 { font-size: clamp(30px, 4.5vw, 44px); font-weight: 800; letter-spacing: -.01em; line-height: 1.05; }
+  header p { color: var(--ink-2); max-width: 60ch; margin: 8px 0 0; }
+  .course { margin-top: 28px; }
+  .course-head h2 { font-size: 22px; font-weight: 800; }
+  .course-head p { margin: 2px 0 0; color: var(--ink-2); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-top: 14px; }
+  .check { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 6px; }
+  .label { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .check h3 { font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
+  .sub { margin: 0; color: var(--ink-2); font-weight: 600; }
+  .topics { margin: 8px 0 0; padding: 10px 12px 10px 14px; list-style: none; background: var(--accent-soft); border-radius: 10px; border-left: 3px solid var(--accent); }
+  .topics li { position: relative; padding: 0 0 0 14px; margin: 0; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+  .topics li + li { margin-top: 7px; }
+  .topics li::before { content: ""; position: absolute; left: 0; top: .6em; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+  .topics strong { color: var(--ink); font-weight: 600; }
+  .format { margin: 6px 0 0; font-size: 14px; color: var(--ink-2); }
+  .links { margin-top: auto; padding-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .open { display: inline-block; padding: 9px 14px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-weight: 600; text-decoration: none; }
+  .open:hover { filter: brightness(1.08); }
+  footer { margin-top: 36px; font-size: 13px; color: var(--ink-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img class="logo" src="assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Index</div>
+    <h1>Knowledge Checks</h1>
+    <p>Every check and exercise, each on its own page. 7 so far.</p>
+  </header>
+    <section class="course">
+      <div class="course-head">
+        <h2>Knowledge Graph Foundations</h2>
+        <p>Weekly self-scored checks, about five minutes each, drawn from that week&#x27;s lecture materials.</p>
+      </div>
+      <div class="grid">
+      <article class="check">
+        <div class="label">Week 1</div>
+        <h3>Forms, Sets &amp; Worlds</h3>
+        <p class="sub">Introduction to Conceptual Modelling</p>
+        <ul class="topics"><li>Plato&#x27;s Idea Theory</li><li>set theory and hierarchy</li><li>classes, instances, properties</li><li>TBox / ABox / CBox</li><li>open and closed world</li></ul>
+        <p class="format">Self-scored quiz · 12 questions · ~5 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/week-01-knowledge-check.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Week 2</div>
+        <h3>Control the Vocabulary</h3>
+        <p class="sub">Controlled Vocabularies and the CBox</p>
+        <ul class="topics"><li>competency questions</li><li><strong>vocabulary control</strong> define, reconcile, disambiguate</li><li>flat list, glossary, taxonomy, thesaurus</li><li>the CBox as a bridge</li><li>Ranganathan&#x27;s canons and MECE</li><li>the coverage model</li></ul>
+        <p class="format">Self-scored quiz · 12 questions · ~5 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/week-02-knowledge-check.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Week 3</div>
+        <h3>Concepts, Schemes &amp; Triples</h3>
+        <p class="sub">URIs, Taxonomies and SKOS</p>
+        <ul class="topics"><li>URIs and namespace prefixes</li><li>what a taxonomy needs</li><li>SKOS as data model and ontology</li><li>concept schemes, broader, topConceptOf, exactMatch</li><li>documentation properties</li><li>authority sources and the RDF triple</li></ul>
+        <p class="format">Self-scored quiz · 12 questions · ~5 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/week-03-knowledge-check.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Week 4</div>
+        <h3>Ontology Foundations</h3>
+        <p class="sub">Competency questions, design heuristics, RDF/RDFS/OWL</p>
+        <ul class="topics"><li><strong>analysing a competency question</strong> time, instances, genre concept, geolocation</li><li><strong>the three design heuristics</strong> rigid classes, sub classes that inherit and extend, classes drive properties</li><li>finding the TBox in your SKOS taxonomy</li><li>rdf:type, rdfs:subClassOf, owl:Class, owl:ObjectProperty, owl:DatatypeProperty</li><li>rdfs:domain and rdfs:range, rdfs:label and rdfs:comment</li><li>owl:Ontology and rdfs:isDefinedBy; Turtle semicolons and commas</li></ul>
+        <p class="format">Self-scored quiz · 12 questions · ~5 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/week-04-knowledge-check.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Module 1 check</div>
+        <h3>What Goes Where</h3>
+        <p class="sub">TBox, ABox and CBox in the music domain</p>
+        <ul class="topics"><li>sort music statements into the three boxes, Bad Bunny included</li><li>which box a questionnaire question reveals</li><li>flat list, glossary, taxonomy, thesaurus</li><li>synonyms, preferred terms, MECE</li><li>instance checking, realization, consistency, subsumption</li><li>why keep schema and data apart</li></ul>
+        <p class="format">Self-scored sorting game · 5 rounds · 32 points · ~8 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/tbox-abox-cbox.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Module 3 tutorial</div>
+        <h3>SKOS in One Sitting</h3>
+        <p class="sub">Labels, hierarchy and documentation</p>
+        <ul class="topics"><li>prefLabel, altLabel, hiddenLabel and the one-per-language rule</li><li>broader, narrower, related, top concepts, no cycles</li><li>definition, scopeNote, example, historyNote, editorialNote, changeNote</li><li><strong>fill in the Turtle</strong> tap each value into its blank</li><li>a complete valid scheme to download</li></ul>
+        <p class="format">Read-along tutorial · 4 tap-to-place exercises · 33 points · ~25 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/skos-tutorial.html">Open the check</a>
+        </div>
+      </article>
+      <article class="check">
+        <div class="label">Exercise</div>
+        <h3>The CQ Forge</h3>
+        <p class="sub">Competency Questions</p>
+        <ul class="topics"><li>strong vs. weak CQs and the five checks</li><li><strong>the four shapes</strong> lookup, traversal, aggregation, inference</li><li>decomposing a CQ into classes, properties, controlled values, rules</li></ul>
+        <p class="format">Interactive game · 3 rounds · ~5 min</p>
+        <div class="links">
+          <a class="open" href="knowledge-graph-foundations/competency-questions-exercise.html">Open the check</a>
+        </div>
+      </article>
+      </div>
+    </section>
+  <footer>Originally created by Jessica Talisman · Maintained by Knowledge Graph Academy</footer>
+</div>
+</body>
+</html>

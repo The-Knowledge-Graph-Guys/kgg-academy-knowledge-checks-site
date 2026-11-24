@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Requires Workbench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  /* Layout: controls on top, then the three layers as three columns (TBox blue, CBox purple, ABox green) that stack on a phone, then queries and the reasoner. */
+  :root{
+    --paper:#F7F7F2; --grid:rgba(36,86,166,.07); --surface:#FFFFFF; --ink:#20283A;
+    --ink-soft:#5A6478; --accent:#2456A6; --accent-ink:#FFFFFF; --line:#DDDDD3;
+    --ok:#2F7D4F; --ok-bg:#EAF3ED; --miss:#B23B26; --miss-bg:#F7ECE8;
+    --gold:#B98A12; --gold-bg:#FFF3C4; --chip:#EEEEE6; --extract-bg:#F1F3F8; --shadow:0 2px 10px rgba(32,40,58,.08);
+    --t:#2456A6; --t-bg:#E6EDF8; --a:#2F7D4F; --a-bg:#EAF3ED; --c:#6B3FA0; --c-bg:#EFE8F7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;color:var(--ink);font:400 16px/1.5 "Source Sans 3",system-ui,sans-serif;background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;min-height:100vh}
+  .wrap{max-width:1180px;margin:0 auto;padding-block:24px 80px;padding-inline:20px;min-width:0}
+  header{margin-bottom:16px;position:relative;padding-right:106px}
+  .kgg-logo{position:absolute;top:0;right:0;height:88px;width:auto;background:#fff;border-radius:12px;padding:4px 8px;box-shadow:var(--shadow)}
+  @media (max-width:520px){header{padding-right:76px}.kgg-logo{height:62px}}
+  .eyebrow{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(30px,6vw,42px)/1.05 "Bricolage Grotesque","Source Sans 3",sans-serif;margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0;max-width:70ch}
+  h2{font:800 20px/1.2 "Bricolage Grotesque",sans-serif;margin:0 0 8px}
+  h3{font:800 15px "Bricolage Grotesque",sans-serif;margin:14px 0 6px}
+  p{margin:0 0 10px}
+  code{font:400 13.5px "IBM Plex Mono",monospace;background:var(--chip);border-radius:5px;padding:1px 5px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px;min-width:0}
+  .lab{font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);display:block;margin-bottom:6px}
+  /* model switch */
+  .switch{display:flex;gap:8px;flex-wrap:wrap}
+  .switch button{flex:1;min-width:180px;font:700 16px "Bricolage Grotesque",sans-serif;color:var(--ink);background:var(--paper);border:2px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left}
+  .switch button small{display:block;font:400 13px "Source Sans 3",sans-serif;color:var(--ink-soft);margin-top:2px}
+  .switch button.on.sk{border-color:var(--c);background:var(--c-bg)} .switch button.on.ow{border-color:var(--t);background:var(--t-bg)}
+  .switch button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  /* controls grid */
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:16px} @media (max-width:760px){.controls{grid-template-columns:1fr}}
+  .controls>*{min-width:0}
+  .rows{display:flex;flex-direction:column;gap:6px}
+  .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .row .arrow{font:600 13px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  select,input[type=text]{font:400 14.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:7px 9px;max-width:100%}
+  select:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+  button.ghost{font:600 13px "Source Sans 3",sans-serif;color:var(--accent);background:var(--surface);border:1.5px solid var(--accent);border-radius:8px;padding:6px 10px;cursor:pointer}
+  button.ghost.x{color:var(--miss);border-color:var(--line);padding:6px 9px}
+  button.ghost:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .thing{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--paper);margin-bottom:8px}
+  .thing b{font:700 15px "Bricolage Grotesque",sans-serif}
+  .thing .accs{margin:6px 0 0 14px;display:flex;flex-direction:column;gap:5px;font-size:14.5px}
+  .thing .accs .row{font-size:14px}
+  /* layers */
+  .layers{display:grid;grid-template-columns:repeat(3,1fr);gap:14px} @media (max-width:900px){.layers{grid-template-columns:1fr}}
+  .layer{border:2px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface);min-width:0;display:flex;flex-direction:column}
+  .layer.t{border-color:var(--t)} .layer.c{border-color:var(--c)} .layer.a{border-color:var(--a)}
+  .layer h3{margin:0 0 4px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .layer.t h3{color:var(--t)} .layer.c h3{color:var(--c)} .layer.a h3{color:var(--a)}
+  .layer .meta{font:600 12px "IBM Plex Mono",monospace;color:var(--ink-soft);margin-bottom:6px}
+  .layer .meta b{color:var(--gold)}
+  pre{font:400 12.5px/1.45 "IBM Plex Mono",monospace;background:var(--extract-bg);border:1px solid var(--line);border-radius:10px;padding:12px 12px;overflow:auto;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;flex:1}
+  pre .c{color:var(--ink-soft)} pre .k{color:var(--t);font-weight:600} pre .s{color:var(--a)} pre .h{background:var(--gold-bg);border-radius:3px;display:inline-block;width:100%}
+  .empty{color:var(--ink-soft);font-style:italic;padding:12px;border:1.5px dashed var(--line);border-radius:10px;flex:1}
+  .badge{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:5px 9px;white-space:nowrap}
+  .badge.t{background:var(--t-bg);color:var(--t)} .badge.a{background:var(--a-bg);color:var(--a)} .badge.c{background:var(--c-bg);color:var(--c)} .badge.g{background:var(--gold-bg);color:var(--gold)}
+  .where{font:600 15px "Bricolage Grotesque",sans-serif;margin:0 0 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  /* queries */
+  .qgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px} @media (max-width:900px){.qgrid{grid-template-columns:1fr}}
+  .qgrid>*{min-width:0}
+  .res{margin-top:8px;border-left:3px solid var(--accent);background:var(--extract-bg);border-radius:0 10px 10px 0;padding:8px 12px;font-size:14.5px}
+  .res .lab{margin-bottom:4px;color:var(--accent)}
+  .res ul{margin:0;padding-left:18px} .res li{margin:0 0 2px}
+  .res .none{color:var(--ink-soft);font-style:italic}
+  .res li.gap{color:var(--miss);font-weight:600}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font:600 14px "Source Sans 3",sans-serif;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%)}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../index.html">Knowledge Checks</a></li><li aria-current="page">Requires Workbench</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="kgg-logo" src="../../assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Knowledge Graph Academy · Modules 3 to 5 · one rule, two models, live</div>
+    <h1>Requires Workbench</h1>
+    <p class="sub">Write the rules as rows, add the gear, and switch the model. The three layers of Turtle rebuild as you go, the rule's new home is highlighted in yellow, and the queries answer from what you wrote.</p>
+  </header>
+
+  <section class="card">
+    <span class="lab">Model</span>
+    <div class="switch" id="switch">
+      <button class="sk" data-m="sk">With SKOS as values<small>Types are concepts in a scheme. A thing says its type through a property. The rule is a thing with two values, in the ABox.</small></button>
+      <button class="ow" data-m="ow">Without SKOS<small>Types are classes in a tree. A thing says its type with rdf:type. The rule is a restriction on the class, in the TBox.</small></button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="controls">
+      <div>
+        <span class="lab">Rules · every instrument of this type needs an accessory of that type</span>
+        <div class="rows" id="rules"></div>
+        <div class="btns"><button class="ghost" id="addrule">+ Add a rule</button></div>
+        <h3>New instrument type</h3>
+        <div class="row"><input type="text" id="newtype" placeholder="Baritone Guitar" aria-label="New instrument type"><span class="arrow">under</span><select id="newparent" aria-label="Parent type"></select><button class="ghost" id="addtype">Add</button></div>
+        <p id="typenote" class="sub" style="font-size:14px;margin-top:6px"></p>
+      </div>
+      <div>
+        <span class="lab">Gear · the things, each with its type and the accessories it is played with</span>
+        <div id="things"></div>
+        <div class="row"><input type="text" id="newthing" placeholder="Dana's Telecaster" aria-label="New instrument name"><select id="newthingtype" aria-label="Its type"></select><button class="ghost" id="addthing">Add instrument</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="where" id="where"></div>
+    <div class="layers">
+      <div class="layer t"><h3>TBox <span class="badge t">classes · properties</span></h3><div class="meta" id="tmeta"></div><pre id="tbox"></pre></div>
+      <div class="layer c"><h3>CBox <span class="badge c">concepts</span></h3><div class="meta" id="cmeta"></div><div id="cboxwrap"><pre id="cbox"></pre></div></div>
+      <div class="layer a"><h3>ABox <span class="badge a">things</span></h3><div class="meta" id="ameta"></div><pre id="abox"></pre></div>
+    </div>
+    <div class="btns"><button class="ghost" id="copy">Copy all three layers as one Turtle file</button><span class="sub" style="font-size:13.5px;align-self:center">Paste it into lesson 10 of the <a href="../sparql-tutorial/">SPARQL Practice Room</a> to run the queries below for real.</span></div>
+  </section>
+
+  <section class="card">
+    <h2>The queries, answered from what you wrote</h2>
+    <div class="qgrid">
+      <div>
+        <span class="lab">Q1 · what does this type require, including what its broader types require?</span>
+        <div class="row"><select id="q1type" aria-label="Instrument type for Q1"></select></div>
+        <pre id="q1sparql" style="margin-top:8px;max-height:none"></pre>
+        <div class="res" id="q1res"></div>
+      </div>
+      <div>
+        <span class="lab">Q2 · which required accessory does each instrument not have?</span>
+        <pre id="q2sparql" style="margin-top:8px;max-height:none"></pre>
+        <div class="res" id="q2res"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>What a reasoner adds, and what it never says</h2>
+    <div class="qgrid">
+      <div id="reason"></div>
+      <div><span class="lab">Open world</span><p id="owa" style="font-size:15px"></p></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ───────── fixed vocabulary: the instrument tree and the accessory list ───────── */
+const TREE = {
+  MusicEquipment:{label:'Music Equipment', parent:null},
+  Instrument:{label:'Instrument', parent:'MusicEquipment'},
+  StringInstrument:{label:'String Instrument', parent:'Instrument'},
+  Guitar:{label:'Guitar', parent:'StringInstrument'},
+  ElectricGuitar:{label:'Electric Guitar', parent:'Guitar'},
+  AcousticGuitar:{label:'Acoustic Guitar', parent:'Guitar'},
+  Violin:{label:'Violin', parent:'StringInstrument'},
+  PercussionInstrument:{label:'Percussion Instrument', parent:'Instrument'},
+  DrumKit:{label:'Drum Kit', parent:'PercussionInstrument'},
+  WindInstrument:{label:'Wind Instrument', parent:'Instrument'},
+  Trumpet:{label:'Trumpet', parent:'WindInstrument'},
+  MusicalAccessory:{label:'Musical Accessory', parent:'MusicEquipment'},
+  Amplifier:{label:'Amplifier', parent:'MusicalAccessory'},
+  InstrumentCable:{label:'Instrument Cable', parent:'MusicalAccessory'},
+  Plectrum:{label:'Plectrum', parent:'MusicalAccessory'},
+  SpareStrings:{label:'Spare Strings', parent:'MusicalAccessory'},
+  Bow:{label:'Bow', parent:'MusicalAccessory'},
+  Drumsticks:{label:'Drumsticks', parent:'MusicalAccessory'},
+  ValveOil:{label:'Valve Oil', parent:'MusicalAccessory'},
+};
+const isUnder = (id, root) => { let x=id; while(x){ if(x===root) return true; x=TREE[x].parent; } return false; };
+const instTypes = () => Object.keys(TREE).filter(k => isUnder(k,'Instrument') && k!=='Instrument');
+const accTypes  = () => Object.keys(TREE).filter(k => isUnder(k,'MusicalAccessory') && k!=='MusicalAccessory');
+const ancestors = id => { const out=[]; let x=id; while(x){ out.push(x); x=TREE[x].parent; } return out; };
+const idOf = label => label.trim().split(/\s+/).map(w=>w[0].toUpperCase()+w.slice(1)).join('').replace(/[^A-Za-z0-9]/g,'');
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $ = s => document.querySelector(s);
+
+/* ───────── state ───────── */
+const S = {
+  model:'sk',
+  rules:[{inst:'ElectricGuitar', acc:'Amplifier'},{inst:'ElectricGuitar', acc:'InstrumentCable'},{inst:'Guitar', acc:'Plectrum'}],
+  things:[
+    {name:"Dana's 1962 Stratocaster", type:'ElectricGuitar', accs:[{name:"Dana's Fender Deluxe Reverb", type:'Amplifier'}]},
+    {name:"Dana's Martin D-28", type:'AcousticGuitar', accs:[]},
+  ],
+  added:[], schemaEdits:0,
+};
+
+/* ───────── derived answers ───────── */
+function required(typeId){ const out=[]; ancestors(typeId).forEach(a => S.rules.filter(r=>r.inst===a).forEach(r => { if(!out.some(o=>o.acc===r.acc)) out.push({acc:r.acc, from:a}); })); return out; }
+function gaps(thing){ return required(thing.type).filter(r => !thing.accs.some(a => isUnder(a.type, r.acc))); }
+
+/* ───────── turtle generation ───────── */
+const PFX = `@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix schema: <https://schema.org/> .
+@prefix inst:  <http://kga.org/2026/10/us-friday/instruments#> .
+@prefix io:    <http://kga.org/2026/10/us-friday/instruments/io#> .
+@prefix data:  <http://kga.org/2026/10/us-friday/instruments/data#> .`;
+const K = s => `<span class="k">${s}</span>`, STR = s => `<span class="s">"${esc(s)}"</span>`, C = s => `<span class="c">${esc(s)}</span>`, H = s => `<span class="h">${s}</span>`;
+const countTriples = html => (html.replace(/<[^>]+>/g,'').match(/[;.]\s*(\n|$)/g)||[]).length; /* rough: one triple per ; or . line end */
+
+function tboxSK(){
+  const L=[];
+  L.push(C('# classes: only two for things, one for rules'));
+  L.push(`io:MusicEquipment ${K('a')} owl:Class ; rdfs:label ${STR('Music Equipment')}@en .`);
+  L.push(`io:Instrument ${K('a')} owl:Class ; rdfs:subClassOf io:MusicEquipment .`);
+  L.push(`io:MusicalAccessory ${K('a')} owl:Class ; rdfs:subClassOf io:MusicEquipment .`);
+  L.push(`io:AccessoryRequirement ${K('a')} owl:Class ;\n    rdfs:comment ${STR('One rule: every instrument of the given type needs an accessory of the given type. Both are values from the scheme.')}@en .`);
+  L.push('');
+  L.push(C('# properties whose value is a concept: domain a class, range skos:Concept'));
+  L.push(`io:hasInstrumentType ${K('a')} owl:ObjectProperty ; rdfs:domain io:Instrument ; rdfs:range skos:Concept .`);
+  L.push(`io:hasAccessoryType ${K('a')} owl:ObjectProperty ; rdfs:domain io:MusicalAccessory ; rdfs:range skos:Concept .`);
+  L.push(`io:forInstrumentType ${K('a')} owl:ObjectProperty ; rdfs:domain io:AccessoryRequirement ; rdfs:range skos:Concept .`);
+  L.push(`io:requiresAccessoryType ${K('a')} owl:ObjectProperty ; rdfs:domain io:AccessoryRequirement ; rdfs:range skos:Concept .`);
+  L.push('');
+  L.push(C('# between two things you can hold'));
+  L.push(`io:requires ${K('a')} owl:ObjectProperty ; rdfs:domain io:Instrument ; rdfs:range io:MusicalAccessory .`);
+  L.push('');
+  L.push(C('# inferred, never typed in: thing -> its type -> the rule for it -> the accessory type'));
+  L.push(`io:needsAccessoryType ${K('a')} owl:ObjectProperty ; rdfs:domain io:Instrument ; rdfs:range skos:Concept ;\n    owl:propertyChainAxiom ( io:hasInstrumentType [ owl:inverseOf io:forInstrumentType ] io:requiresAccessoryType ) .`);
+  return L.join('\n');
+}
+function cboxSK(){
+  const L=[];
+  L.push(`inst:scheme ${K('a')} skos:ConceptScheme ; skos:prefLabel ${STR('Instruments')}@en ; skos:hasTopConcept inst:MusicEquipment .`);
+  Object.keys(TREE).forEach(id => {
+    const t=TREE[id]; const line=`inst:${id} ${K('a')} skos:Concept ; skos:inScheme inst:scheme ; skos:prefLabel ${STR(t.label)}@en${t.parent?` ; skos:broader inst:${t.parent}`:' ; skos:topConceptOf inst:scheme'} .`;
+    L.push(S.added.includes(id)?H(line):line);
+  });
+  return L.join('\n');
+}
+function aboxSK(){
+  const L=[];
+  L.push(C('# the rules: each one is a thing with two values'));
+  S.rules.forEach((r,i) => L.push(H(`data:req-${i+1} ${K('a')} io:AccessoryRequirement ;\n    io:forInstrumentType inst:${r.inst} ;\n    io:requiresAccessoryType inst:${r.acc} .`)));
+  L.push('');
+  L.push(C('# the gear: a class from rdf:type, a type from the scheme'));
+  S.things.forEach(t => {
+    const id='data:'+slug(t.name);
+    L.push(`${id} ${K('a')} io:Instrument ;\n    schema:name ${STR(t.name)} ;\n    io:hasInstrumentType inst:${t.type}${t.accs.length?` ;\n    io:requires ${t.accs.map(a=>'data:'+slug(a.name)).join(', ')}`:''} .`);
+    t.accs.forEach(a => L.push(`data:${slug(a.name)} ${K('a')} io:MusicalAccessory ; schema:name ${STR(a.name)} ; io:hasAccessoryType inst:${a.type} .`));
+  });
+  return L.join('\n');
+}
+function tboxOW(){
+  const L=[];
+  L.push(C('# every type is a class'));
+  Object.keys(TREE).forEach(id => { const t=TREE[id]; const line=`io:${id} ${K('a')} owl:Class ; rdfs:label ${STR(t.label)}@en${t.parent?` ; rdfs:subClassOf io:${t.parent}`:''} .`; L.push(S.added.includes(id)?H(line):line); });
+  L.push(`io:Instrument owl:disjointWith io:MusicalAccessory .`);
+  L.push('');
+  L.push(C('# between two things you can hold'));
+  L.push(`io:requires ${K('a')} owl:ObjectProperty ; rdfs:domain io:Instrument ; rdfs:range io:MusicalAccessory .`);
+  L.push('');
+  L.push(C('# the rules: a restriction on the class, written once'));
+  S.rules.forEach(r => L.push(H(`io:${r.inst} rdfs:subClassOf [ ${K('a')} owl:Restriction ;\n    owl:onProperty io:requires ; owl:someValuesFrom io:${r.acc} ] .`)));
+  return L.join('\n');
+}
+function aboxOW(){
+  const L=[];
+  L.push(C('# the gear: the type is the class'));
+  S.things.forEach(t => {
+    const id='data:'+slug(t.name);
+    L.push(`${id} ${K('a')} io:${t.type} ;\n    schema:name ${STR(t.name)}${t.accs.length?` ;\n    io:requires ${t.accs.map(a=>'data:'+slug(a.name)).join(', ')}`:''} .`);
+    t.accs.forEach(a => L.push(`data:${slug(a.name)} ${K('a')} io:${a.type} ; schema:name ${STR(a.name)} .`));
+  });
+  return L.join('\n');
+}
+
+/* ───────── SPARQL text ───────── */
+function q1text(type){ return S.model==='sk'
+  ? `SELECT ?accessoryType WHERE {\n  inst:${type} skos:broader* ?type .\n  ?rule io:forInstrumentType ?type ;\n        io:requiresAccessoryType ?accessoryType .\n}`
+  : `SELECT ?accessoryClass WHERE {\n  io:${type} rdfs:subClassOf* ?c .\n  ?c rdfs:subClassOf [ owl:onProperty io:requires ;\n                       owl:someValuesFrom ?accessoryClass ] .\n}`; }
+function q2text(){ return S.model==='sk'
+  ? `SELECT ?instrument ?accessoryType WHERE {\n  ?instrument io:hasInstrumentType ?t . ?t skos:broader* ?type .\n  ?rule io:forInstrumentType ?type ; io:requiresAccessoryType ?accessoryType .\n  FILTER NOT EXISTS { ?instrument io:requires ?a . ?a io:hasAccessoryType ?accessoryType }\n}`
+  : `SELECT ?instrument ?accessoryClass WHERE {\n  ?instrument a ?t . ?t rdfs:subClassOf* ?c .\n  ?c rdfs:subClassOf [ owl:onProperty io:requires ; owl:someValuesFrom ?accessoryClass ] .\n  FILTER NOT EXISTS { ?instrument io:requires ?a . ?a a ?accessoryClass }\n}`; }
+
+/* ───────── render ───────── */
+function options(ids, sel){ return ids.map(id=>`<option value="${id}"${id===sel?' selected':''}>${esc(TREE[id].label)}</option>`).join(''); }
+function render(){
+  const sk = S.model==='sk', p = sk?'inst:':'io:';
+  document.querySelectorAll('#switch button').forEach(b=>b.classList.toggle('on', b.dataset.m===S.model));
+  /* rules */
+  $('#rules').innerHTML = S.rules.map((r,i)=>`<div class="row"><span class="arrow">every</span><select data-r="${i}" data-f="inst" aria-label="Instrument type">${options(instTypes(), r.inst)}</select><span class="arrow">needs a</span><select data-r="${i}" data-f="acc" aria-label="Accessory type">${options(accTypes(), r.acc)}</select><button class="ghost x" data-del="${i}" aria-label="Remove rule">✕</button></div>`).join('') || '<p class="sub">No rules yet.</p>';
+  document.querySelectorAll('#rules select').forEach(s=>s.onchange=()=>{ S.rules[+s.dataset.r][s.dataset.f]=s.value; render(); });
+  document.querySelectorAll('#rules [data-del]').forEach(b=>b.onclick=()=>{ S.rules.splice(+b.dataset.del,1); render(); });
+  $('#newparent').innerHTML = options(instTypes().concat(['Instrument']), 'Guitar');
+  $('#typenote').innerHTML = sk ? 'In this model a new type is one concept in the scheme. The TBox does not change.' : `In this model a new type is a new class. Schema edits so far: <b>${S.schemaEdits}</b>.`;
+  /* things */
+  $('#things').innerHTML = S.things.map((t,i)=>`<div class="thing"><div class="row"><b>${esc(t.name)}</b><span class="arrow">is a</span><select data-t="${i}" aria-label="Type of ${esc(t.name)}">${options(instTypes(), t.type)}</select><button class="ghost x" data-delt="${i}" aria-label="Remove">✕</button></div>
+    <div class="accs">${t.accs.map((a,j)=>`<div class="row"><span class="arrow">played with</span>${esc(a.name)} <span class="arrow">a</span> ${esc(TREE[a.type].label)}<button class="ghost x" data-dela="${i}:${j}" aria-label="Remove accessory">✕</button></div>`).join('')}
+    <div class="row"><input type="text" data-newacc="${i}" placeholder="Dana's cable" aria-label="New accessory name"><select data-newacct="${i}" aria-label="Accessory type">${options(accTypes(),'InstrumentCable')}</select><button class="ghost" data-adda="${i}">+ accessory</button></div></div></div>`).join('');
+  document.querySelectorAll('#things select[data-t]').forEach(s=>s.onchange=()=>{ S.things[+s.dataset.t].type=s.value; render(); });
+  document.querySelectorAll('#things [data-delt]').forEach(b=>b.onclick=()=>{ S.things.splice(+b.dataset.delt,1); render(); });
+  document.querySelectorAll('#things [data-dela]').forEach(b=>b.onclick=()=>{ const [i,j]=b.dataset.dela.split(':').map(Number); S.things[i].accs.splice(j,1); render(); });
+  document.querySelectorAll('#things [data-adda]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.adda; const n=document.querySelector(`[data-newacc="${i}"]`).value.trim(); if(!n) return; S.things[i].accs.push({name:n, type:document.querySelector(`[data-newacct="${i}"]`).value}); render(); });
+  $('#newthingtype').innerHTML = options(instTypes(),'ElectricGuitar');
+  /* layers */
+  $('#where').innerHTML = sk
+    ? `The rule lives in the <span class="badge a">ABox</span> as an Accessory Requirement with two values. The types live in the <span class="badge c">CBox</span>. <span class="badge g">yellow = the rules</span>`
+    : `The rule lives in the <span class="badge t">TBox</span> as a restriction on the class. There is no CBox: the types are classes. <span class="badge g">yellow = the rules</span>`;
+  const t = sk?tboxSK():tboxOW(), c = sk?cboxSK():'', a = sk?aboxSK():aboxOW();
+  $('#tbox').innerHTML=t; $('#abox').innerHTML=a;
+  $('#cboxwrap').innerHTML = sk ? `<pre id="cbox">${c}</pre>` : `<div class="empty">No CBox in this model. Every type is a class in the TBox, and the words are rdfs:label on the class.</div>`;
+  $('#tmeta').innerHTML = `${countTriples(t)} triples${sk?'':` · <b>${S.rules.length}</b> rule${S.rules.length===1?'':'s'} in the schema`}`;
+  $('#cmeta').innerHTML = sk ? `${countTriples(c)} triples · ${Object.keys(TREE).length} concepts` : '0 triples';
+  $('#ameta').innerHTML = `${countTriples(a)} triples${sk?` · <b>${S.rules.length}</b> rule${S.rules.length===1?'':'s'} as data`:''}`;
+  /* queries */
+  const q1sel=$('#q1type'); const keep=q1sel.value||'ElectricGuitar'; q1sel.innerHTML=options(instTypes(), keep);
+  $('#q1sparql').textContent=q1text(q1sel.value);
+  const req=required(q1sel.value);
+  $('#q1res').innerHTML=`<span class="lab">result</span>${req.length?`<ul>${req.map(r=>`<li>${p}${r.acc}${r.from!==q1sel.value?` <span class="sub" style="font-size:13px">(from the rule on ${esc(TREE[r.from].label)})</span>`:''}</li>`).join('')}</ul>`:'<span class="none">no rows: no rule mentions this type or any type above it</span>'}`;
+  $('#q2sparql').textContent=q2text();
+  const rows=S.things.flatMap(th=>gaps(th).map(g=>({th,g})));
+  $('#q2res').innerHTML=`<span class="lab">result</span>${rows.length?`<ul>${rows.map(({th,g})=>`<li class="gap">data:${slug(th.name)} is missing a ${p}${g.acc}</li>`).join('')}</ul>`:'<span class="none">no rows: every instrument has every accessory its type requires</span>'}`;
+  /* reasoner */
+  $('#reason').innerHTML = `<span class="lab">inferred triples</span>` + (sk
+    ? `<p style="font-size:15px">From the property chain on <code>io:needsAccessoryType</code>:</p><pre style="max-height:none">${S.things.flatMap(th=>required(th.type).map(r=>`data:${slug(th.name)} io:needsAccessoryType inst:${r.acc} .`)).join('\n')||C('# nothing: no rule reaches any instrument')}</pre>`
+    : `<p style="font-size:15px">From <code>rdfs:subClassOf</code>:</p><pre style="max-height:none">${S.things.map(th=>`data:${slug(th.name)} a ${ancestors(th.type).slice(1).map(x=>'io:'+x).join(', ')} .`).join('\n')}</pre>`);
+  const firstGap=rows[0];
+  $('#owa').innerHTML = firstGap
+    ? `<b>${esc(firstGap.th.name)}</b> lists no ${esc(TREE[firstGap.g.acc].label)}, and the rule says it needs one. A reasoner says nothing about that in either model: a missing accessory is unknown, not absent. Q2 finds it; a SHACL shape would report it. ${sk?'The chain adds the accessory type the thing needs, and stops there.':'The restriction tells the reasoner some accessory exists, and stops there.'}`
+    : `Every instrument has what its type requires, so there is no gap to find. Remove an accessory above and watch Q2 report it while the reasoner stays silent.`;
+}
+
+/* ───────── wiring ───────── */
+document.querySelectorAll('#switch button').forEach(b=>b.onclick=()=>{ S.model=b.dataset.m; render(); });
+$('#addrule').onclick=()=>{ S.rules.push({inst:'Violin', acc:'Bow'}); render(); };
+$('#addtype').onclick=()=>{ const label=$('#newtype').value.trim(); if(!label) return; const id=idOf(label); if(TREE[id]){ toast('That type already exists.'); return; } TREE[id]={label, parent:$('#newparent').value}; S.added.push(id); if(S.model==='ow') S.schemaEdits++; $('#newtype').value=''; render(); toast(S.model==='sk'?'One concept added to the scheme. The TBox is unchanged.':'One class added. That is a schema edit.'); };
+$('#addthing').onclick=()=>{ const n=$('#newthing').value.trim(); if(!n) return; S.things.push({name:n, type:$('#newthingtype').value, accs:[]}); $('#newthing').value=''; render(); };
+$('#q1type').onchange=render;
+$('#copy').onclick=()=>{ const strip=h=>h.replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'"); const sk=S.model==='sk'; const text=PFX+'\n\n# ── TBox ──\n'+strip(sk?tboxSK():tboxOW())+(sk?'\n\n# ── CBox ──\n'+strip(cboxSK()):'')+'\n\n# ── ABox ──\n'+strip(sk?aboxSK():aboxOW())+'\n'; try{ navigator.clipboard.writeText(text).then(()=>toast('Copied. Paste it into a .ttl file or the Practice Room.'), ()=>fallback(text)); }catch(e){ fallback(text); } };
+function fallback(text){ const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast('Copied.'); }catch(e){ toast('Select the three panes and copy them by hand.'); } ta.remove(); }
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('show'),2600); }
+render();
+</script>
+</body>
+</html>

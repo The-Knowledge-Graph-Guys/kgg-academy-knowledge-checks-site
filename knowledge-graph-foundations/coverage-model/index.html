@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coverage Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --paper:#F7F7F2; --grid:rgba(36,86,166,.07); --surface:#FFFFFF; --ink:#20283A;
+    --ink-soft:#5A6478; --accent:#2456A6; --accent-ink:#FFFFFF; --line:#DDDDD3;
+    --ok:#2F7D4F; --ok-bg:#EAF3ED; --miss:#B23B26; --miss-bg:#F7ECE8; --warn:#B98A12; --warn-bg:#FBF3DC;
+    --gold:#B98A12; --chip:#EEEEE6; --extract-bg:#F1F3F8; --shadow:0 2px 10px rgba(32,40,58,.08);
+    --cand:#B98A12; --cand-bg:#FBF3DC; --amb:#B23B26; --amb-bg:#F7ECE8; --ext:#2F7D4F; --int:#2456A6; --comp:#6B3FA0; --comm:#B98A12;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;color:var(--ink);font:400 16.5px/1.5 "Source Sans 3",system-ui,sans-serif;background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;min-height:100vh}
+  .wrap{max-width:1040px;margin:0 auto;padding:28px 20px 80px;min-width:0}
+  header{margin-bottom:16px;position:relative;padding-right:106px}
+  .kgg-logo{position:absolute;top:0;right:0;height:88px;width:auto;background:#fff;border-radius:12px;padding:4px 8px;box-shadow:var(--shadow)}
+  @media (max-width:520px){header{padding-right:76px}.kgg-logo{height:62px}}
+  .eyebrow{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(30px,6vw,42px)/1.05 "Bricolage Grotesque","Source Sans 3",sans-serif;margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0}
+  .steps{display:flex;gap:6px;margin:18px 0 14px;flex-wrap:wrap}
+  .steps button{flex:1;min-width:130px;font:700 13.5px "Bricolage Grotesque",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left}
+  .steps button .n{font:600 11px "IBM Plex Mono",monospace;color:var(--accent);display:block;letter-spacing:.1em;margin-bottom:2px}
+  .steps button .c{font:600 11px "IBM Plex Mono",monospace;color:var(--ink-soft);display:block;margin-top:2px}
+  .steps button.on{background:var(--surface);border-color:var(--accent);box-shadow:var(--shadow)}
+  .steps button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:24px;overflow-wrap:anywhere;min-width:0}
+  .card h2{font:800 24px "Bricolage Grotesque",sans-serif;margin:0 0 8px}
+  .card h3{font:800 16.5px "Bricolage Grotesque",sans-serif;margin:20px 0 8px}
+  .card p{margin:0 0 10px} .muted{color:var(--ink-soft)} .small{font-size:14px}
+  .mono{font:600 12px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+  .roundchip{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:6px 12px;margin-bottom:12px}
+  .note{background:var(--extract-bg);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:11px 15px;font-size:15px;margin:10px 0}
+  .note .lab{display:block;margin-bottom:5px;color:var(--accent)}
+  a{color:var(--accent);font-weight:600}
+  .field{margin:8px 0} .field label{display:block;font:600 13.5px "Source Sans 3",sans-serif;margin-bottom:3px}
+  input.cell,select.cell,textarea.cell,.field input,.field textarea,.field select{width:100%;font:400 14.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:6px 8px}
+  .cell:focus,.field input:focus,.field textarea:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px} @media (max-width:700px){.grid2{grid-template-columns:1fr}}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  button.next{font:700 15px "Bricolage Grotesque",sans-serif;color:var(--accent-ink);background:var(--accent);border:none;border-radius:10px;padding:10px 18px;cursor:pointer}
+  button.ghost{font:700 14px "Bricolage Grotesque",sans-serif;color:var(--accent);background:transparent;border:1.5px solid var(--accent);border-radius:10px;padding:8px 14px;cursor:pointer}
+  button.ghost.danger{color:var(--miss);border-color:var(--miss)}
+  button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  button.chip{font:600 13.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:999px;padding:6px 12px;cursor:pointer}
+  button.chip.sel{background:var(--accent);color:var(--accent-ink)}
+  .tag{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:4px 8px;white-space:nowrap;background:var(--chip);color:var(--ink-soft)}
+  .tag.ok{background:var(--ok-bg);color:var(--ok)} .tag.warn{background:var(--warn-bg);color:var(--warn)} .tag.bad{background:var(--miss-bg);color:var(--miss)} .tag.acc{background:#E6EDF8;color:var(--accent)}
+  .tag.int{background:#E6EDF8;color:var(--int)} .tag.ext{background:var(--ok-bg);color:var(--ext)} .tag.comp{background:#EFE8F7;color:var(--comp)} .tag.comm{background:var(--warn-bg);color:var(--comm)}
+  .tbl{width:100%;border-collapse:collapse;font-size:14.5px;margin:8px 0}
+  .tbl th{font:700 12px "Bricolage Grotesque",sans-serif;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+  .tbl td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  .tscroll{overflow-x:auto}
+  .meters{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:10px 0}
+  .meter{background:var(--extract-bg);border-radius:10px;padding:10px 12px}
+  .meter b{display:block;font:800 26px/1 "Bricolage Grotesque",sans-serif;color:var(--accent)} .meter span{font-size:13px;color:var(--ink-soft)}
+  .flags{margin:8px 0 0;padding:0;list-style:none} .flags li{font-size:14.5px;padding:7px 10px;border-radius:8px;margin-bottom:5px}
+  .flags li.bad{background:var(--miss-bg);color:var(--miss)} .flags li.warn{background:var(--warn-bg);color:var(--warn)} .flags li.good{background:var(--ok-bg);color:var(--ok)}
+  /* reconcile layout: vocabulary rail + queue */
+  .curate{display:grid;grid-template-columns:290px minmax(0,1fr);gap:18px;align-items:start}
+  .rail{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:12px}
+  .rail h4{font:800 13px "Bricolage Grotesque",sans-serif;margin:0 0 6px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft)}
+  .rail .area{margin:10px 0 4px;font:800 14px "Bricolage Grotesque",sans-serif;color:var(--accent);display:flex;justify-content:space-between;align-items:baseline}
+  .rail .area span{font:600 11px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  .rail .vc{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:7px 9px;margin:4px 0;font-size:13.5px}
+  .rail .vc.cand{border-style:dashed;border-color:var(--cand)}
+  .rail .vc{cursor:pointer;transition:border-color .12s} .rail .vc:hover{border-color:var(--accent)} .rail .vc.on{border-color:var(--accent);box-shadow:0 0 0 2px #E6EDF8}
+  .rail .vc:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .focus{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#E6EDF8;border-radius:10px;padding:8px 12px;margin:6px 0 10px;font-size:14px}
+  .rail .vc b{display:block;font-size:14px} .rail .vc .d{color:var(--ink-soft);font-size:12.5px;line-height:1.35}
+  .rail .vc .alts{margin-top:3px;display:flex;gap:4px;flex-wrap:wrap} .rail .vc .alts span{font-size:11.5px;background:var(--chip);border-radius:999px;padding:1px 7px}
+  .rail .vc .n{font:600 11px "IBM Plex Mono",monospace;color:var(--ink-soft);float:right}
+  .rail input{width:100%;font:400 13.5px "Source Sans 3",sans-serif;border:1.5px solid var(--line);border-radius:8px;padding:6px 8px;margin-bottom:6px;background:var(--surface);color:var(--ink)}
+  .rail .empty{border:1px dashed var(--line);border-radius:9px;padding:8px;color:var(--ink-soft);font-size:12.5px;text-align:center}
+  @media (max-width:900px){ .curate{grid-template-columns:1fr} .rail{position:static;max-height:300px} }
+  /* curation queue */
+  .queue .row{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--paper);display:grid;grid-template-columns:minmax(180px,1.2fr) minmax(220px,2fr);gap:8px 14px;align-items:start}
+  @media (max-width:760px){.queue .row{grid-template-columns:1fr}}
+  .queue .row.done{background:var(--surface)} .queue .row.suggest{border-color:var(--accent)}
+  .queue .term{font:800 18px "Bricolage Grotesque",sans-serif} .queue .ctx{font-size:13.5px;color:var(--ink-soft);margin-top:3px;font-style:italic}
+  .queue .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center}
+  .queue .freq{font:600 12px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  .decide{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .decide select,.decide input{font:400 14px "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:6px 8px;max-width:100%}
+  .decide .k{font:700 13px "Bricolage Grotesque",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:999px;padding:6px 11px;cursor:pointer}
+  .decide .k.sel{background:var(--accent);color:#fff} .decide .k.sel.cand{background:var(--cand)} .decide .k.sel.ex{background:var(--ink-soft)}
+  .fb{margin-top:6px;font-size:14px} .fb.ok{color:var(--ok)} .fb.miss{color:var(--miss)} .fb.part{color:var(--warn)} .fb .why{display:block;color:var(--ink-soft)}
+  .filters{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;align-items:center}
+  /* definitions */
+  .def{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0;background:var(--paper)}
+  .def .head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+  .def .head b{font:800 17px "Bricolage Grotesque",sans-serif}
+  .def .alts span{font-size:13px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 8px;margin-right:4px}
+  .def textarea{width:100%;font:400 14.5px "Source Sans 3",sans-serif;border:1.5px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--surface);color:var(--ink)}
+  .checks{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  /* graph */
+  .graphwrap{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px;overflow-x:auto;margin:10px 0}
+  svg.graph{display:block;min-width:900px;width:100%;height:auto;font-family:"Source Sans 3",sans-serif}
+  svg.graph .band{fill:var(--extract-bg);stroke:none} svg.graph .bandlab{font:800 12px "Bricolage Grotesque",sans-serif;fill:var(--ink)} svg.graph .bandpct{font:600 11px "IBM Plex Mono",monospace;fill:var(--ink-soft)}
+  svg.graph .edge{fill:none;stroke-linecap:round;opacity:.55} svg.graph .edge.hl{opacity:1}
+  svg.graph .node text{font-size:11.5px;fill:var(--ink)} svg.graph .node.cand circle{stroke:var(--cand);stroke-dasharray:4 3;fill:#fff} svg.graph .node.cv circle{fill:var(--accent);stroke:var(--accent)}
+  svg.graph .node.gap circle{fill:none;stroke:var(--line);stroke-dasharray:3 3} svg.graph .node.gap text{fill:var(--ink-soft);font-style:italic}
+  svg.graph .src text{font:700 12px "Bricolage Grotesque",sans-serif;fill:var(--ink)} svg.graph .src .k{font:600 10px "IBM Plex Mono",monospace;fill:var(--ink-soft)}
+  svg.graph .amb polygon{fill:#fff;stroke:var(--amb);stroke-width:2} svg.graph .amb text{font-size:11px;fill:var(--amb);font-weight:700}
+  svg.graph .ex text{font-size:11px;fill:var(--ink-soft);font-style:italic}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--ink-soft);margin:4px 0 8px;align-items:center}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:middle;margin-right:4px}
+  .exports{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .exports button{font:600 13.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:10px;padding:8px 12px;cursor:pointer}
+  .exports button:hover{border-color:var(--accent)} .exports .fmt{font:600 11px "IBM Plex Mono",monospace;color:var(--accent);margin-left:5px}
+  textarea.paste{width:100%;min-height:110px;font:400 13.5px/1.5 "IBM Plex Mono",monospace;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:10px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);font:600 14px "Source Sans 3",sans-serif;padding:10px 16px;border-radius:999px;box-shadow:var(--shadow);opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+  .toast.show{opacity:1}
+  .domainbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 4px;font-size:15px} .domainbar b{font:800 18px "Bricolage Grotesque",sans-serif}
+  button.ghost.small{font-size:13px;padding:6px 11px}
+  .domains{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0}
+  button.domain{text-align:left;background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:6px;color:var(--ink);font-family:inherit}
+  button.domain:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow)}
+  button.domain .n{font:600 11px "IBM Plex Mono",monospace;color:var(--accent);letter-spacing:.1em}
+  button.domain b{font:800 19px "Bricolage Grotesque",sans-serif} button.domain .mono{font-size:11px;color:var(--ink-soft);text-transform:none;letter-spacing:.04em}
+  details{margin:8px 0} summary{cursor:pointer;font:700 15px "Bricolage Grotesque",sans-serif;color:var(--accent)}
+  @media print{ body{background:none} .steps,.btns,.exports,.kgg-logo,button,.toast{display:none!important} .card{box-shadow:none;border:none;padding:0} }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../index.html">Knowledge Checks</a></li><li aria-current="page">Coverage Model</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="kgg-logo" src="../../assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Knowledge Graph Academy · Module 2 · Controlled Vocabularies</div>
+    <h1>Coverage Model</h1>
+    <p class="sub">A curation exercise, one subgraph at a time. Harvested terms from five sources, an existing vocabulary, and coverage targets. Reconcile every term, disambiguate the ones that mean two things, define what is new, and watch the graph fill in.</p>
+  </header>
+  <div class="domainbar" id="domainbar" hidden><span class="mono">Subgraph</span> <b id="domainName"></b> <button class="ghost small" id="changeDomain">Change subgraph</button></div>
+  <div class="steps" id="steps">
+    <button data-step="brief"><span class="n">1</span>The brief<span class="c" id="c-brief"></span></button>
+    <button data-step="curate"><span class="n">2</span>Reconcile<span class="c" id="c-curate"></span></button>
+    <button data-step="define"><span class="n">3</span>Define &amp; disambiguate<span class="c" id="c-define"></span></button>
+    <button data-step="graph"><span class="n">4</span>Coverage graph<span class="c" id="c-graph"></span></button>
+  </div>
+  <div class="card" id="card"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ the material: four subgraphs of the music knowledge graph ============ */
+const KEY = 'kga.coverage.v3';
+const SOURCES = [
+  {id:'tix', name:'Ticketing database', kind:'int', kindName:'internal · structured', rel:4, prov:'Export of event_type, venue_type, genre_tag and credit fields from the listings system, 12 months.'},
+  {id:'mkt', name:'Marketing blog', kind:'int', kindName:'internal · unstructured', rel:3, prov:'Term frequency over 140 blog posts and newsletters.'},
+  {id:'wd', name:'Wikidata', kind:'ext', kindName:'external · knowledge graph', rel:4, prov:'Labels of items under the relevant Wikidata classes.'},
+  {id:'comp', name:'Competitor navigation', kind:'comp', kindName:'competitor', rel:3, prov:'Menu and facet labels scraped from a rival listings site.'},
+  {id:'forum', name:'Fan forum', kind:'comm', kindName:'community', rel:2, prov:'Term frequency over 3,000 forum posts in the past year.'},
+];
+const DOMAINS = [
+/* ---------------- 1 · Genres and musical works ---------------- */
+{ id:'genres', name:'Genres and musical works', blurb:'The genre facet fans search by, and the works they search for: songs, albums, covers, remixes, and the formats they come in.',
+  usecase:{title:'Genre and release discovery for a concert-listings app', problem:'Fans filter by genre and search for works, but the tags are inconsistent: "Hip-hop", "hip hop" and "Hip-Hop/Rap" are three tags for one genre, "EP" and "single" are used as if they were genres, and "cover" means a version of a song in one post and the artwork in the next.', requirement:'A controlled vocabulary of genres, subgenres and styles, work types and release formats, with alternative labels for the words fans and promoters use and definitions that settle what a term covers.'},
+  areas:[{id:'genre', name:'Genres', target:8, why:'the top search facet'},{id:'sub', name:'Subgenres and styles', target:5, why:'the second level of the facet'},{id:'work', name:'Work types', target:4, why:'what is being released or performed'},{id:'format', name:'Release formats', target:3, why:'"out now" posts and merch'}],
+  cv:[
+    {id:'rock', pref:'Rock', area:'genre', def:'A popular music genre built on electric guitar, bass and drums that grew out of 1950s rock and roll.'},
+    {id:'jazz', pref:'Jazz', area:'genre', def:'A genre born in New Orleans around 1900, built on improvisation, swing rhythm and blues harmony.'},
+    {id:'hiphop', pref:'Hip hop', area:'genre', def:'A genre built on rapping over sampled or programmed beats, originating in 1970s New York.'},
+    {id:'electronic', pref:'Electronic music', area:'genre', def:'Music made primarily with electronic instruments and production.'},
+    {id:'pop', pref:'Pop', area:'genre', def:'Melodic, chart-oriented popular music with short songs and a strong hook.'},
+    {id:'punk', pref:'Punk rock', area:'sub', def:'A subgenre of rock from the mid-1970s: fast, short, loud and stripped to a few chords.'},
+    {id:'song', pref:'Song', area:'work', def:'A musical work with lyrics and melody, typically three to five minutes, released or performed as a unit.'},
+    {id:'album', pref:'Album', area:'work', def:'A collection of recordings released together as one work.'},
+    {id:'vinyl', pref:'Vinyl', area:'format', def:'A release pressed on a vinyl record.'},
+  ],
+  h:[
+    {id:'g1', src:'tix', term:'Hip-hop', freq:210, ctx:'genre_tag: hip-hop'},
+    {id:'g2', src:'tix', term:'EDM', freq:150, ctx:'genre_tag: EDM'},
+    {id:'g3', src:'tix', term:'R&B', freq:130, ctx:'genre_tag: R&B'},
+    {id:'g4', src:'tix', term:'Indie', freq:180, ctx:'genre_tag: indie'},
+    {id:'g5', src:'tix', term:'Metal', freq:120, ctx:'genre_tag: metal'},
+    {id:'g6', src:'tix', term:'Alt', freq:70, ctx:'genre_tag: alt'},
+    {id:'g7', src:'tix', term:'Country', freq:90, ctx:'genre_tag: country'},
+    {id:'g8', src:'tix', term:'Single', freq:40, ctx:'genre_tag: single (mis-filed by promoters)'},
+    {id:'g9', src:'mkt', term:'Rock', freq:80, ctx:'"the best rock shows this month"'},
+    {id:'g10', src:'mkt', term:'House', freq:28, ctx:'"house and techno all night"'},
+    {id:'g11', src:'mkt', term:'Album drop', freq:30, ctx:'"the album drop this Friday"'},
+    {id:'g12', src:'mkt', term:'EP', freq:45, ctx:'"new EP out now"'},
+    {id:'g13', src:'mkt', term:'LP', freq:25, ctx:'"the LP lands in March"'},
+    {id:'g14', src:'mkt', term:'cover', freq:33, ctx:'"a cover of Hallelujah that silenced the room"'},
+    {id:'g15', src:'mkt', term:'Pop', freq:60, ctx:'"pop, pure and simple"'},
+    {id:'g16', src:'mkt', term:'Punk', freq:26, ctx:'"punk is back at the Underworld"'},
+    {id:'g17', src:'mkt', term:'Trap', freq:22, ctx:'"trap beats and Latin trap all night"'},
+    {id:'g18', src:'wd', term:'Rock music', freq:1, ctx:'Q11399 · music genre'},
+    {id:'g19', src:'wd', term:'Hip hop music', freq:1, ctx:'Q11401 · music genre'},
+    {id:'g20', src:'wd', term:'Electronic dance music', freq:1, ctx:'Q208641 · music genre'},
+    {id:'g21', src:'wd', term:'Heavy metal', freq:1, ctx:'Q38848 · music genre'},
+    {id:'g22', src:'wd', term:'House music', freq:1, ctx:'Q20502 · music genre'},
+    {id:'g23', src:'wd', term:'Rhythm and blues', freq:1, ctx:'Q45981 · music genre'},
+    {id:'g24', src:'wd', term:'Extended play', freq:1, ctx:'Q169930 · release type'},
+    {id:'g25', src:'wd', term:'Remix', freq:1, ctx:'Q1330257 · musical work type'},
+    {id:'g26', src:'wd', term:'Cover version', freq:1, ctx:'Q1364562 · musical work type'},
+    {id:'g27', src:'wd', term:'Compact disc', freq:1, ctx:'Q34467 · audio format'},
+    {id:'g28', src:'comp', term:'Genres', freq:1, ctx:'facet heading'},
+    {id:'g29', src:'comp', term:'Hip-Hop/Rap', freq:1, ctx:'genre facet'},
+    {id:'g30', src:'comp', term:'Alternative', freq:1, ctx:'genre facet'},
+    {id:'g31', src:'comp', term:'Latin', freq:1, ctx:'genre facet'},
+    {id:'g32', src:'comp', term:'CD', freq:1, ctx:'format facet'},
+    {id:'g33', src:'comp', term:'Digital', freq:1, ctx:'format facet'},
+    {id:'g34', src:'forum', term:'techno', freq:110, ctx:'"techno till 6am"'},
+    {id:'g35', src:'forum', term:'remix', freq:95, ctx:'"the remix is better than the original"'},
+    {id:'g36', src:'forum', term:'bootleg', freq:40, ctx:'"a bootleg of the Glasgow show"'},
+    {id:'g37', src:'forum', term:'vinyl', freq:140, ctx:'"vinyl reissue finally"'},
+    {id:'g38', src:'forum', term:'cassette', freq:35, ctx:'"cassette-only release, of course"'},
+    {id:'g39', src:'forum', term:'banger', freq:160, ctx:'"absolute banger"'},
+    {id:'g40', src:'forum', term:'track', freq:300, ctx:'"track 4 is the one"'},
+    {id:'g41', src:'forum', term:'cover', freq:52, ctx:'"the album cover art is stunning"'},
+    {id:'g42', src:'forum', term:'pop', freq:18, ctx:'"the pop of the snare on that record"'},
+    {id:'g43', src:'forum', term:'house show', freq:45, ctx:'"house show in someone\'s basement"'},
+  ],
+  keys:{
+    g1:{ok:[{k:'cluster',c:'hiphop'}], why:'A hyphenated spelling of Hip hop. Alternative label.'},
+    g2:{ok:[{k:'cluster',c:'electronic'},{k:'candidate',a:'sub'},{k:'cluster',c:'electronic dance music'}], why:'An acronym, so never a preferred label. Alternative label of Electronic music, or the alternative of a spelled-out Electronic dance music candidate under subgenres.'},
+    g3:{ok:[{k:'candidate',a:'genre'},{k:'cluster',c:'rhythm and blues'}], why:'An acronym for a genre the vocabulary lacks. Candidate Rhythm and blues, with R&B as the alternative label.'},
+    g4:{ok:[{k:'candidate',a:'genre'},{k:'candidate',a:'sub'}], why:'A genre or style the vocabulary lacks. Candidate; genre or subgenre is a judgement call, and either is defensible.'},
+    g5:{ok:[{k:'candidate',a:'genre'},{k:'cluster',c:'heavy metal'}], why:'Candidate Heavy metal, Wikidata\'s spelled-out form, with Metal as the alternative label.'},
+    g6:{ok:[{k:'candidate',a:'sub'},{k:'candidate',a:'genre'},{k:'cluster',c:'alternative rock'}], why:'"Alt" is a clipped form. The concept is Alternative rock: candidate, spelled out, with Alt and the competitor\'s Alternative as alternative labels.'},
+    g7:{ok:[{k:'candidate',a:'genre'}], why:'A genre the vocabulary lacks. Candidate.'},
+    g8:{ok:[{k:'exclude'},{k:'cluster',c:'single'}], why:'A work type mis-filed as a genre tag. Exclude here with a note, or cluster it to the Single candidate that the blog supplies. Either way it is not a genre.'},
+    g9:{ok:[{k:'exact',c:'rock'}], why:'Exact match.'},
+    g10:{ok:[{k:'candidate',a:'genre'},{k:'candidate',a:'sub'},{k:'cluster',c:'house music'}], why:'"house and techno" is the genre. Candidate House music with House as the alternative label. The forum "house show" is a venue, a different sense.'},
+    g11:{ok:[{k:'exclude'},{k:'cluster',c:'album'}], why:'A marketing phrase, not a concept. Exclude with a note, or at most an alternative label of Album.'},
+    g12:{ok:[{k:'candidate',a:'work'},{k:'cluster',c:'extended play'}], why:'Acronym for Extended play, a work type the vocabulary lacks. Candidate, spelled out, EP as alternative.'},
+    g13:{ok:[{k:'cluster',c:'album'}], why:'In this usage LP means the album. Alternative label of Album.'},
+    g14:{ok:[{k:'candidate',a:'work'},{k:'cluster',c:'cover version'}], why:'A cover of a song is a work type: Cover version, which Wikidata supplies. Candidate. The forum "cover" is the artwork.'},
+    g15:{ok:[{k:'exact',c:'pop'}], why:'Exact match. The forum "pop of the snare" is a different sense.'},
+    g16:{ok:[{k:'cluster',c:'punk'}], why:'Clipped form of Punk rock. Alternative label.'},
+    g17:{ok:[{k:'candidate',a:'sub'},{k:'candidate',a:'genre'}], why:'A style the vocabulary lacks. Candidate.'},
+    g18:{ok:[{k:'cluster',c:'rock'}], why:'Wikidata\'s label for Rock. Alternative label and a Module 3 exactMatch.'},
+    g19:{ok:[{k:'cluster',c:'hiphop'}], why:'Alternative label of Hip hop.'},
+    g20:{ok:[{k:'candidate',a:'sub'},{k:'cluster',c:'electronic'}], why:'Narrower than Electronic music. Candidate under subgenres; EDM clusters here.'},
+    g21:{ok:[{k:'candidate',a:'genre'}], why:'Candidate genre; Metal clusters here.'},
+    g22:{ok:[{k:'candidate',a:'genre'},{k:'candidate',a:'sub'}], why:'Candidate; House from the blog clusters here.'},
+    g23:{ok:[{k:'candidate',a:'genre'}], why:'Candidate; R&B clusters here.'},
+    g24:{ok:[{k:'candidate',a:'work'}], why:'Candidate work type; EP is its alternative label.'},
+    g25:{ok:[{k:'candidate',a:'work'}], why:'Candidate work type; the forum remix clusters here.'},
+    g26:{ok:[{k:'candidate',a:'work'}], why:'Candidate; the blog cover clusters here.'},
+    g27:{ok:[{k:'candidate',a:'format'}], why:'Candidate format; CD from the competitor is its alternative label.'},
+    g28:{ok:[{k:'exclude'}], why:'A facet heading, not a concept. Exclude with a note.'},
+    g29:{ok:[{k:'cluster',c:'hiphop'}], why:'The competitor\'s label for Hip hop. Alternative label.'},
+    g30:{ok:[{k:'candidate',a:'sub'},{k:'candidate',a:'genre'},{k:'cluster',c:'alternative rock'}], why:'Same concept as "Alt": Alternative rock. Cluster to that candidate, or create it here.'},
+    g31:{ok:[{k:'candidate',a:'genre'}], why:'A genre the competitor covers and you do not. Candidate, and a gap the model exists to find.'},
+    g32:{ok:[{k:'candidate',a:'format'},{k:'cluster',c:'compact disc'}], why:'Acronym; preferred form is Compact disc unless you argue CD dominates, in which case record the exception. Either way the concept is a candidate format.'},
+    g33:{ok:[{k:'candidate',a:'format'}], why:'Candidate format (Digital download or streaming). Name it fully.'},
+    g34:{ok:[{k:'candidate',a:'sub'},{k:'candidate',a:'genre'}], why:'Candidate.'},
+    g35:{ok:[{k:'candidate',a:'work'},{k:'cluster',c:'remix'}], why:'Work type; Wikidata supplies the same. Candidate or cluster to it.'},
+    g36:{ok:[{k:'candidate',a:'work'},{k:'exclude'}], why:'An unofficial recording is a work type if the app lists them; otherwise exclude with a note. Both defensible.'},
+    g37:{ok:[{k:'exact',c:'vinyl'}], why:'Exact match.'},
+    g38:{ok:[{k:'candidate',a:'format'}], why:'Candidate format.'},
+    g39:{ok:[{k:'exclude'}], why:'Praise, not a concept. Exclude with a note.'},
+    g40:{ok:[{k:'cluster',c:'song'}], why:'Fans say track for song. Alternative label of Song.'},
+    g41:{ok:[{k:'exclude'}], why:'Album cover art is not a musical work. Exclude. Mapping it to Cover version would collapse a homonym.'},
+    g42:{ok:[{k:'exclude'}], why:'The sound of a snare, not the genre. Exclude. Mapping it to Pop collapses a homonym.'},
+    g43:{ok:[{k:'exclude'}], why:'A venue, out of scope for this subgraph. Exclude with a note pointing to the Events and venues group.'},
+  },
+  ambig:[['g14','g41','Cover'],['g15','g42','Pop'],['g10','g43','House']],
+  known:{'EDM':'Electronic dance music','R&B':'Rhythm and blues','Metal':'Heavy metal','Alt':'Alternative rock','Alternative':'Alternative rock','House':'House music','EP':'Extended play','cover':'Cover version','CD':'Compact disc','Digital':'Digital download','remix':'Remix','bootleg':'Bootleg recording','cassette':'Cassette','techno':'Techno','Trap':'Trap','Single':'Single'},
+},
+/* ---------------- 2 · Events and venues ---------------- */
+{ id:'events', name:'Events and venues', blurb:'What kind of show it is, where it happens, who plays when, and what ticket gets you in.',
+  usecase:{title:'Event and venue search for a concert-listings app', problem:'"Gig", "concert" and "show" are three tags for one thing, a livestream is filed as a venue, "house" means the audience in one post and a basement venue in another, and ticket types are typed free-hand by every promoter.', requirement:'A controlled vocabulary of event types, venue types, programme slots and ticket types, with alternative labels for the words promoters and fans use and definitions that settle the boundaries.'},
+  areas:[{id:'event', name:'Event types', target:6, why:'what kind of show it is'},{id:'venue', name:'Venue types', target:5, why:'where, at what scale'},{id:'slot', name:'Programme slots', target:3, why:'who plays when'},{id:'ticket', name:'Ticket types', target:3, why:'what gets you in'}],
+  cv:[
+    {id:'concert', pref:'Concert', area:'event', def:'A live performance of music before an audience, with a set line-up and start time.'},
+    {id:'festival', pref:'Festival', area:'event', def:'A multi-act music event, usually over more than one day or stage.'},
+    {id:'openmic', pref:'Open mic', area:'event', def:'An event where unbooked performers sign up to play short slots.'},
+    {id:'club', pref:'Club', area:'venue', def:'A small standing venue with a bar and late-night programming.'},
+    {id:'hall', pref:'Concert hall', area:'venue', def:'A purpose-built seated venue for live music.'},
+    {id:'arena', pref:'Arena', area:'venue', def:'A large indoor venue, typically over 5,000 capacity, used for sport and touring shows.'},
+    {id:'headliner', pref:'Headliner', area:'slot', def:'The act billed as the main attraction, usually playing last.'},
+    {id:'support', pref:'Support act', area:'slot', def:'An act that plays before the headliner.'},
+    {id:'ga', pref:'General admission', area:'ticket', def:'A ticket that admits the holder to an unreserved standing or seating area.'},
+  ],
+  h:[
+    {id:'e1', src:'tix', term:'Concert', freq:1200, ctx:'event_type: concert'},
+    {id:'e2', src:'tix', term:'Gig', freq:340, ctx:'event_type: gig'},
+    {id:'e3', src:'tix', term:'Livestream', freq:75, ctx:'venue_type: livestream (mis-filed)'},
+    {id:'e4', src:'tix', term:'Residency', freq:22, ctx:'event_type: residency'},
+    {id:'e5', src:'tix', term:'Club night', freq:180, ctx:'event_type: club night'},
+    {id:'e6', src:'tix', term:'Stadium', freq:30, ctx:'venue_type: stadium'},
+    {id:'e7', src:'tix', term:'Theatre', freq:88, ctx:'venue_type: theatre'},
+    {id:'e8', src:'tix', term:'GA', freq:900, ctx:'ticket_type: GA'},
+    {id:'e9', src:'tix', term:'VIP', freq:210, ctx:'ticket_type: VIP'},
+    {id:'e10', src:'tix', term:'Early bird', freq:150, ctx:'ticket_type: early bird'},
+    {id:'e11', src:'tix', term:'Doors', freq:1100, ctx:'field: doors (a time, 19:00)'},
+    {id:'e12', src:'tix', term:'Opening', freq:60, ctx:'field: opening hours of the venue'},
+    {id:'e13', src:'mkt', term:'show', freq:140, ctx:'"the show of the summer"'},
+    {id:'e14', src:'mkt', term:'tour', freq:70, ctx:'"the tour reaches us in May"'},
+    {id:'e15', src:'mkt', term:'after-party', freq:25, ctx:'"after-party till late"'},
+    {id:'e16', src:'mkt', term:'venue', freq:200, ctx:'"our favourite venue"'},
+    {id:'e17', src:'mkt', term:'the house', freq:18, ctx:'"the house was packed by nine"'},
+    {id:'e18', src:'mkt', term:'set', freq:48, ctx:'"a 90-minute set"'},
+    {id:'e19', src:'mkt', term:'opening', freq:31, ctx:'"opening for the headliners"'},
+    {id:'e20', src:'wd', term:'Music festival', freq:1, ctx:'Q868557 · event'},
+    {id:'e21', src:'wd', term:'Nightclub', freq:1, ctx:'Q622425 · venue'},
+    {id:'e22', src:'wd', term:'Stadium', freq:1, ctx:'Q483110 · venue'},
+    {id:'e23', src:'wd', term:'Amphitheatre', freq:1, ctx:'Q54831 · venue'},
+    {id:'e24', src:'wd', term:'Concert tour', freq:1, ctx:'Q1573906 · event'},
+    {id:'e25', src:'wd', term:'Opening act', freq:1, ctx:'Q1520695 · role in event'},
+    {id:'e26', src:'wd', term:'Encore', freq:1, ctx:'Q1341116 · part of performance'},
+    {id:'e27', src:'comp', term:'Concerts', freq:1, ctx:'top menu'},
+    {id:'e28', src:'comp', term:'Festivals', freq:1, ctx:'top menu'},
+    {id:'e29', src:'comp', term:'Venues', freq:1, ctx:'facet heading'},
+    {id:'e30', src:'comp', term:'Arenas', freq:1, ctx:'venue facet'},
+    {id:'e31', src:'comp', term:'Comedy', freq:1, ctx:'event facet'},
+    {id:'e32', src:'comp', term:'Presale', freq:1, ctx:'ticket facet'},
+    {id:'e33', src:'forum', term:'gig', freq:500, ctx:'"best gig of the year"'},
+    {id:'e34', src:'forum', term:'openers', freq:85, ctx:'"the openers were better than the headliner"'},
+    {id:'e35', src:'forum', term:'the pit', freq:60, ctx:'"front of the pit, deaf for a week"'},
+    {id:'e36', src:'forum', term:'encore', freq:70, ctx:'"two-song encore"'},
+    {id:'e37', src:'forum', term:'merch', freq:130, ctx:'"merch table was cash only"'},
+    {id:'e38', src:'forum', term:'house show', freq:45, ctx:'"house show in someone\'s basement"'},
+    {id:'e39', src:'forum', term:'set list', freq:90, ctx:'"set list posted below"'},
+    {id:'e40', src:'forum', term:'secret show', freq:38, ctx:'"secret show announced an hour before"'},
+    {id:'e41', src:'forum', term:'door price', freq:44, ctx:'"door price was 15"'},
+  ],
+  keys:{
+    e1:{ok:[{k:'exact',c:'concert'}], why:'Exact match; the frequency validates it.'},
+    e2:{ok:[{k:'cluster',c:'concert'},{k:'candidate',a:'event'}], why:'Everyday word for a concert: alternative label, or a narrower candidate if the app needs the small-show sense. Not an exclusion, at 340 uses.'},
+    e3:{ok:[{k:'candidate',a:'event'}], why:'Mis-filed as a venue; it is an event type. Candidate under Event types, spelled Live stream.'},
+    e4:{ok:[{k:'candidate',a:'event'}], why:'A run of dates at one venue. Candidate event type.'},
+    e5:{ok:[{k:'candidate',a:'event'}], why:'An event type, not the venue. Candidate.'},
+    e6:{ok:[{k:'candidate',a:'venue'}], why:'Candidate venue type.'},
+    e7:{ok:[{k:'candidate',a:'venue'}], why:'Candidate venue type.'},
+    e8:{ok:[{k:'cluster',c:'ga'}], why:'Acronym of General admission, already preferred. Alternative label.'},
+    e9:{ok:[{k:'candidate',a:'ticket'}], why:'A ticket type the vocabulary lacks. The acronym dominates usage; keep VIP as the preferred label and record the exception, or spell it out with VIP as alternative.'},
+    e10:{ok:[{k:'candidate',a:'ticket'}], why:'Candidate ticket type.'},
+    e11:{ok:[{k:'exclude'}], why:'A time field, not a concept. Exclude with a note.'},
+    e12:{ok:[{k:'exclude'}], why:'Opening hours: a venue attribute, not a slot. Exclude. The blog "opening for" is the support slot, a different sense.'},
+    e13:{ok:[{k:'cluster',c:'concert'}], why:'Alternative label of Concert.'},
+    e14:{ok:[{k:'candidate',a:'event'},{k:'cluster',c:'concert tour'}], why:'A series of events. Candidate; Wikidata\'s Concert tour is the same concept.'},
+    e15:{ok:[{k:'candidate',a:'event'}], why:'Candidate event type.'},
+    e16:{ok:[{k:'exclude'}], why:'The generic word for the whole area, not a type. Exclude with a note.'},
+    e17:{ok:[{k:'exclude'}], why:'"The house" here is the audience or the room. Exclude. The forum "house show" is a venue type, a different sense.'},
+    e18:{ok:[{k:'candidate',a:'slot'},{k:'exclude'}], why:'A set is one act\'s performance within an event: a programme slot candidate, or excluded if slots are only about billing. The forum "set list" is a document, a different sense.'},
+    e19:{ok:[{k:'cluster',c:'support'}], why:'"Opening for" is the support slot. Alternative label of Support act.'},
+    e20:{ok:[{k:'cluster',c:'festival'}], why:'Alternative label of Festival.'},
+    e21:{ok:[{k:'cluster',c:'club'}], why:'Alternative label of Club.'},
+    e22:{ok:[{k:'candidate',a:'venue'},{k:'cluster',c:'stadium'}], why:'Same as the ticketing Stadium candidate.'},
+    e23:{ok:[{k:'candidate',a:'venue'}], why:'Candidate venue type.'},
+    e24:{ok:[{k:'candidate',a:'event'},{k:'cluster',c:'tour'}], why:'Candidate; the blog "tour" clusters here.'},
+    e25:{ok:[{k:'cluster',c:'support'}], why:'Alternative label of Support act.'},
+    e26:{ok:[{k:'candidate',a:'slot'}], why:'Candidate programme slot.'},
+    e27:{ok:[{k:'cluster',c:'concert'}], why:'Plural. Alternative label at most.'},
+    e28:{ok:[{k:'cluster',c:'festival'}], why:'Plural. Alternative label at most.'},
+    e29:{ok:[{k:'exclude'}], why:'A facet heading. Exclude with a note; it tells you the competitor facets by venue.'},
+    e30:{ok:[{k:'cluster',c:'arena'}], why:'Plural of Arena, already in the vocabulary.'},
+    e31:{ok:[{k:'exclude'}], why:'Out of scope: not music. Exclude with a note; it is coverage intelligence about the competitor.'},
+    e32:{ok:[{k:'candidate',a:'ticket'}], why:'Candidate ticket type.'},
+    e33:{ok:[{k:'cluster',c:'concert'},{k:'candidate',a:'event'}], why:'Same decision as the ticketing Gig; the two should agree.'},
+    e34:{ok:[{k:'cluster',c:'support'}], why:'Fan word for Support act. Alternative label.'},
+    e35:{ok:[{k:'exclude'}], why:'Slang for the standing area. Out of scope; exclude with a note.'},
+    e36:{ok:[{k:'candidate',a:'slot'},{k:'cluster',c:'encore'}], why:'Candidate slot; Wikidata supplies the same.'},
+    e37:{ok:[{k:'exclude'}], why:'Out of scope. Exclude with a note.'},
+    e38:{ok:[{k:'candidate',a:'venue'}], why:'A venue type. Candidate. Keeping it apart from the blog "the house" is the disambiguation.'},
+    e39:{ok:[{k:'exclude'}], why:'A document, not a slot or event. Exclude. Mapping it to the Set candidate collapses a homonym.'},
+    e40:{ok:[{k:'candidate',a:'event'}], why:'Candidate event type.'},
+    e41:{ok:[{k:'exclude'},{k:'candidate',a:'ticket'}], why:'A price paid at the door: an attribute, or a ticket type ("On the door") if the app sells it. Either, with a note.'},
+  },
+  ambig:[['e17','e38','House'],['e18','e39','Set'],['e19','e12','Opening']],
+  known:{'Gig':'Gig','gig':'Gig','Livestream':'Live stream','Club night':'Club night','Theatre':'Theatre','VIP':'VIP','Early bird':'Early bird','tour':'Tour','after-party':'After-party','set':'Set','Amphitheatre':'Amphitheatre','Concert tour':'Tour','Encore':'Encore','encore':'Encore','Presale':'Presale','house show':'House show','secret show':'Secret show','door price':'On the door','Residency':'Residency','Stadium':'Stadium'},
+},
+/* ---------------- 3 · Instruments ---------------- */
+{ id:'instruments', name:'Instruments', blurb:'The credits on a listing and the "wanted" ads: what people play, in the words they use for it.',
+  usecase:{title:'Instrument credits and musician-wanted ads for a concert-listings app', problem:'Credits are typed free-hand: "bass", "keys", "sax", "vox", "axe". A "wanted" ad for a drummer cannot be matched to a profile that says "kit". And "bass" in a forum post is a sound, not an instrument.', requirement:'A controlled vocabulary of instruments by family, with alternative labels for slang, clipped forms and brand names, and definitions that keep instruments apart from sounds, equipment and sections.'},
+  areas:[{id:'string', name:'String', target:5, why:'the most-credited family'},{id:'wind', name:'Wind', target:4, why:'brass and woodwind credits'},{id:'perc', name:'Percussion', target:3, why:'drummer-wanted ads'},{id:'keyelec', name:'Keyboard and electronic', target:4, why:'keys, synths, decks'}],
+  cv:[
+    {id:'guitar', pref:'Guitar', area:'string', def:'A fretted string instrument, plucked or strummed, acoustic or electric.'},
+    {id:'bassguitar', pref:'Bass guitar', area:'string', def:'A guitar-shaped string instrument tuned an octave below the guitar, supplying the low end.'},
+    {id:'violin', pref:'Violin', area:'string', def:'A bowed four-string instrument, the highest-pitched of the orchestral string family.'},
+    {id:'sax', pref:'Saxophone', area:'wind', def:'A single-reed woodwind instrument made of brass, in soprano to baritone sizes.'},
+    {id:'trumpet', pref:'Trumpet', area:'wind', def:'A valved brass instrument, the highest-pitched of the standard brass family.'},
+    {id:'drumkit', pref:'Drum kit', area:'perc', def:'A set of drums and cymbals played by one person.'},
+    {id:'piano', pref:'Piano', area:'keyelec', def:'A keyboard instrument in which hammers strike strings.'},
+    {id:'synth', pref:'Synthesizer', area:'keyelec', def:'An electronic instrument that generates sound from oscillators or samples, usually played from a keyboard.'},
+  ],
+  h:[
+    {id:'i1', src:'tix', term:'bass', freq:40, ctx:'credit: bass'},
+    {id:'i2', src:'tix', term:'keys', freq:35, ctx:'credit: keys'},
+    {id:'i3', src:'tix', term:'strings', freq:14, ctx:'credit: strings'},
+    {id:'i4', src:'tix', term:'sax', freq:28, ctx:'credit: sax'},
+    {id:'i5', src:'tix', term:'drums', freq:120, ctx:'credit: drums'},
+    {id:'i6', src:'tix', term:'vox', freq:90, ctx:'credit: vox'},
+    {id:'i7', src:'tix', term:'acoustic', freq:26, ctx:'credit: acoustic'},
+    {id:'i8', src:'tix', term:'lead', freq:33, ctx:'credit: lead (guitar)'},
+    {id:'i9', src:'tix', term:'808s', freq:12, ctx:'credit: 808s'},
+    {id:'i10', src:'mkt', term:'Fender', freq:9, ctx:'"a Fender through a cranked amp"'},
+    {id:'i11', src:'mkt', term:'Rhodes', freq:11, ctx:'"Rhodes on the ballad"'},
+    {id:'i12', src:'mkt', term:'turntables', freq:20, ctx:'"two turntables and a microphone"'},
+    {id:'i13', src:'mkt', term:'cello', freq:15, ctx:'"cello and voice, nothing else"'},
+    {id:'i14', src:'mkt', term:'flute', freq:8, ctx:'"flute solo, unexpectedly"'},
+    {id:'i15', src:'mkt', term:'brass', freq:17, ctx:'"a full brass section"'},
+    {id:'i16', src:'mkt', term:'guitar', freq:60, ctx:'"guitar hero night"'},
+    {id:'i17', src:'wd', term:'Electric guitar', freq:1, ctx:'Q78987 · musical instrument'},
+    {id:'i18', src:'wd', term:'Double bass', freq:1, ctx:'Q80019 · musical instrument'},
+    {id:'i19', src:'wd', term:'Violoncello', freq:1, ctx:'Q8371 · musical instrument'},
+    {id:'i20', src:'wd', term:'Clarinet', freq:1, ctx:'Q8343 · musical instrument'},
+    {id:'i21', src:'wd', term:'Trombone', freq:1, ctx:'Q8350 · musical instrument'},
+    {id:'i22', src:'wd', term:'Congas', freq:1, ctx:'Q1117994 · musical instrument'},
+    {id:'i23', src:'wd', term:'Drum machine', freq:1, ctx:'Q188594 · electronic instrument'},
+    {id:'i24', src:'wd', term:'Electric piano', freq:1, ctx:'Q1327500 · musical instrument'},
+    {id:'i25', src:'wd', term:'Turntable', freq:1, ctx:'Q1275599 · device'},
+    {id:'i26', src:'comp', term:'Guitars', freq:1, ctx:'wanted-ads facet'},
+    {id:'i27', src:'comp', term:'Bass', freq:1, ctx:'wanted-ads facet'},
+    {id:'i28', src:'comp', term:'Drums', freq:1, ctx:'wanted-ads facet'},
+    {id:'i29', src:'comp', term:'Keys', freq:1, ctx:'wanted-ads facet'},
+    {id:'i30', src:'comp', term:'Vocals', freq:1, ctx:'wanted-ads facet'},
+    {id:'i31', src:'comp', term:'DJ gear', freq:1, ctx:'wanted-ads facet'},
+    {id:'i32', src:'forum', term:'axe', freq:70, ctx:'"new axe, same three chords"'},
+    {id:'i33', src:'forum', term:'kit', freq:95, ctx:'"selling my kit, cymbals included"'},
+    {id:'i34', src:'forum', term:'synth', freq:88, ctx:'"synth wanted for a post-punk thing"'},
+    {id:'i35', src:'forum', term:'bass', freq:210, ctx:'"that bass drop at 2:10"'},
+    {id:'i36', src:'forum', term:'keys', freq:30, ctx:'"what key is this in?"'},
+    {id:'i37', src:'forum', term:'uke', freq:22, ctx:'"uke player looking for a band"'},
+    {id:'i38', src:'forum', term:'fiddle', freq:41, ctx:'"fiddle player wanted, folk set"'},
+    {id:'i39', src:'forum', term:'banjo', freq:19, ctx:'"banjo, sorry"'},
+    {id:'i40', src:'forum', term:'cajón', freq:16, ctx:'"cajón instead of a kit for the acoustic set"'},
+    {id:'i41', src:'forum', term:'MPC', freq:27, ctx:'"made the whole beat on an MPC"'},
+    {id:'i42', src:'forum', term:'amp', freq:130, ctx:'"amp blew mid-song"'},
+    {id:'i43', src:'forum', term:'lead', freq:24, ctx:'"lead sheet in G attached"'},
+  ],
+  keys:{
+    i1:{ok:[{k:'cluster',c:'bassguitar'}], why:'In a credit field, bass is the instrument. Alternative label of Bass guitar. The forum "bass drop" is a different sense.'},
+    i2:{ok:[{k:'cluster',c:'piano'},{k:'candidate',a:'keyelec'}], why:'A credit for keys means the keyboard player. Alternative label of Piano, or of a Keyboard candidate. The forum "what key" is a different sense.'},
+    i3:{ok:[{k:'candidate',a:'string'},{k:'exclude'}], why:'A string section is a group, not an instrument. Candidate if the app credits sections; otherwise exclude with a note.'},
+    i4:{ok:[{k:'cluster',c:'sax'}], why:'Clipped form. Alternative label of Saxophone.'},
+    i5:{ok:[{k:'cluster',c:'drumkit'}], why:'Alternative label of Drum kit.'},
+    i6:{ok:[{k:'exclude'},{k:'candidate',a:'wind'}], why:'Vocals are not an instrument in this subgraph; exclude with a note pointing to the Musicians group. Treating the voice as a wind instrument is a defensible minority view, so a candidate passes too.'},
+    i7:{ok:[{k:'cluster',c:'guitar'},{k:'candidate',a:'string'}], why:'"Acoustic" in a credit is the acoustic guitar. Alternative label of Guitar, or a narrower candidate Acoustic guitar.'},
+    i8:{ok:[{k:'cluster',c:'guitar'},{k:'candidate',a:'string'}], why:'Lead here is lead guitar. Alternative label of Guitar or a narrower candidate. The forum "lead sheet" is a different sense.'},
+    i9:{ok:[{k:'candidate',a:'keyelec'},{k:'cluster',c:'drum machine'}], why:'808s are drum-machine sounds. Cluster to the Drum machine candidate that Wikidata supplies, or create it.'},
+    i10:{ok:[{k:'exclude'},{k:'cluster',c:'guitar'}], why:'A brand. Exclude with a note, or at most an alternative label of Guitar. Brands are not preferred labels.'},
+    i11:{ok:[{k:'candidate',a:'keyelec'},{k:'cluster',c:'electric piano'}], why:'A brand that names a type: the electric piano. Candidate Electric piano with Rhodes as alternative label.'},
+    i12:{ok:[{k:'candidate',a:'keyelec'},{k:'cluster',c:'turntable'}], why:'Candidate; Wikidata\'s Turntable is the same concept.'},
+    i13:{ok:[{k:'candidate',a:'string'},{k:'cluster',c:'violoncello'}], why:'Candidate; Wikidata supplies Violoncello, the formal name. Pick one as preferred and keep the other as alternative.'},
+    i14:{ok:[{k:'candidate',a:'wind'}], why:'Candidate wind instrument.'},
+    i15:{ok:[{k:'candidate',a:'wind'},{k:'exclude'}], why:'A section, like strings. Candidate or exclude with a note; be consistent with your strings decision.'},
+    i16:{ok:[{k:'exact',c:'guitar'}], why:'Exact match.'},
+    i17:{ok:[{k:'candidate',a:'string'},{k:'cluster',c:'guitar'}], why:'Narrower than Guitar. Candidate, or an alternative label if the app does not distinguish.'},
+    i18:{ok:[{k:'candidate',a:'string'}], why:'Not the bass guitar. Candidate.'},
+    i19:{ok:[{k:'candidate',a:'string'},{k:'cluster',c:'cello'}], why:'Same concept as the blog cello.'},
+    i20:{ok:[{k:'candidate',a:'wind'}], why:'Candidate.'},
+    i21:{ok:[{k:'candidate',a:'wind'}], why:'Candidate.'},
+    i22:{ok:[{k:'candidate',a:'perc'}], why:'Candidate.'},
+    i23:{ok:[{k:'candidate',a:'keyelec'}], why:'Candidate; 808s and MPC cluster here or nearby.'},
+    i24:{ok:[{k:'candidate',a:'keyelec'}], why:'Candidate; Rhodes clusters here.'},
+    i25:{ok:[{k:'candidate',a:'keyelec'}], why:'Candidate; turntables clusters here.'},
+    i26:{ok:[{k:'cluster',c:'guitar'}], why:'Plural. Alternative label at most.'},
+    i27:{ok:[{k:'cluster',c:'bassguitar'}], why:'In a wanted-ads facet, Bass is the instrument. Alternative label of Bass guitar.'},
+    i28:{ok:[{k:'cluster',c:'drumkit'}], why:'Alternative label of Drum kit.'},
+    i29:{ok:[{k:'cluster',c:'piano'},{k:'candidate',a:'keyelec'}], why:'Same as the ticketing keys.'},
+    i30:{ok:[{k:'exclude'}], why:'Not an instrument in this subgraph. Exclude with a note pointing to the Musicians group.'},
+    i31:{ok:[{k:'exclude'},{k:'cluster',c:'turntable'}], why:'Equipment category, not an instrument; exclude with a note, or cluster to Turntable if you treat decks as an instrument.'},
+    i32:{ok:[{k:'cluster',c:'guitar'}], why:'Slang for guitar. Alternative label.'},
+    i33:{ok:[{k:'cluster',c:'drumkit'}], why:'Clipped form. Alternative label of Drum kit.'},
+    i34:{ok:[{k:'cluster',c:'synth'}], why:'Clipped form. Alternative label of Synthesizer.'},
+    i35:{ok:[{k:'exclude'}], why:'The low-frequency sound, not the instrument. Exclude. Mapping it to Bass guitar collapses the homonym.'},
+    i36:{ok:[{k:'exclude'}], why:'The musical key. Exclude.'},
+    i37:{ok:[{k:'candidate',a:'string'}], why:'Clipped form of Ukulele. Candidate, spelled out, uke as alternative.'},
+    i38:{ok:[{k:'cluster',c:'violin'}], why:'Folk name for the violin. Alternative label.'},
+    i39:{ok:[{k:'candidate',a:'string'}], why:'Candidate.'},
+    i40:{ok:[{k:'candidate',a:'perc'}], why:'Candidate.'},
+    i41:{ok:[{k:'candidate',a:'keyelec'},{k:'cluster',c:'drum machine'}], why:'A brand naming a type: sampler or drum machine. Cluster to Drum machine, or candidate Sampler with MPC as alternative.'},
+    i42:{ok:[{k:'exclude'}], why:'Equipment, not an instrument. Exclude with a note.'},
+    i43:{ok:[{k:'exclude'}], why:'A lead sheet is notation. Exclude. The ticketing "lead" is lead guitar.'},
+  },
+  ambig:[['i1','i35','Bass'],['i2','i36','Keys'],['i8','i43','Lead']],
+  known:{'strings':'String section','acoustic':'Acoustic guitar','lead':'Lead guitar','808s':'Drum machine','Rhodes':'Electric piano','turntables':'Turntable','cello':'Cello','flute':'Flute','brass':'Brass section','uke':'Ukulele','banjo':'Banjo','cajón':'Cajón','MPC':'Sampler','vox':'Voice','keys':'Keyboard','Keys':'Keyboard'},
+},
+/* ---------------- 4 · Musicians and musical works ---------------- */
+{ id:'musicians', name:'Musicians and musical works', blurb:'Who is on the bill and what they did: performer and creative roles, kinds of act, and the works and credits that connect them.',
+  usecase:{title:'Line-up and credits for a concert-listings app', problem:'A listing says "feat.", "prod.", "MC" and "lead" and the app cannot tell a rapper from a host or a lead singer from a lead sheet. Bands, duos and collectives are all "artist". Covers and remixes are credited three different ways.', requirement:'A controlled vocabulary of performer roles, creative roles, act types and work credits, with alternative labels for abbreviations and slang and definitions that settle the ambiguous ones.'},
+  areas:[{id:'perf', name:'Performer roles', target:5, why:'who is on stage'},{id:'act', name:'Act types', target:3, why:'how the act is billed'},{id:'creative', name:'Creative roles', target:4, why:'who made the work'},{id:'work', name:'Works and credits', target:4, why:'what is being performed and how'}],
+  cv:[
+    {id:'vocalist', pref:'Vocalist', area:'perf', def:'A performer whose instrument is the voice.'},
+    {id:'dj', pref:'DJ', area:'perf', def:'A performer who selects and mixes recorded music for an audience.'},
+    {id:'guitarist', pref:'Guitarist', area:'perf', def:'A performer who plays the guitar.'},
+    {id:'band', pref:'Band', area:'act', def:'An act of three or more musicians performing under one name.'},
+    {id:'solo', pref:'Solo artist', area:'act', def:'An act billed under one performer\'s name.'},
+    {id:'producer', pref:'Producer', area:'creative', def:'The person who oversees the recording of a work and shapes its sound.'},
+    {id:'songwriter', pref:'Songwriter', area:'creative', def:'The person who writes the music and lyrics of a song.'},
+    {id:'song', pref:'Song', area:'work', def:'A musical work with lyrics and melody, released or performed as a unit.'},
+    {id:'album', pref:'Album', area:'work', def:'A collection of recordings released together as one work.'},
+  ],
+  h:[
+    {id:'m1', src:'tix', term:'vocals', freq:300, ctx:'credit: vocals'},
+    {id:'m2', src:'tix', term:'MC', freq:48, ctx:'credit: MC (on a hip hop bill)'},
+    {id:'m3', src:'tix', term:'feat.', freq:160, ctx:'credit: feat.'},
+    {id:'m4', src:'tix', term:'prod.', freq:90, ctx:'credit: prod.'},
+    {id:'m5', src:'tix', term:'trio', freq:36, ctx:'act_type: trio'},
+    {id:'m6', src:'tix', term:'collective', freq:21, ctx:'act_type: collective'},
+    {id:'m7', src:'tix', term:'support act', freq:220, ctx:'slot: support act'},
+    {id:'m8', src:'tix', term:'headliner', freq:260, ctx:'slot: headliner'},
+    {id:'m9', src:'mkt', term:'frontman', freq:22, ctx:'"the frontman returns"'},
+    {id:'m10', src:'mkt', term:'singer', freq:70, ctx:'"the singer everyone is talking about"'},
+    {id:'m11', src:'mkt', term:'rapper', freq:40, ctx:'"the rapper who stole the show"'},
+    {id:'m12', src:'mkt', term:'drummer', freq:31, ctx:'"drummer of the year"'},
+    {id:'m13', src:'mkt', term:'beatmaker', freq:12, ctx:'"beatmaker turned headliner"'},
+    {id:'m14', src:'mkt', term:'lead', freq:27, ctx:'"lead singer of the band"'},
+    {id:'m15', src:'mkt', term:'composer', freq:14, ctx:'"composer of the score"'},
+    {id:'m16', src:'mkt', term:'cover', freq:33, ctx:'"a cover of Hallelujah that silenced the room"'},
+    {id:'m17', src:'mkt', term:'duet', freq:16, ctx:'"a duet with her sister"'},
+    {id:'m18', src:'mkt', term:'singer-songwriter', freq:29, ctx:'"singer-songwriter night"'},
+    {id:'m19', src:'wd', term:'Singer', freq:1, ctx:'Q177220 · occupation'},
+    {id:'m20', src:'wd', term:'Disc jockey', freq:1, ctx:'Q130857 · occupation'},
+    {id:'m21', src:'wd', term:'Musical ensemble', freq:1, ctx:'Q2088357 · organisation type'},
+    {id:'m22', src:'wd', term:'Duo', freq:1, ctx:'Q10648343 · ensemble type'},
+    {id:'m23', src:'wd', term:'Record producer', freq:1, ctx:'Q183945 · occupation'},
+    {id:'m24', src:'wd', term:'Composer', freq:1, ctx:'Q36834 · occupation'},
+    {id:'m25', src:'wd', term:'Lyricist', freq:1, ctx:'Q822146 · occupation'},
+    {id:'m26', src:'wd', term:'Cover version', freq:1, ctx:'Q1364562 · musical work type'},
+    {id:'m27', src:'wd', term:'Remix', freq:1, ctx:'Q1330257 · musical work type'},
+    {id:'m28', src:'wd', term:'Featured artist', freq:1, ctx:'Q2478141 · credit role'},
+    {id:'m29', src:'wd', term:'Session musician', freq:1, ctx:'Q1129478 · occupation'},
+    {id:'m30', src:'comp', term:'Artists', freq:1, ctx:'facet heading'},
+    {id:'m31', src:'comp', term:'Bands', freq:1, ctx:'act facet'},
+    {id:'m32', src:'comp', term:'DJs', freq:1, ctx:'act facet'},
+    {id:'m33', src:'comp', term:'Solo', freq:1, ctx:'act facet'},
+    {id:'m34', src:'comp', term:'Tribute acts', freq:1, ctx:'act facet'},
+    {id:'m35', src:'comp', term:'Open mic', freq:1, ctx:'act facet (mis-filed)'},
+    {id:'m36', src:'forum', term:'MC', freq:40, ctx:'"the MC hyped the crowd between sets"'},
+    {id:'m37', src:'forum', term:'lead', freq:24, ctx:'"lead sheet in G attached"'},
+    {id:'m38', src:'forum', term:'cover', freq:52, ctx:'"the album cover art is stunning"'},
+    {id:'m39', src:'forum', term:'session player', freq:18, ctx:'"session player on half the record"'},
+    {id:'m40', src:'forum', term:'ghost producer', freq:15, ctx:'"ghost producer did the whole EP"'},
+    {id:'m41', src:'forum', term:'feature', freq:66, ctx:'"the feature on track 3 is wasted"'},
+    {id:'m42', src:'forum', term:'hype man', freq:23, ctx:'"the hype man did more than the headliner"'},
+    {id:'m43', src:'forum', term:'roadie', freq:34, ctx:'"roadie fixed it in ten seconds"'},
+    {id:'m44', src:'forum', term:'the band', freq:210, ctx:'"the band were on fire"'},
+  ],
+  keys:{
+    m1:{ok:[{k:'cluster',c:'vocalist'}], why:'A credit for vocals is the vocalist. Alternative label.'},
+    m2:{ok:[{k:'candidate',a:'perf'},{k:'cluster',c:'rapper'}], why:'On a hip hop bill, MC is the rapper. Cluster to the Rapper candidate as an alternative label. The forum MC is the host, a different sense: the same acronym, two concepts.'},
+    m3:{ok:[{k:'candidate',a:'work'},{k:'cluster',c:'featured artist'}], why:'An abbreviation of Featured artist, a credit the vocabulary lacks. Candidate, spelled out; feat. as alternative.'},
+    m4:{ok:[{k:'cluster',c:'producer'}], why:'Abbreviation of Producer. Alternative label.'},
+    m5:{ok:[{k:'candidate',a:'act'},{k:'cluster',c:'band'}], why:'An act type. Candidate, or an alternative of Band if the app does not distinguish size.'},
+    m6:{ok:[{k:'candidate',a:'act'}], why:'Candidate act type.'},
+    m7:{ok:[{k:'exclude'},{k:'candidate',a:'perf'}], why:'A programme slot, which belongs to the Events group. Exclude with a note pointing there; a performer-role candidate is defensible if the app treats billing as a role.'},
+    m8:{ok:[{k:'exclude'},{k:'candidate',a:'perf'}], why:'Same as support act.'},
+    m9:{ok:[{k:'cluster',c:'vocalist'}], why:'Gendered, informal synonym. Alternative label of Vocalist, never preferred.'},
+    m10:{ok:[{k:'cluster',c:'vocalist'}], why:'Alternative label of Vocalist.'},
+    m11:{ok:[{k:'candidate',a:'perf'}], why:'A performer role the vocabulary lacks. Candidate; the ticketing MC clusters here.'},
+    m12:{ok:[{k:'candidate',a:'perf'}], why:'Candidate performer role.'},
+    m13:{ok:[{k:'cluster',c:'producer'},{k:'candidate',a:'creative'}], why:'Alternative label of Producer, or a narrower candidate.'},
+    m14:{ok:[{k:'cluster',c:'vocalist'},{k:'candidate',a:'perf'}], why:'"Lead singer" is the vocalist, or a narrower Lead vocalist candidate. The forum "lead sheet" is notation, a different sense.'},
+    m15:{ok:[{k:'candidate',a:'creative'}], why:'Candidate creative role; Wikidata supplies the same.'},
+    m16:{ok:[{k:'candidate',a:'work'},{k:'cluster',c:'cover version'}], why:'A cover of a song is a work credit: Cover version. The forum "cover" is the artwork.'},
+    m17:{ok:[{k:'candidate',a:'act'},{k:'candidate',a:'work'},{k:'cluster',c:'duo'}], why:'A duet is a work for two voices; the act type is Duo. Either area is defensible, with a definition that says which.'},
+    m18:{ok:[{k:'candidate',a:'perf'},{k:'candidate',a:'creative'},{k:'cluster',c:'songwriter'}], why:'A combined role. Candidate under either performer or creative roles, or an alternative label of Songwriter.'},
+    m19:{ok:[{k:'cluster',c:'vocalist'}], why:'Alternative label of Vocalist.'},
+    m20:{ok:[{k:'cluster',c:'dj'}], why:'The spelled-out form. The acronym rule says spell out, unless the acronym dominates; DJ does. Keep DJ preferred, record Disc jockey as alternative, note the exception.'},
+    m21:{ok:[{k:'cluster',c:'band'}], why:'Wikidata\'s formal name for a band. Alternative label.'},
+    m22:{ok:[{k:'candidate',a:'act'}], why:'Candidate act type.'},
+    m23:{ok:[{k:'cluster',c:'producer'}], why:'Alternative label of Producer.'},
+    m24:{ok:[{k:'candidate',a:'creative'},{k:'cluster',c:'composer'}], why:'Candidate; the blog composer is the same.'},
+    m25:{ok:[{k:'candidate',a:'creative'}], why:'Candidate creative role.'},
+    m26:{ok:[{k:'candidate',a:'work'}], why:'Candidate; the blog cover clusters here.'},
+    m27:{ok:[{k:'candidate',a:'work'}], why:'Candidate work credit.'},
+    m28:{ok:[{k:'candidate',a:'work'},{k:'candidate',a:'perf'}], why:'Candidate; feat. and feature cluster here.'},
+    m29:{ok:[{k:'candidate',a:'perf'}], why:'Candidate; the forum session player clusters here.'},
+    m30:{ok:[{k:'exclude'}], why:'A facet heading. Exclude with a note.'},
+    m31:{ok:[{k:'cluster',c:'band'}], why:'Plural. Alternative label at most.'},
+    m32:{ok:[{k:'cluster',c:'dj'}], why:'Plural. Alternative label at most.'},
+    m33:{ok:[{k:'cluster',c:'solo'}], why:'Clipped form of Solo artist. Alternative label.'},
+    m34:{ok:[{k:'candidate',a:'act'}], why:'An act type the competitor covers and you do not. Candidate: a competitor gap.'},
+    m35:{ok:[{k:'exclude'}], why:'An event type mis-filed as an act. Exclude with a note pointing to the Events group.'},
+    m36:{ok:[{k:'candidate',a:'perf'}], why:'The host who works the crowd: a different concept from the rapper. Candidate Master of ceremonies (or Host) with MC as alternative. Mapping both MCs to one concept collapses the homonym.'},
+    m37:{ok:[{k:'exclude'}], why:'Notation, not a role. Exclude.'},
+    m38:{ok:[{k:'exclude'}], why:'Artwork, not a work credit. Exclude.'},
+    m39:{ok:[{k:'candidate',a:'perf'},{k:'cluster',c:'session musician'}], why:'Same as Wikidata\'s Session musician.'},
+    m40:{ok:[{k:'cluster',c:'producer'},{k:'candidate',a:'creative'}], why:'A narrower kind of producer. Alternative label, or narrower candidate.'},
+    m41:{ok:[{k:'candidate',a:'work'},{k:'cluster',c:'featured artist'}], why:'Fan word for a featured-artist credit. Cluster to that candidate.'},
+    m42:{ok:[{k:'candidate',a:'perf'},{k:'cluster',c:'master of ceremonies'}], why:'A performer role, close to the host sense of MC. Candidate or cluster to it.'},
+    m43:{ok:[{k:'exclude'}], why:'Crew, not a musician. Exclude with a note.'},
+    m44:{ok:[{k:'exact',c:'band'},{k:'cluster',c:'band'}], why:'Band, with the article. Exact or alternative, either passes.'},
+  },
+  ambig:[['m2','m36','MC'],['m14','m37','Lead'],['m16','m38','Cover']],
+  known:{'MC':'Master of ceremonies','feat.':'Featured artist','prod.':'Producer','trio':'Trio','collective':'Collective','rapper':'Rapper','drummer':'Drummer','beatmaker':'Beatmaker','lead':'Lead vocalist','composer':'Composer','cover':'Cover version','duet':'Duet','singer-songwriter':'Singer-songwriter','Tribute acts':'Tribute act','session player':'Session musician','ghost producer':'Ghost producer','feature':'Featured artist','hype man':'Hype man','Duo':'Duo','support act':'Support act','headliner':'Headliner'},
+},
+];
+/* active subgraph, bound into the globals the rest of the page reads */
+let USECASE, AREAS, CV0, H, KEYS, AMBIG, KNOWN, DOMAIN;
+function setDomain(id){ DOMAIN = DOMAINS.find(d => d.id === id) || null; if(!DOMAIN){ USECASE = AREAS = CV0 = H = KEYS = AMBIG = KNOWN = null; return; } USECASE = DOMAIN.usecase; AREAS = DOMAIN.areas; CV0 = DOMAIN.cv; H = DOMAIN.h; KEYS = DOMAIN.keys; AMBIG = DOMAIN.ambig; KNOWN = DOMAIN.known; }
+
+/* ============ state ============ */
+let G = load() || {domain:null, per:{}};
+let S = null;
+function fresh(){ return {step:'brief', dec:{}, defs:{}, notes:{}, checked:false, fsrc:'all', fstat:'all', fcon:null}; }
+function load(){ try{ const g = JSON.parse(localStorage.getItem(KEY)); return g && g.per ? g : null; }catch(e){ return null; } }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(G)); }catch(e){} }
+function chooseDomain(id){ G.domain = id; setDomain(id); if(id){ G.per[id] ||= fresh(); S = G.per[id]; } else S = null; save(); render(); window.scrollTo({top:0}); }
+if(G.domain){ setDomain(G.domain); S = G.per[G.domain] ||= fresh(); }
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s||'').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+const slug = s => norm(s).replace(/\s+/g,'-') || 'x';
+const today = () => new Date().toISOString().slice(0,10);
+function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove('show'), 1800); }
+const occ = id => H.find(h => h.id === id);
+const srcOf = id => SOURCES.find(s => s.id === id);
+const area = id => AREAS.find(a => a.id === id);
+const cv = id => CV0.find(c => c.id === id);
+const stem = s => { let k = norm(s); if(k.endsWith('ies')) k = k.slice(0,-3)+'y'; else if(k.endsWith('es') && !k.endsWith('ses')) k = k.slice(0,-2); else if(k.endsWith('s') && !k.endsWith('ss')) k = k.slice(0,-1); return k; };
+
+/* a decision: {k:'exact'|'cluster'|'candidate'|'exclude', c: cvId (exact/cluster) | candName (cluster to candidate), role:'alt'|'narrower', a: areaId, name: candidate pref, note} */
+function candidates(){
+  /* candidate concepts: from decisions of kind candidate, grouped by normalised name */
+  const map = {};
+  H.forEach(h => { const d = S.dec[h.id]; if(d && d.k === 'candidate' && d.name){ const key = norm(d.name); (map[key] ||= {key, name:d.name, area:d.a, occ:[], alts:[]}); map[key].occ.push(h.id); if(norm(h.term) !== norm(d.name) && !map[key].alts.includes(h.term)) map[key].alts.push(h.term); } });
+  H.forEach(h => { const d = S.dec[h.id]; if(d && d.k === 'cluster' && d.c && !cv(d.c)){ const key = norm(d.c); if(map[key]){ map[key].occ.push(h.id); if(!map[key].alts.includes(h.term) && norm(h.term) !== key) map[key].alts.push(h.term); } } });
+  return Object.values(map);
+}
+function conceptNodes(){
+  const nodes = CV0.map(c => ({id:c.id, pref:c.pref, area:c.area, kind:'cv', def:S.defs[c.id] ?? c.def, occ:[], alts:[]}));
+  H.forEach(h => { const d = S.dec[h.id]; if(!d) return; if((d.k === 'exact' || d.k === 'cluster') && cv(d.c)){ const n = nodes.find(x => x.id === d.c); n.occ.push(h.id); if(d.k === 'cluster' && !n.alts.includes(h.term) && norm(h.term) !== norm(n.pref)) n.alts.push(h.term); } });
+  candidates().forEach(c => nodes.push({id:'cand:' + c.key, pref:c.name, area:c.area, kind:'cand', def:S.defs['cand:' + c.key] || '', occ:c.occ, alts:c.alts}));
+  return nodes;
+}
+const srcsOf = node => [...new Set(node.occ.map(id => occ(id).src))];
+const freqOf = node => node.occ.reduce((a,id) => a + occ(id).freq, 0);
+function progress(){ const done = H.filter(h => S.dec[h.id] && S.dec[h.id].k && (S.dec[h.id].k === 'exclude' || S.dec[h.id].k === 'candidate' ? (S.dec[h.id].k === 'exclude' || S.dec[h.id].name) : S.dec[h.id].c)).length; return {done, total:H.length}; }
+
+/* ============ render ============ */
+function counts(){
+  const p = progress(); const nodes = conceptNodes(); const cands = nodes.filter(n => n.kind === 'cand');
+  const need = cands.filter(n => !n.def).length + AMBIG.filter(([a,b]) => !S.notes[a + '|' + b]).length;
+  $('#c-brief').textContent = `${CV0.length} concepts · ${H.length} harvested`;
+  $('#c-curate').textContent = `${p.done} of ${p.total} resolved`;
+  $('#c-define').textContent = need ? `${need} to write` : (cands.length ? 'done' : 'waiting');
+  const cov = completeness(); $('#c-graph').textContent = `${cov.pct}% complete`;
+}
+function render(){
+  const chooser = !G.domain;
+  $('#steps').hidden = chooser; $('#domainbar').hidden = chooser;
+  if(chooser){ renderChooser($('#card')); return; }
+  $('#domainName').textContent = DOMAIN.name;
+  document.querySelectorAll('#steps button').forEach(b => b.classList.toggle('on', b.dataset.step === S.step));
+  counts();
+  ({brief:renderBrief, curate:renderCurate, define:renderDefine, graph:renderGraph})[S.step]($('#card'));
+  save();
+}
+function renderChooser(card){
+  card.innerHTML = `
+    <span class="roundchip">Choose your subgraph</span>
+    <h2>Which part of the music knowledge graph is your group building?</h2>
+    <p>Each subgraph has its own use case, coverage targets, starting vocabulary and harvested terms from the same five sources. You will only see the material for the one you pick. Your work on each is saved separately, so a group can come back to its own.</p>
+    <div class="domains">${DOMAINS.map((d,i) => { const st = G.per[d.id]; const n = st ? Object.keys(st.dec).length : 0; return `<button class="domain" data-d="${d.id}"><span class="n">${i+1}</span><b>${esc(d.name)}</b><span class="small muted">${esc(d.blurb)}</span><span class="mono">${d.h.length} terms · ${d.cv.length} concepts · ${d.areas.length} areas${n ? ' · ' + n + ' decided' : ''}</span></button>`; }).join('')}</div>
+    <div class="note"><span class="lab mono">The method is the same in every subgraph</span>Read the brief and the targets. Reconcile every harvested term against the vocabulary: exact match, cluster, new candidate or documented exclusion. Define what is new and write scope notes for the strings that mean two things. Then read the graph: coverage by source, completeness against the targets, homonyms split or collapsed.</div>`;
+  bind(card, '[data-d]', 'click', el => chooseDomain(el.dataset.d));
+}
+document.querySelectorAll('#steps button').forEach(b => b.addEventListener('click', () => { S.step = b.dataset.step; render(); window.scrollTo({top:0}); }));
+$('#changeDomain').addEventListener('click', () => chooseDomain(null));
+function bind(el, sel, ev, fn){ el.querySelectorAll(sel).forEach(x => x.addEventListener(ev, e => fn(x, e))); }
+
+/* ---------- 1 brief ---------- */
+function renderBrief(card){
+  card.innerHTML = `
+    <span class="roundchip">1 · The brief</span>
+    <h2>${esc(USECASE.title)}</h2>
+    <p><b>The problem.</b> ${esc(USECASE.problem)}</p>
+    <p><b>What the taxonomy must do.</b> ${esc(USECASE.requirement)}</p>
+    <div class="note"><span class="lab mono">The four questions a coverage model answers</span>What topics must be included? How deep should each branch go? What granularity do users and systems need? What are competitors covering that we must match or exceed? The targets below are the answer to the first question, written down before any term is touched, so that "done" means something.</div>
+    <h3>Coverage targets · completeness criteria</h3>
+    <div class="tscroll"><table class="tbl"><thead><tr><th>Required area</th><th>Why</th><th>Target</th><th>Already in the vocabulary</th></tr></thead><tbody>
+      ${AREAS.map(a => `<tr><td><b>${esc(a.name)}</b></td><td class="muted">${esc(a.why)}</td><td>${a.target} concepts</td><td>${CV0.filter(c => c.area === a.id).length}</td></tr>`).join('')}</tbody></table></div>
+    <h3>The existing controlled vocabulary · ${CV0.length} concepts</h3>
+    <p class="small muted">The flat list your group already has. It tells you what is accounted for. Everything harvested is reconciled against it.</p>
+    <div class="tscroll"><table class="tbl"><thead><tr><th>Preferred label</th><th>Area</th><th>Definition</th></tr></thead><tbody>
+      ${CV0.map(c => `<tr><td><b>${esc(c.pref)}</b></td><td><span class="tag acc">${esc(area(c.area).name)}</span></td><td class="small">${esc(c.def)}</td></tr>`).join('')}</tbody></table></div>
+    <h3>The sources · ${SOURCES.length}, ${H.length} harvested occurrences</h3>
+    <p class="small muted">Internal and external, structured and unstructured, one competitor and one community. Each term keeps its provenance and its frequency. Reliability is your prior, not the last word.</p>
+    <div class="tscroll"><table class="tbl"><thead><tr><th>Source</th><th>Kind</th><th>Reliability</th><th>Provenance</th><th>Terms</th></tr></thead><tbody>
+      ${SOURCES.map(s => `<tr><td><b>${esc(s.name)}</b></td><td><span class="tag ${s.kind}">${esc(s.kindName)}</span></td><td>${s.rel}/5</td><td class="small">${esc(s.prov)}</td><td>${H.filter(h => h.src === s.id).length}</td></tr>`).join('')}</tbody></table></div>
+    <div class="note"><span class="lab mono">Three passes, one decision per occurrence</span><b>Exact match:</b> the term is already a preferred label. Note it, keep the frequency, move on. <b>Cluster:</b> a synonym, spelling, plural or acronym of a concept you have: it becomes an alternative label, or a narrower candidate if it is a real sub-type. <b>New candidate:</b> a concept the vocabulary lacks: name it, spelled out, and put it in an area. <b>Exclude:</b> not a concept, or out of scope, with a note saying why. The same string can mean two things in two sources. Decide each occurrence on its context.</div>
+    <div class="btns"><span style="flex:1"></span><button class="next" id="go">Start reconciling →</button></div>`;
+  $('#go').addEventListener('click', () => { S.step = 'curate'; render(); });
+}
+
+/* ---------- 2 curate ---------- */
+function suggestFor(h){
+  const exact = CV0.find(c => norm(c.pref) === norm(h.term)); if(exact) return {k:'exact', c:exact.id};
+  const st = CV0.find(c => stem(c.pref) === stem(h.term)); if(st) return {k:'cluster', c:st.id};
+  return null;
+}
+function candOptions(){ return candidates().map(c => c.name); }
+function renderCurate(card){
+  const p = progress();
+  const focus = S.fcon ? conceptNodes().find(n => n.id === S.fcon) : null; if(S.fcon && !focus) S.fcon = null;
+  const rows = H.filter(h => (S.fsrc === 'all' || h.src === S.fsrc) && (S.fstat === 'all' || (S.fstat === 'open' ? !isDone(h.id) : isDone(h.id))) && (!focus || focus.occ.includes(h.id)));
+  card.innerHTML = `
+    <span class="roundchip">2 · Reconcile</span>
+    <h2>Every harvested term gets a decision</h2>
+    <p>The rail on the left is what exists: the vocabulary you are reconciling against, by area, with definitions, and the alternative labels and candidates you add as you go. Work source by source or straight down the list. A suggested match is shown when the string matches a preferred label; check it against the context before you accept it.</p>
+    <div class="meters"><div class="meter"><b>${p.done}</b><span>of ${p.total} resolved</span></div><div class="meter"><b>${H.filter(h => S.dec[h.id]?.k === 'exact').length}</b><span>exact matches</span></div><div class="meter"><b>${H.filter(h => S.dec[h.id]?.k === 'cluster').length}</b><span>clustered</span></div><div class="meter"><b>${candidates().length}</b><span>new candidate concepts</span></div><div class="meter"><b>${H.filter(h => S.dec[h.id]?.k === 'exclude').length}</b><span>excluded</span></div></div>
+    <div class="curate"><aside class="rail" id="rail" aria-label="What exists"></aside><div class="qmain">
+    <div class="filters"><span class="small muted">Source:</span><button class="chip ${S.fsrc==='all'?'sel':''}" data-fs="all">all</button>${SOURCES.map(s => `<button class="chip ${S.fsrc===s.id?'sel':''}" data-fs="${s.id}">${esc(s.name)}</button>`).join('')}<span class="small muted" style="margin-left:8px">Show:</span><button class="chip ${S.fstat==='all'?'sel':''}" data-fst="all">all</button><button class="chip ${S.fstat==='open'?'sel':''}" data-fst="open">open</button><button class="chip ${S.fstat==='done'?'sel':''}" data-fst="done">resolved</button></div>
+    ${focus ? `<div class="focus"><b>${esc(focus.pref)}</b> · ${focus.occ.length} occurrence${focus.occ.length===1?'':'s'} mapped${focus.alts.length ? ' · alt labels: ' + focus.alts.map(esc).join(', ') : ''} <button class="ghost small" id="clearFocus">Show all terms</button></div>` : ''}
+    <div class="queue">${rows.map(h => rowHtml(h)).join('') || (focus ? '<p class="muted">Nothing is mapped to this concept yet. Cluster or exact-match a term to it and it will appear here.</p>' : '<p class="muted">Nothing in this view.</p>')}</div>
+    </div></div>
+    <div class="btns"><button class="ghost" id="accept">Accept every suggested exact match</button><span style="flex:1"></span><button class="next" id="go">Define &amp; disambiguate →</button></div>`;
+  bind(card, '[data-fs]', 'click', el => { S.fsrc = el.dataset.fs; render(); });
+  bind(card, '[data-fst]', 'click', el => { S.fstat = el.dataset.fst; render(); });
+  const cf = $('#clearFocus'); if(cf) cf.addEventListener('click', () => { S.fcon = null; render(); });
+  wireRows(card); drawRail();
+  $('#accept').addEventListener('click', () => { let n = 0; H.forEach(h => { const s = suggestFor(h); if(s && s.k === 'exact' && !S.dec[h.id]){ S.dec[h.id] = s; n++; } }); render(); toast(`${n} exact matches accepted`); });
+  $('#go').addEventListener('click', () => { S.step = 'define'; render(); });
+}
+let railQ = '';
+function drawRail(){
+  const rail = $('#rail'); if(!rail) return;
+  const nodes = conceptNodes(); const q = norm(railQ);
+  const show = n => !q || norm(n.pref + ' ' + n.alts.join(' ') + ' ' + (n.def||'')).includes(q);
+  const vc = n => `<div class="vc ${n.kind} ${S.fcon===n.id?'on':''}" data-focus="${esc(n.id)}" role="button" tabindex="0" title="Show the terms mapped to this concept"><span class="n">${n.occ.length ? n.occ.length + ' mapped' : ''}</span><b>${esc(n.pref)}${n.kind==='cand' ? ' <span class="tag warn" style="font-size:9.5px;padding:2px 6px">candidate</span>' : ''}</b>${n.def ? `<div class="d">${esc(n.def)}</div>` : '<div class="d muted">no definition yet</div>'}${n.alts.length ? `<div class="alts">${n.alts.map(a => `<span>${esc(a)}</span>`).join('')}</div>` : ''}</div>`;
+  const existing = nodes.filter(n => n.kind === 'cv'), cands = nodes.filter(n => n.kind === 'cand');
+  rail.innerHTML = `<h4>What exists · ${existing.length} concepts</h4><p class="small muted" style="margin:0 0 6px;font-size:12px">Click a concept to see only the terms mapped to it.</p><input id="railQ" placeholder="filter by label, alt label or definition" value="${esc(railQ)}">`
+    + AREAS.map(a => { const items = existing.filter(n => n.area === a.id && show(n)); return `<div class="area">${esc(a.name)}<span>${existing.filter(n => n.area === a.id).length} of ${a.target}</span></div>${items.map(vc).join('') || '<div class="empty">nothing here yet</div>'}`; }).join('')
+    + `<h4 style="margin-top:14px">Candidates so far · ${cands.length}</h4>${cands.filter(show).map(vc).join('') || '<div class="empty">none yet: a “New candidate” decision adds one</div>'}`;
+  rail.querySelectorAll('[data-focus]').forEach(el => { const go = () => { S.fcon = S.fcon === el.dataset.focus ? null : el.dataset.focus; save(); render(); }; el.addEventListener('click', go); el.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } }); });
+  const inp = $('#railQ'); inp.addEventListener('input', () => { const pos = inp.selectionStart; railQ = inp.value; drawRail(); const i2 = $('#railQ'); i2.focus(); i2.setSelectionRange(pos, pos); });
+}
+function isDone(id){ const d = S.dec[id]; if(!d || !d.k) return false; if(d.k === 'exclude') return true; if(d.k === 'candidate') return !!d.name; return !!d.c; }
+function rowHtml(h){
+  const d = S.dec[h.id] || {}; const s = srcOf(h.src); const sug = !d.k && suggestFor(h);
+  const fb = S.checked ? judge(h) : null;
+  const cvOpts = CV0.map(c => `<option value="${c.id}" ${d.c===c.id?'selected':''}>${esc(c.pref)}</option>`).join('');
+  const candOpts = candOptions().filter(n => n).map(n => `<option value="${esc(n)}" ${d.c===n?'selected':''}>${esc(n)} (candidate)</option>`).join('');
+  let ctl = '';
+  if(d.k === 'exact') ctl = `<select data-f="c" data-h="${h.id}"><option value="">which concept?</option>${cvOpts}</select>`;
+  else if(d.k === 'cluster') ctl = `<select data-f="c" data-h="${h.id}"><option value="">into which concept?</option>${cvOpts}${candOpts}</select><select data-f="role" data-h="${h.id}"><option value="alt" ${d.role!=='narrower'?'selected':''}>as alternative label</option><option value="narrower" ${d.role==='narrower'?'selected':''}>as narrower candidate</option></select>`;
+  else if(d.k === 'candidate') ctl = `<input data-f="name" data-h="${h.id}" value="${esc(d.name||'')}" placeholder="preferred label, spelled out" list="candlist"><select data-f="a" data-h="${h.id}"><option value="">area…</option>${AREAS.map(a => `<option value="${a.id}" ${d.a===a.id?'selected':''}>${esc(a.name)}</option>`).join('')}</select>`;
+  else if(d.k === 'exclude') ctl = `<input data-f="note" data-h="${h.id}" value="${esc(d.note||'')}" placeholder="why, in a few words (documented exclusion)" style="min-width:240px">`;
+  return `<div class="row ${isDone(h.id)?'done':''} ${sug?'suggest':''}" id="row-${h.id}">
+    <div><div class="term">${esc(h.term)}</div><div class="ctx">${esc(h.ctx)}</div><div class="meta"><span class="tag ${s.kind}">${esc(s.name)}</span><span class="freq">${h.freq === 1 && s.kind !== 'int' && s.kind !== 'comm' ? 'listed' : 'freq ' + h.freq}</span>${sug ? `<span class="tag acc">suggested: ${sug.k === 'exact' ? 'exact match' : 'cluster'} → ${esc(cv(sug.c).pref)}</span>` : ''}</div></div>
+    <div><div class="decide">
+      <button class="k ${d.k==='exact'?'sel':''}" data-k="exact" data-h="${h.id}">Exact match</button>
+      <button class="k ${d.k==='cluster'?'sel':''}" data-k="cluster" data-h="${h.id}">Cluster</button>
+      <button class="k ${d.k==='candidate'?'sel cand':''}" data-k="candidate" data-h="${h.id}">New candidate</button>
+      <button class="k ${d.k==='exclude'?'sel ex':''}" data-k="exclude" data-h="${h.id}">Exclude</button></div>
+      ${ctl ? `<div class="decide" style="margin-top:6px">${ctl}</div>` : ''}
+      ${fb ? `<div class="fb ${fb.cls}">${esc(fb.text)}<span class="why">${esc(KEYS[h.id].why)}</span></div>` : ''}
+    </div></div>`;
+}
+function wireRows(card){
+  if(!$('#candlist')){ const dl = document.createElement('datalist'); dl.id = 'candlist'; document.body.appendChild(dl); }
+  $('#candlist').innerHTML = candOptions().map(n => `<option value="${esc(n)}">`).join('');
+  bind(card, '.decide .k', 'click', el => { const h = occ(el.dataset.h); const k = el.dataset.k; const sug = suggestFor(h); const d = S.dec[h.id] || {}; if(d.k === k){ delete S.dec[h.id]; } else { S.dec[h.id] = {k}; if(sug && (k === 'exact' || k === 'cluster') && (k === sug.k || k === 'cluster')) S.dec[h.id].c = sug.c; if(k === 'candidate') S.dec[h.id].name = defaultCandName(h); if(k === 'cluster') S.dec[h.id].role = 'alt'; } S.checked = false; rerow(h.id, card); });
+  bind(card, '.decide select, .decide input', 'change', el => { const d = S.dec[el.dataset.h]; d[el.dataset.f] = el.value; if(el.dataset.f === 'c' && !cv(el.value) && el.value){ /* clustering into a candidate */ } S.checked = false; save(); counts(); if(el.dataset.f === 'name' || el.dataset.f === 'c'){ $('#candlist').innerHTML = candOptions().map(n => `<option value="${esc(n)}">`).join(''); } const row = $(`#row-${el.dataset.h}`); row.classList.toggle('done', isDone(el.dataset.h)); drawRail(); });
+  bind(card, '.decide input', 'input', el => { const d = S.dec[el.dataset.h]; d[el.dataset.f] = el.value; save(); });
+}
+function defaultCandName(h){ const t = h.term.trim(); if(KNOWN && KNOWN[t] !== undefined) return KNOWN[t]; return t.charAt(0).toUpperCase() + t.slice(1); }
+function rerow(id, card){ const old = $(`#row-${id}`); const tmp = document.createElement('div'); tmp.innerHTML = rowHtml(occ(id)); old.replaceWith(tmp.firstElementChild); wireRows(card); save(); counts(); drawRail(); }
+/* judge one occurrence against the key */
+function judge(h){
+  const d = S.dec[h.id]; const K = KEYS[h.id]; if(!d || !isDone(h.id)) return {cls:'part', text:'Not decided yet.'};
+  const hit = K.ok.some(o => { if(o.k !== d.k) return o.k === 'cluster' && d.k === 'candidate' && o.c && !cv(o.c) && norm(d.name) === norm(o.c) || (o.k === 'candidate' && d.k === 'cluster' && d.c && !cv(d.c) && candidates().some(c => c.key === norm(d.c) && c.area === o.a)); if(o.k === 'exact' || o.k === 'cluster'){ if(cv(o.c)) return d.c === o.c; return norm(d.c) === norm(o.c); } if(o.k === 'candidate') return d.a === o.a; return true; });
+  return hit ? {cls:'ok', text:'Defensible.'} : {cls:'miss', text:'Look again.'};
+}
+
+/* ---------- 3 define ---------- */
+function defChecks(name, text, areaName){
+  const t = String(text||'').trim(); const out = [];
+  if(!t) return [{ok:false, m:'No definition yet.'}];
+  const sentences = t.split(/[.!?]+\s/).filter(Boolean).length; out.push({ok:sentences <= 2, m: sentences <= 2 ? 'Concise' : 'More than two sentences'});
+  const circ = norm(t).includes(norm(name)) || name.split(/\s+/).filter(w => w.length > 4).some(w => norm(t).includes(norm(w))); out.push({ok:!circ, m: circ ? 'Uses the term being defined (circular)' : 'Non-circular'});
+  const genus = /\b(is|are)\s+(a|an|the)\b|\b(a|an)\s+(kind|type|form|genre|instrument|performer|event|venue|format|collection|series)\b/i.test(t) || /^(a|an)\s+\w+/i.test(t); out.push({ok:genus, m: genus ? 'Names a genus' : 'No genus: start with what kind of thing it is'});
+  const diff = /\b(that|which|who|where|with|for|focused|built|played|made|released|held|used)\b/i.test(t); out.push({ok:diff, m: diff ? 'States a differentia' : 'No differentia: what sets it apart from its siblings?'});
+  return out;
+}
+function renderDefine(card){
+  const nodes = conceptNodes(); const cands = nodes.filter(n => n.kind === 'cand');
+  card.innerHTML = `
+    <span class="roundchip">3 · Define &amp; disambiguate</span>
+    <h2>New concepts get a definition. Split senses get a scope note.</h2>
+    <p>Definitions do the heavy lifting. Use the genus-differentia pattern: <i>[Preferred label] is a [kind of thing] that [what sets it apart from its siblings]</i>. Concise, non-circular, boundary-setting. The checker looks for exactly those things.</p>
+    <h3>New candidate concepts · ${cands.length}</h3>
+    ${cands.length ? cands.map(n => defCard(n)).join('') : '<p class="muted">No candidates yet. They come from step 2.</p>'}
+    <h3>Disambiguation · ${AMBIG.length} strings that mean two things</h3>
+    <p class="small muted">The same word from two sources, two senses. Write the scope note that tells the next curator, or a classifier, which is which. Pattern: "Use for … For …, use …".</p>
+    ${AMBIG.map(([a,b,label]) => { const ha = occ(a), hb = occ(b); const da = S.dec[a], db = S.dec[b]; const desc = d => !d || !isDone(d === da ? a : b) ? '<span class="tag warn">undecided</span>' : d.k === 'exclude' ? '<span class="tag">excluded</span>' : d.k === 'candidate' ? `<span class="tag warn">candidate: ${esc(d.name)}</span>` : `<span class="tag acc">→ ${esc(cv(d.c)?.pref || d.c)}</span>`; const same = da && db && isDone(a) && isDone(b) && da.k !== 'exclude' && db.k !== 'exclude' && ((da.c && da.c === db.c) || (da.name && db.name && norm(da.name) === norm(db.name))); return `<div class="def ${same?'':''}"><div class="head"><b>${esc(label)}</b>${same ? '<span class="tag bad">both senses landed on the same concept</span>' : ''}</div>
+      <div class="small"><span class="tag ${srcOf(ha.src).kind}">${esc(srcOf(ha.src).name)}</span> <i>${esc(ha.ctx)}</i> ${desc(da)}<br><span class="tag ${srcOf(hb.src).kind}">${esc(srcOf(hb.src).name)}</span> <i>${esc(hb.ctx)}</i> ${desc(db)}</div>
+      <textarea rows="2" data-note="${a}|${b}" placeholder="Use for the instrument credit. For the low-frequency sound in a track, do not use; it is out of scope.">${esc(S.notes[a + '|' + b] || '')}</textarea></div>`; }).join('')}
+    ${cv('dj') ? `<h3>A rule to apply</h3>
+    <div class="def"><div class="head"><b>DJ</b><span class="tag acc">existing preferred label</span><span class="tag warn">acronym as preferred label</span></div><p class="small" style="margin:0 0 6px">The acronym rule: spelled-out form preferred, acronym as alternative label, unless the acronym dominates usage. Wikidata offers "Disc jockey". Decide and record why.</p><textarea rows="2" data-note="dj" placeholder="Keep DJ as preferred: usage in every source is DJ; Disc jockey recorded as alternative label. Exception to the acronym rule, justified by frequency.">${esc(S.notes.dj || '')}</textarea></div>` : ''}
+    <div class="btns"><span style="flex:1"></span><button class="next" id="go">Coverage graph →</button></div>`;
+  bind(card, '[data-def]', 'input', el => { S.defs[el.dataset.def] = el.value; save(); const box = el.closest('.def').querySelector('.checks'); box.innerHTML = checksHtml(el.dataset.name, el.value); counts(); });
+  bind(card, '[data-note]', 'input', el => { S.notes[el.dataset.note] = el.value; save(); counts(); });
+  $('#go').addEventListener('click', () => { S.step = 'graph'; render(); });
+}
+function checksHtml(name, text){ return defChecks(name, text).map(c => `<span class="tag ${c.ok?'ok':'bad'}">${esc(c.m)}</span>`).join(''); }
+function defCard(n){
+  return `<div class="def"><div class="head"><b>${esc(n.pref)}</b><span class="tag acc">${esc(area(n.area)?.name || 'no area')}</span><span class="small muted">${n.occ.length} occurrence${n.occ.length===1?'':'s'} · ${srcsOf(n).map(s => srcOf(s).name).join(', ')}</span></div>
+    ${n.alts.length ? `<div class="alts small" style="margin-bottom:6px"><span class="muted">alt:</span> ${n.alts.map(a => `<span>${esc(a)}</span>`).join('')}</div>` : ''}
+    <textarea rows="2" data-def="${n.id}" data-name="${esc(n.pref)}" placeholder="${esc(n.pref)} is a … that …">${esc(n.def)}</textarea>
+    <div class="checks">${checksHtml(n.pref, n.def)}</div></div>`;
+}
+
+/* ---------- 4 graph ---------- */
+function completeness(){
+  const nodes = conceptNodes();
+  const per = AREAS.map(a => { const have = nodes.filter(n => n.area === a.id); const defined = have.filter(n => n.kind === 'cv' || n.def); return {area:a, have:have.length, defined:defined.length, target:a.target, pct:Math.min(100, Math.round(defined.length / a.target * 100))}; });
+  const tot = per.reduce((s,p) => s + Math.min(p.defined, p.target), 0), tgt = AREAS.reduce((s,a) => s + a.target, 0);
+  return {per, pct:Math.round(tot / tgt * 100)};
+}
+function flags(){
+  const F = []; const nodes = conceptNodes(); const p = progress(); const c = completeness();
+  if(p.done < p.total) F.push({level:'warn', text:`${p.total - p.done} harvested occurrence${p.total-p.done===1?'':'s'} still undecided. The coverage figure is provisional until every term is accounted for.`});
+  c.per.forEach(x => { if(x.have < x.target) F.push({level: x.have === 0 ? 'bad' : 'warn', text:`${x.area.name}: ${x.have} of ${x.target} target concepts. ${x.have === 0 ? 'Nothing covers this area yet.' : 'Gap of ' + (x.target - x.have) + '.'}`}); if(x.have > x.target + 3) F.push({level:'warn', text:`${x.area.name}: ${x.have} concepts against a target of ${x.target}. Over-investing here, or the target was wrong; either way, record it.`}); });
+  nodes.filter(n => n.kind === 'cand' && !n.def).forEach(n => F.push({level:'warn', text:`Candidate ${n.pref} has no definition. It does not count towards completeness until it does.`}));
+  nodes.filter(n => n.kind === 'cv' && n.occ.length === 0).forEach(n => F.push({level:'warn', text:`${n.pref} is in the vocabulary but no source uses it. Either the sources are thin or the label is not how people talk.`}));
+  nodes.forEach(n => { const ss = srcsOf(n); const kinds = new Set(ss.map(s => srcOf(s).kind)); if(ss.length && kinds.size === 1 && ss.length >= 1 && n.kind === 'cand'){ const k = [...kinds][0]; if(k === 'int') F.push({level:'warn', text:`${n.pref} is internal-only. Check it against the world before it becomes a preferred label.`}); if(k === 'comm') F.push({level:'warn', text:`${n.pref} comes from the fan forum only (reliability 2). Confirm it against a stronger source.`}); } });
+  AMBIG.forEach(([a,b,label]) => { const da = S.dec[a], db = S.dec[b]; if(isDone(a) && isDone(b)){ const same = da.k !== 'exclude' && db.k !== 'exclude' && ((da.c && da.c === db.c) || (da.name && db.name && norm(da.name) === norm(db.name))); if(same) F.push({level:'bad', text:`"${label}" from two sources with two senses was mapped to one concept. That is a homonym collapsed: the classifier will never tell them apart.`}); else if(!S.notes[a + '|' + b]) F.push({level:'warn', text:`"${label}" is split, but there is no scope note recording which sense is which.`}); } else F.push({level:'warn', text:`"${label}" appears in two senses and one of them is undecided.`}); });
+  const acr = H.filter(h => /^[A-Z&]{2,4}$/.test(h.term.trim()) && S.dec[h.id]?.k === 'candidate' && S.dec[h.id].name && /^[A-Z&]{2,4}$/.test(S.dec[h.id].name.trim())); acr.forEach(h => F.push({level:'bad', text:`${h.term} is an acronym set as a preferred label. Spell it out; the acronym is the alternative label.`}));
+  if(cv('dj') && !S.notes.dj) F.push({level:'warn', text:'DJ: the acronym-as-preferred-label decision has no note. Record the exception or fix it.'});
+  const ex = H.filter(h => S.dec[h.id]?.k === 'exclude' && !(S.dec[h.id].note||'').trim()); if(ex.length) F.push({level:'warn', text:`${ex.length} exclusion${ex.length===1?'':'s'} without a reason. An undocumented exclusion will be re-harvested next time.`});
+  const comp = H.filter(h => h.src === 'comp' && S.dec[h.id]?.k === 'candidate').length; if(comp) F.push({level:'good', text:`${comp} concept${comp===1?'':'s'} the competitor covers and you did not: found by the model, exactly what it is for.`});
+  if(!F.some(f => f.level !== 'good')) F.push({level:'good', text:'Every term accounted for, every candidate defined, every homonym split with a note. The coverage targets are the measure now.'});
+  return F;
+}
+function renderGraph(card){
+  const c = completeness(); const F = flags(); const p = progress();
+  card.innerHTML = `
+    <span class="roundchip">4 · Coverage graph</span>
+    <h2>Coverage, completeness, disambiguation, in one picture</h2>
+    <p class="small muted">Left: the sources. Middle: concepts, one band per required area, filled solid if they were in the vocabulary and dashed if they are candidates you promoted. An edge means a source supplied evidence; its width is frequency. Dotted circles are the unfilled part of each target. Red diamonds are strings you split into two senses.</p>
+    <div class="meters">
+      <div class="meter"><b>${c.pct}%</b><span>of coverage targets met (defined concepts)</span></div>
+      <div class="meter"><b>${p.done}/${p.total}</b><span>occurrences resolved</span></div>
+      <div class="meter"><b>${conceptNodes().filter(n => n.kind === 'cand').length}</b><span>candidates promoted</span></div>
+      <div class="meter"><b>${AMBIG.filter(([a,b]) => isDone(a) && isDone(b) && S.notes[a+'|'+b]).length}/${AMBIG.length}</b><span>homonyms split and noted</span></div>
+      <div class="meter"><b>${H.filter(h => S.dec[h.id]?.k === 'exclude').length}</b><span>documented exclusions</span></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--int)"></i>internal</span><span><i style="background:var(--ext)"></i>external</span><span><i style="background:var(--comp)"></i>competitor</span><span><i style="background:var(--comm)"></i>community</span><span><i style="background:var(--accent)"></i>in the vocabulary</span><span><i style="border:2px dashed var(--cand);background:#fff"></i>candidate</span><span><i style="border:1.5px dotted var(--line);background:#fff"></i>unmet target</span></div>
+    <div class="graphwrap">${graphSvg()}</div>
+    <h3>Completeness by area</h3>
+    <div class="tscroll"><table class="tbl"><thead><tr><th>Area</th><th>Target</th><th>Concepts</th><th>Defined</th><th>Met</th><th>Sources behind it</th></tr></thead><tbody>
+      ${c.per.map(x => { const ss = new Set(); conceptNodes().filter(n => n.area === x.area.id).forEach(n => srcsOf(n).forEach(s => ss.add(s))); return `<tr><td><b>${esc(x.area.name)}</b></td><td>${x.target}</td><td>${x.have}</td><td>${x.defined}</td><td><span class="tag ${x.pct>=100?'ok':x.pct>=50?'warn':'bad'}">${x.pct}%</span></td><td>${[...ss].map(s => `<span class="tag ${srcOf(s).kind}">${esc(srcOf(s).name)}</span>`).join(' ') || '<span class="muted">none</span>'}</td></tr>`; }).join('')}</tbody></table></div>
+    <h3>Gaps, risks and wins</h3>
+    <ul class="flags">${F.map(f => `<li class="${f.level}">${esc(f.text)}</li>`).join('')}</ul>
+    <h3>Check your curation</h3>
+    <p class="small muted">Every occurrence is compared with the decisions the chapter's rules support. Where two decisions are defensible, both pass. Feedback appears on each row in step 2.</p>
+    <div class="btns"><button class="next" id="check">Check against the key</button>${S.checked ? `<span class="small"><b>${H.filter(h => judge(h).cls === 'ok').length}</b> of ${H.length} defensible · <b>${H.filter(h => judge(h).cls === 'miss').length}</b> to look at again · <b>${H.filter(h => judge(h).cls === 'part').length}</b> undecided</span>` : ''}</div>
+    <h3>Export the reconciliation workbook</h3>
+    <p class="small muted">Excel with the brief, the vocabulary, one tab per source with mapping status and frequency, the reconciliation (exact, clusters, candidates, exclusions), the coverage table and the flags. JSON for a teammate. A SKOS starter for Module 3.</p>
+    <div class="exports"><button data-x="xlsx">Excel<span class="fmt">.xlsx</span></button><button data-x="csv">Reconciliation<span class="fmt">.csv</span></button><button data-x="md">Report<span class="fmt">.md</span></button><button data-x="json">Project<span class="fmt">.json</span></button><button data-x="ttl">SKOS starter<span class="fmt">.ttl</span></button><button data-x="print">Print</button></div>
+    <div class="btns"><button class="ghost danger" id="reset">Start over</button></div>`;
+  $('#check').addEventListener('click', () => { S.checked = true; render(); toast('Feedback is on every row in step 2'); });
+  bind(card, '[data-x]', 'click', el => doExport(el.dataset.x));
+  $('#reset').addEventListener('click', () => { if(confirm(`Start ${DOMAIN.name} over? This clears every decision, definition and note for this subgraph on this computer.`)){ G.per[DOMAIN.id] = fresh(); S = G.per[DOMAIN.id]; render(); } });
+  wireGraph(card);
+}
+function graphSvg(){
+  const nodes = conceptNodes(); const c = completeness();
+  const W = 1140, leftX = 190, midX0 = 330, midX1 = 900, rightX = 1010; const bandH = 96, top = 20; const Hh = top + AREAS.length * bandH + 20;
+  const srcY = i => top + 30 + i * ((AREAS.length * bandH - 60) / Math.max(1, SOURCES.length - 1));
+  const col = {int:'var(--int)', ext:'var(--ext)', comp:'var(--comp)', comm:'var(--comm)'};
+  let g = `<svg class="graph" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Coverage graph">`;
+  const pos = {};
+  AREAS.forEach((a,i) => { const y = top + i * bandH; const pc = c.per[i]; g += `<rect class="band" x="${midX0-20}" y="${y+4}" width="${midX1-midX0+40}" height="${bandH-8}" rx="10"/><text class="bandlab" x="${midX0-12}" y="${y+18}">${esc(a.name)}</text><text class="bandpct" x="${midX1+12}" y="${y+18}" text-anchor="end">${pc.have}/${a.target} · ${pc.pct}%</text>`;
+    const items = nodes.filter(n => n.area === a.id); const slots = Math.max(items.length, a.target); const gap = (midX1 - midX0) / (slots + 1);
+    const maxLen = slots > 6 ? 12 : slots > 4 ? 16 : 22;
+    items.forEach((n,j) => { const x = midX0 + gap * (j+1), yy = y + 44; pos[n.id] = {x, y:yy}; const r = 6 + Math.min(9, Math.log2(1 + freqOf(n)) * 1.1); const ly = yy + r + 12 + (slots > 4 && j % 2 ? 14 : 0); const lab = n.pref.length > maxLen ? n.pref.slice(0, maxLen - 1) + '…' : n.pref; g += `<g class="node ${n.kind}" data-node="${esc(n.id)}"><title>${esc(n.pref)}</title><circle cx="${x}" cy="${yy}" r="${r}" stroke-width="2"/><text x="${x}" y="${ly}" text-anchor="middle">${esc(lab)}</text></g>`; });
+    for(let j = items.length; j < a.target; j++){ const x = midX0 + gap * (j+1); const ly = y + 44 + 19 + (slots > 4 && j % 2 ? 14 : 0); g += `<g class="node gap"><circle cx="${x}" cy="${y+44}" r="7"/><text x="${x}" y="${ly}" text-anchor="middle">gap</text></g>`; } });
+  let edges = '';
+  SOURCES.forEach((s,i) => { const y = srcY(i); nodes.forEach(n => { const f = n.occ.filter(id => occ(id).src === s.id).reduce((a,id) => a + occ(id).freq, 0); if(!f) return; const p = pos[n.id]; const w = 1 + Math.min(6, Math.log10(1 + f) * 2); edges += `<path class="edge" data-src="${s.id}" data-node="${esc(n.id)}" d="M${leftX+10},${y} C${(leftX+p.x)/2},${y} ${(leftX+p.x)/2},${p.y} ${p.x},${p.y}" stroke="${col[s.kind]}" stroke-width="${w.toFixed(1)}"/>`; }); });
+  g += edges;
+  SOURCES.forEach((s,i) => { const y = srcY(i); g += `<g class="src"><circle cx="${leftX}" cy="${y}" r="9" fill="${col[s.kind]}"/><text x="${leftX-14}" y="${y+4}" text-anchor="end">${esc(s.name)}</text><text class="k" x="${leftX-14}" y="${y+17}" text-anchor="end">${esc(s.kindName)}</text></g>`; });
+  /* ambiguity diamonds on the right, edges to the two concepts (or an "excluded" stub) */
+  AMBIG.forEach(([a,b,label], i) => { const y = top + 50 + i * 90; const targets = [a,b].map(id => { const d = S.dec[id]; if(!d || !isDone(id)) return null; if(d.k === 'exclude') return 'ex'; const nid = (d.k === 'candidate') ? 'cand:' + norm(d.name) : (cv(d.c) ? d.c : 'cand:' + norm(d.c)); return pos[nid] ? nid : null; });
+    const same = targets[0] && targets[1] && targets[0] === targets[1] && targets[0] !== 'ex';
+    g += `<g class="amb"><polygon points="${rightX},${y-12} ${rightX+12},${y} ${rightX},${y+12} ${rightX-12},${y}" ${same ? 'style="fill:var(--amb-bg)"' : ''}/><text x="${rightX}" y="${y+28}" text-anchor="middle">${esc(label)}</text>${same ? `<text x="${rightX}" y="${y+41}" text-anchor="middle" style="font-weight:400">collapsed!</text>` : ''}</g>`;
+    targets.forEach((t, k) => { if(!t) return; if(t === 'ex'){ g += `<g class="ex"><line x1="${rightX+12}" y1="${y}" x2="${rightX+34}" y2="${y + (k ? 20 : -20)}" stroke="var(--line)" stroke-dasharray="3 3"/><text x="${rightX+36}" y="${y + (k ? 24 : -16)}" font-size="10">excluded</text></g>`; return; } const p = pos[t]; g += `<path class="edge" d="M${rightX-12},${y} C${(rightX+p.x)/2},${y} ${(rightX+p.x)/2},${p.y} ${p.x},${p.y}" stroke="var(--amb)" stroke-width="1.5" stroke-dasharray="4 3"/>`; }); });
+  g += '</svg>'; return g;
+}
+function wireGraph(card){
+  const svg = card.querySelector('svg.graph'); if(!svg) return;
+  svg.querySelectorAll('.node[data-node]').forEach(n => { n.style.cursor = 'pointer'; n.addEventListener('click', () => { const id = n.dataset.node; const on = n.classList.toggle('on'); svg.querySelectorAll('.edge[data-node]').forEach(e => { e.style.opacity = !svg.querySelector('.node.on') ? '' : (e.dataset.node === id && on ? '1' : '.12'); }); const node = conceptNodes().find(x => x.id === id); if(node) toast(`${node.pref}: ${node.occ.length} occurrence${node.occ.length===1?'':'s'} from ${srcsOf(node).length} source${srcsOf(node).length===1?'':'s'}${node.alts.length ? ' · alt: ' + node.alts.join(', ') : ''}`); }); });
+}
+
+/* ---------- exports ---------- */
+const decText = h => { const d = S.dec[h.id]; if(!d || !isDone(h.id)) return ['undecided','','']; if(d.k === 'exact') return ['exact match', cv(d.c)?.pref || '', '']; if(d.k === 'cluster') return ['cluster', cv(d.c)?.pref || d.c, d.role === 'narrower' ? 'narrower candidate' : 'alternative label']; if(d.k === 'candidate') return ['new candidate', d.name, area(d.a)?.name || '']; return ['excluded', '', d.note || '']; };
+function reconRows(){ return [['term','source','kind','frequency','context','decision','concept','detail'], ...H.map(h => { const [k,c,x] = decText(h); return [h.term, srcOf(h.src).name, srcOf(h.src).kindName, h.freq, h.ctx, k, c, x]; })]; }
+const csv = rows => rows.map(r => r.map(v => { v = String(v ?? ''); return /[",\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; }).join(',')).join('\n') + '\n';
+function project(){ return {title:'Coverage model · ' + DOMAIN.name, useCase:USECASE, areas:AREAS, vocabulary:CV0, sources:SOURCES, harvested:H, decisions:S.dec, definitions:S.defs, notes:S.notes, concepts:conceptNodes().map(n => ({id:n.id, pref:n.pref, area:area(n.area)?.name, kind:n.kind, definition:n.def, altLabels:n.alts, sources:srcsOf(n).map(s => srcOf(s).name), frequency:freqOf(n)})), completeness:completeness(), flags:flags().map(f => f.text), exportedAt:new Date().toISOString()}; }
+function reportMd(){
+  const c = completeness(); const L = [`# Coverage model · ${DOMAIN.name}`, ``, USECASE.title, ``, today(), ``, `## Completeness · ${c.pct}%`, ``, `| Area | Target | Concepts | Defined | Met |`, `|---|---|---|---|---|`];
+  c.per.forEach(x => L.push(`| ${x.area.name} | ${x.target} | ${x.have} | ${x.defined} | ${x.pct}% |`));
+  L.push(``, `## Concepts`, ``, `| Preferred | Status | Area | Alternative labels | Sources | Definition |`, `|---|---|---|---|---|---|`);
+  conceptNodes().forEach(n => L.push(`| ${n.pref} | ${n.kind === 'cv' ? 'existing' : 'candidate'} | ${area(n.area)?.name || ''} | ${n.alts.join(', ')} | ${srcsOf(n).map(s => srcOf(s).name).join(', ')} | ${(n.def||'').replace(/\|/g,'/')} |`));
+  L.push(``, `## Reconciliation`, ``, `| Term | Source | Freq | Decision | Concept | Detail |`, `|---|---|---|---|---|---|`);
+  H.forEach(h => { const [k,cc,x] = decText(h); L.push(`| ${h.term} | ${srcOf(h.src).name} | ${h.freq} | ${k} | ${cc} | ${x} |`); });
+  L.push(``, `## Scope notes`, ``); AMBIG.forEach(([a,b,l]) => L.push(`- **${l}**: ${S.notes[a+'|'+b] || '_none_'}`)); if(cv('dj')) L.push(`- **DJ**: ${S.notes.dj || '_none_'}`);
+  L.push(``, `## Flags`, ``); flags().forEach(f => L.push(`- ${f.text}`));
+  return L.join('\n') + '\n';
+}
+function skosTtl(){
+  const base = `https://checks.knowledge-graph-academy.com/music/${DOMAIN.id}#`;
+  const lit = s => '"' + String(s).replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\n/g,' ') + '"';
+  const L = [`@prefix skos: <http://www.w3.org/2004/02/skos/core#> .`, `@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .`, `@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .`, `@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .`, `@prefix dct:  <http://purl.org/dc/terms/> .`, `@prefix ex:   <${base}> .`, ``, `# SKOS starter from the coverage model. Flat: hierarchy comes in Module 3.`, ``,
+    `ex:scheme a skos:ConceptScheme ;`, `    dct:title ${lit(DOMAIN.name + ' (coverage model)')}@en ;`, `    dct:description ${lit(USECASE.requirement)}@en ;`, `    dct:created "${today()}"^^xsd:date .`, ``];
+  const used = new Set(); const idOf = n => { let id = slug(n.pref); while(used.has(id)) id += '-x'; used.add(id); return id; };
+  const nodes = conceptNodes(); const ids = new Map(nodes.map(n => [n.id, idOf(n)]));
+  AREAS.forEach(a => { const m = nodes.filter(n => n.area === a.id); L.push(`ex:area-${a.id} a skos:Collection ;`, `    skos:prefLabel ${lit(a.name)}@en${m.length ? ` ;\n    skos:member ${m.map(n => 'ex:' + ids.get(n.id)).join(', ')}` : ''} .`, ``); });
+  nodes.forEach(n => { const P = [`ex:${ids.get(n.id)} a skos:Concept`, `    skos:inScheme ex:scheme`, `    skos:prefLabel ${lit(n.pref)}@en`]; if(n.alts.length) P.push(`    skos:altLabel ${n.alts.map(a => lit(a) + '@en').join(', ')}`); if(n.def) P.push(`    skos:definition ${lit(n.def)}@en`); const note = AMBIG.find(([a,b]) => [S.dec[a], S.dec[b]].some(d => d && ((d.c && (d.c === n.id || norm(d.c) === n.id.replace('cand:',''))) || (d.name && 'cand:' + norm(d.name) === n.id)))); if(note && S.notes[note[0] + '|' + note[1]]) P.push(`    skos:scopeNote ${lit('On the string "' + note[2] + '": ' + S.notes[note[0] + '|' + note[1]])}@en`); if(n.id === 'dj' && S.notes.dj) P.push(`    skos:editorialNote ${lit(S.notes.dj)}@en`); srcsOf(n).forEach(s => P.push(`    dct:source ${lit(srcOf(s).name)}`)); P.push(`    skos:note ${lit((n.kind === 'cv' ? 'Existing concept' : 'Candidate') + ' · ' + area(n.area)?.name + ' · evidence frequency ' + freqOf(n))}@en`); L.push(P.join(' ;\n') + ' .', ''); });
+  return L.join('\n');
+}
+function sheets(){
+  const c = completeness(); const sh = [];
+  sh.push({name:'Brief', rows:[['Subgraph', DOMAIN.name], ['Use case', USECASE.title], ['Problem', USECASE.problem], ['Requirement', USECASE.requirement], [], ['Area','Why','Target','Existing'], ...AREAS.map(a => [a.name, a.why, a.target, CV0.filter(x => x.area === a.id).length])]});
+  sh.push({name:'Vocabulary', rows:[['Preferred label','Area','Definition'], ...CV0.map(x => [x.pref, area(x.area).name, x.def])]});
+  sh.push({name:'Sources', rows:[['Source','Kind','Reliability','Provenance','Terms'], ...SOURCES.map(s => [s.name, s.kindName, s.rel, s.prov, H.filter(h => h.src === s.id).length])]});
+  SOURCES.forEach(s => sh.push({name:s.name, rows:[['Term','Frequency','Context','Mapping status','Concept','Detail'], ...H.filter(h => h.src === s.id).map(h => { const [k,cc,x] = decText(h); return [h.term, h.freq, h.ctx, k, cc, x]; })]}));
+  sh.push({name:'Reconciliation', rows:reconRows()});
+  sh.push({name:'Concepts', rows:[['Preferred label','Status','Area','Alternative labels','Definition','Sources','Frequency'], ...conceptNodes().map(n => [n.pref, n.kind === 'cv' ? 'existing' : 'candidate', area(n.area)?.name || '', n.alts.join(' | '), n.def, srcsOf(n).map(s => srcOf(s).name).join(' | '), freqOf(n)])]});
+  sh.push({name:'Coverage', rows:[['Area','Target','Concepts','Defined','Met %'], ...c.per.map(x => [x.area.name, x.target, x.have, x.defined, x.pct]), [], ['Overall', '', '', '', c.pct], [], ['Scope notes'], ...AMBIG.map(([a,b,l]) => [l, S.notes[a+'|'+b] || '']), ...(cv('dj') ? [['DJ', S.notes.dj || '']] : []), [], ['Flags'], ...flags().map(f => [f.text])]});
+  return sh;
+}
+function doExport(kind){
+  const stem = `coverage-model-${DOMAIN.id}-${today()}`;
+  if(kind === 'xlsx') download(stem + '.xlsx', toXlsx(sheets()));
+  else if(kind === 'csv') download(stem + '-reconciliation.csv', csv(reconRows()), 'text/csv');
+  else if(kind === 'md') download(stem + '.md', reportMd(), 'text/markdown');
+  else if(kind === 'json') download(stem + '.json', JSON.stringify(project(), null, 2), 'application/json');
+  else if(kind === 'ttl') download(stem + '.ttl', skosTtl(), 'text/turtle');
+  else if(kind === 'print'){ window.print(); }
+}
+function download(name, data, type){ const blob = data instanceof Blob ? data : new Blob([data], {type}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); toast('Downloaded ' + name); }
+function colRef(i){ let s = ''; i++; while(i > 0){ const m = (i-1) % 26; s = String.fromCharCode(65+m) + s; i = Math.floor((i-1)/26); } return s; }
+const xml = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function sheetXml(rows){ return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${rows.map((r,ri) => `<row r="${ri+1}">` + r.map((v,ci) => { if(v === '' || v === null || v === undefined) return ''; const ref = colRef(ci) + (ri+1); return typeof v === 'number' ? `<c r="${ref}"><v>${v}</v></c>` : `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${xml(v)}</t></is></c>`; }).join('') + '</row>').join('')}</sheetData></worksheet>`; }
+function toXlsx(sh){
+  const seen = new Set(); const names = sh.map(s => { let n = String(s.name).replace(/[\\\/\?\*\[\]:]/g,' ').trim().slice(0,28) || 'Sheet'; let k = n, i = 2; while(seen.has(k.toLowerCase())) k = n.slice(0,25) + ' ' + (i++); seen.add(k.toLowerCase()); return k; });
+  const files = [
+    ['[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${sh.map((s,i) => `<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`],
+    ['_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
+    ['xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sh.map((s,i) => `<sheet name="${xml(names[i])}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets></workbook>`],
+    ['xl/_rels/workbook.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sh.map((s,i) => `<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')}</Relationships>`],
+    ...sh.map((s,i) => [`xl/worksheets/sheet${i+1}.xml`, sheetXml(s.rows)]),
+  ];
+  return zipStored(files);
+}
+const CRC = (() => { const t = new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = c & 1 ? 0xEDB88320 ^ (c>>>1) : c>>>1; t[n]=c>>>0; } return t; })();
+function crc32(u8){ let c = 0xFFFFFFFF; for(let i=0;i<u8.length;i++) c = CRC[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStored(files){
+  const enc = new TextEncoder(); const parts = [], central = []; let offset = 0;
+  const u16 = n => [n & 255, (n>>8) & 255], u32 = n => [n & 255, (n>>8) & 255, (n>>16) & 255, (n>>>24) & 255];
+  files.forEach(([name, text]) => { const nameB = enc.encode(name), data = enc.encode(text), crc = crc32(data);
+    const local = new Uint8Array([...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nameB.length), ...u16(0), ...nameB]);
+    parts.push(local, data);
+    central.push(new Uint8Array([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(data.length), ...u32(data.length), ...u16(nameB.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(offset), ...nameB]));
+    offset += local.length + data.length; });
+  const cdSize = central.reduce((a,c) => a + c.length, 0);
+  const end = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(files.length), ...u16(files.length), ...u32(cdSize), ...u32(offset), ...u16(0)]);
+  return new Blob([...parts, ...central, end], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix e: <https://checks.knowledge-graph-academy.com/music/events#> .
+
+e:scheme rdf:type skos:ConceptScheme ;
+    dct:title "Events and venues"@en ;
+    dct:creator "Example group" ;
+    dct:description "Example scheme for the events and venues subgraph."@en ;
+    skos:hasTopConcept e:event, e:venue, e:venue-area .
+
+e:event rdf:type skos:Concept ;
+    skos:inScheme e:scheme ;
+    skos:topConceptOf e:scheme ;
+    skos:prefLabel "Event"@en ;
+    skos:definition "A scheduled occasion at which music is performed for an audience."@en .
+
+e:concert rdf:type skos:Concept ;
+    skos:inScheme e:scheme ;
+    skos:prefLabel "Concert"@en ;
+    skos:altLabel "Gig"@en ;
+    skos:altLabel "Show"@en ;
+    skos:broader e:event ;
+    skos:definition "An event at which one or more acts perform a full programme of music."@en .
+
+e:festival rdf:type skos:Concept ;
+    skos:inScheme e:scheme ;
+    skos:prefLabel "Festival"@en ;
+    skos:altLabel "Music festival"@en ;
+    skos:broader e:event ;
+    skos:definition "An event with many acts across one or more days, usually on several stages."@en .
+
+e:club-night rdf:type skos:Concept ;
+    skos:inScheme e:scheme ;
+    skos:prefLabel "Club night"@en ;
+    skos:broader e:event ;
+    skos:related e:club ;
+    skos:definition "A recurring event in a club where DJs play recorded music for dancing."@en .
+
+e:dj-set rdf:type skos:Concept ;
+    skos:inScheme e:scheme ;
+    skos:prefLabel "DJ set"@en ;
+    skos:broader e:event ;
+    skos:scopeNote "A slot in a programme, not the person performing it."@en ;
+    skos:definition "A performance slot within an event in which a DJ mixes recorded tracks."@en .
+
+e:venue rdf:type skos:Concept ;
+    skos:inScheme e:scheme ;
+    skos:topConceptOf e:scheme ;
+    skos:prefLabel "Venue"@en ;
+    skos:definition "A place where music events are held."@en .
+
+e:arena rdf:type skos:Concept ;
+    skos:inScheme e:scheme ;
+    skos:prefLabel "Arena"@en ;
+    skos:broader e:venue ;
+    skos:definition "A large indoor venue with seating around a central floor."@en .
+
+e:club rdf:type skos:Concept ;
+    skos:inScheme e:scheme ;
+    skos:prefLabel "Club"@en ;
+    skos:altLabel "Nightclub"@en ;
+    skos:broader e:venue ;
+    skos:definition "A venue for dancing to recorded or live music, usually open late."@en .
+
+e:concert-hall rdf:type skos:Concept ;
+    skos:inScheme e:scheme ;
+    skos:prefLabel "Concert hall"@en ;
+    skos:broader e:venue ;
+    skos:definition "A venue designed for acoustic performance with fixed seating."@en .
+
+e:venue-area rdf:type skos:Concept ;
+    skos:inScheme e:scheme ;
+    skos:topConceptOf e:scheme ;
+    skos:prefLabel "Venue area"@en ;
+    skos:definition "A named part of a venue."@en .
+
+e:house rdf:type skos:Concept ;
+    skos:inScheme e:scheme ;
+    skos:prefLabel "House"@en ;
+    skos:altLabel "Auditorium"@en ;
+    skos:broader e:venue-area ;
+    skos:scopeNote "The room, not the dance genre."@en ;
+    skos:definition "The venue area where the audience sits or stands, as in a full house."@en .
+
+e:stage rdf:type skos:Concept ;
+    skos:inScheme e:scheme ;
+    skos:prefLabel "Stage"@en ;
+    skos:broader e:venue-area ;
+    skos:definition "The venue area where the performers play."@en .
+

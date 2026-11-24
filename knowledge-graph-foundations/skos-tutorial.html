@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SKOS in One Sitting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --paper:#F7F7F2; --grid:rgba(36,86,166,.07); --surface:#FFFFFF; --ink:#20283A;
+    --ink-soft:#5A6478; --accent:#2456A6; --accent-ink:#FFFFFF; --line:#DDDDD3;
+    --ok:#2F7D4F; --ok-bg:#EAF3ED; --miss:#B23B26; --miss-bg:#F7ECE8;
+    --gold:#B98A12; --chip:#EEEEE6; --extract-bg:#F1F3F8; --shadow:0 2px 10px rgba(32,40,58,.08);
+    --pref:#2456A6; --pref-bg:#E6EDF8; --alt:#2F7D4F; --alt-bg:#EAF3ED; --hid:#8C94A6; --hid-bg:#EEEEE6; --doc:#6B3FA0; --doc-bg:#EFE8F7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;color:var(--ink);font:400 17px/1.55 "Source Sans 3",system-ui,sans-serif;background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;min-height:100vh}
+  .wrap{max-width:760px;margin:0 auto;padding:28px 20px 80px}
+  header{margin-bottom:18px;position:relative;padding-right:106px}
+  .kgg-logo{position:absolute;top:0;right:0;height:88px;width:auto;background:#fff;border-radius:12px;padding:4px 8px;box-shadow:var(--shadow)}
+  @media (max-width:520px){header{padding-right:76px}.kgg-logo{height:62px}}
+  .eyebrow{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(32px,7vw,46px)/1.05 "Bricolage Grotesque","Source Sans 3",sans-serif;margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0}
+  nav.toc{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 10px}
+  nav.toc a{font:700 13px "Bricolage Grotesque",sans-serif;color:var(--ink);background:var(--chip);border-radius:999px;padding:8px 13px;text-decoration:none}
+  nav.toc a:hover{background:var(--surface);box-shadow:var(--shadow)}
+  .scorebar{display:flex;justify-content:space-between;align-items:baseline;font:600 13px "IBM Plex Mono",monospace;color:var(--ink-soft);margin-bottom:10px}
+  .scorebar b{color:var(--gold);font-size:15px}
+  section.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:26px 24px;margin-bottom:18px;scroll-margin-top:16px;overflow-wrap:anywhere;min-width:0}
+  .wrap{min-width:0}
+  .roundchip{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:6px 12px;margin-bottom:12px}
+  h2{font:800 26px "Bricolage Grotesque",sans-serif;margin:0 0 10px;text-wrap:balance}
+  h3{font:800 17px "Bricolage Grotesque",sans-serif;margin:22px 0 8px}
+  p{margin:0 0 12px} .muted{color:var(--ink-soft)} .small{font-size:14.5px}
+  code{font:400 14px "IBM Plex Mono",monospace;background:var(--chip);border-radius:5px;padding:1px 6px}
+  pre{font:400 13.5px/1.5 "IBM Plex Mono",monospace;background:var(--extract-bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto;margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+  pre .c{color:var(--ink-soft)} pre .k{color:var(--pref);font-weight:600} pre .s{color:var(--alt)} pre .d{color:var(--doc);font-weight:600} pre .h{color:var(--hid)}
+  .note{background:var(--extract-bg);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:12px 16px;font-size:15.5px;margin:12px 0}
+  .note .lab{display:block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  table{border-collapse:collapse;width:100%;font-size:15px;margin:8px 0 14px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font:700 13px "Bricolage Grotesque",sans-serif;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em}
+  td code{white-space:normal;overflow-wrap:anywhere}
+  @media (max-width:600px){ table,tbody,tr,td{display:block;width:100%} thead,th{display:none} tr{border-bottom:2px solid var(--line);padding:8px 0} td{border:none;padding:3px 0} td:first-child{font-weight:700} }
+  .tag{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:5px 9px;white-space:nowrap}
+  .tag.pref{background:var(--pref-bg);color:var(--pref)} .tag.alt{background:var(--alt-bg);color:var(--alt)} .tag.hid{background:var(--hid-bg);color:var(--hid)} .tag.doc{background:var(--doc-bg);color:var(--doc)}
+  /* tree */
+  .tree{font:600 15.5px "Source Sans 3",sans-serif;background:var(--extract-bg);border-radius:10px;padding:14px 18px;margin:10px 0}
+  .tree ul{list-style:none;margin:0;padding-left:22px;border-left:2px solid var(--line)} .tree > ul{padding-left:0;border:none}
+  .tree li{padding:3px 0} .tree .rel{font-weight:400;color:var(--doc);font-size:14px}
+  .tree .lbl{font:600 11px "IBM Plex Mono",monospace;color:var(--ink-soft);margin-left:6px}
+  /* exercises */
+  .ex{border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0;background:var(--paper)}
+  .ex .q{font-weight:600;margin-bottom:10px;overflow-wrap:anywhere} .ex .q .kind{display:block;font:600 11px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:4px}
+  .opts{display:flex;gap:8px;flex-wrap:wrap}
+  button.chip{font:600 14.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:999px;padding:8px 14px;cursor:pointer;transition:all .15s}
+  button.chip:hover:not(:disabled){border-color:var(--accent)}
+  button.chip:focus-visible,button.next:focus-visible,button.ghost:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  button.chip.right{background:var(--ok-bg);border-color:var(--ok)} button.chip.wrong{background:var(--miss-bg);border-color:var(--miss)}
+  button.chip:disabled{cursor:default;opacity:.85} button.chip.dim{opacity:.4}
+  .fb{margin-top:8px;font-size:14.5px} .fb.ok{color:var(--ok)} .fb.miss{color:var(--miss)}
+  .fb .why{color:var(--ink-soft);display:block;margin-top:2px}
+  .exscore{font:600 13px "IBM Plex Mono",monospace;color:var(--ink-soft);margin:6px 0 0}
+  /* word cloud + slots */
+  .cloud{display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:center;align-items:center;padding:18px 14px;background:var(--extract-bg);border-radius:12px;min-height:90px;margin:8px 0 14px}
+  .cloud .empty{color:var(--ink-soft);font-size:14.5px}
+  button.word{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;color:var(--accent);background:none;border:2px solid transparent;border-radius:10px;padding:4px 8px;cursor:pointer;line-height:1.1;transition:transform .12s}
+  button.word:hover{transform:scale(1.06)} button.word.sel{border-color:var(--accent);background:var(--surface);box-shadow:var(--shadow)}
+  button.word:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .slots ul{list-style:none;margin:0;padding-left:26px;border-left:2px solid var(--line)} .slots > ul{padding-left:0;border:none} .slots li{padding:5px 0}
+  button.slot{font:600 15px "Source Sans 3",sans-serif;color:var(--ink-soft);background:var(--surface);border:2px dashed var(--line);border-radius:9px;padding:7px 14px;min-width:150px;text-align:left;cursor:pointer;transition:border-color .15s}
+  button.slot:hover:not(.filled){border-color:var(--accent);color:var(--accent)} button.slot.target{border-color:var(--accent);color:var(--accent);border-style:solid}
+  button.slot.filled{border-style:solid;border-color:var(--ok);background:var(--ok-bg);color:var(--ink);font-weight:700;cursor:default}
+  button.slot.no{animation:shake .35s;border-color:var(--miss);color:var(--miss)}
+  button.slot:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .slot .hint{font:600 11px "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;display:block;margin-top:2px;color:inherit;opacity:.8}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  #treeMsg{min-height:24px}
+  /* fill in the turtle */
+  .ttlfill{font:400 14px/1.9 "IBM Plex Mono",monospace;background:var(--extract-bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-wrap:anywhere}
+  .ttlfill .ln{display:block;padding-left:2.2em;text-indent:-2.2em}
+  .ttlfill .k{color:var(--pref);font-weight:600} .ttlfill .d{color:var(--doc);font-weight:600} .ttlfill .p{color:var(--ink-soft)}
+  button.blank{font:400 13.5px "IBM Plex Mono",monospace;color:var(--ink-soft);background:var(--surface);border:2px dashed var(--line);border-radius:7px;padding:2px 10px;min-width:110px;cursor:pointer;vertical-align:baseline;text-indent:0;margin:2px 2px}
+  button.blank:hover:not(.filled){border-color:var(--accent);color:var(--accent)} button.blank.target{border-color:var(--accent);border-style:solid;color:var(--accent)}
+  button.blank.filled{border-style:solid;border-color:var(--ok);background:var(--ok-bg);color:var(--ink);cursor:default;font-weight:600}
+  button.blank.no{animation:shake .35s;border-color:var(--miss);color:var(--miss)}
+  button.blank:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  button.word.val{font:600 14px "IBM Plex Mono",monospace;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;transform:none!important}
+  button.word.val.sel{border-color:var(--accent);box-shadow:var(--shadow)}
+  /* builder */
+  .field{margin:10px 0} .field label{display:block;font:600 14px "Source Sans 3",sans-serif;margin-bottom:4px}
+  .field input,.field textarea,.field select{width:100%;font:400 16px "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:8px 10px}
+  .field input:focus,.field textarea:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .field .hint{font-size:13px;color:var(--ink-soft);margin:3px 0 0}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:14px} @media (max-width:640px){.split{grid-template-columns:1fr}}
+  .problems{margin:10px 0 0;padding:0;list-style:none} .problems li{font-size:14.5px;padding:6px 10px;border-radius:8px;margin-bottom:4px}
+  .problems li.bad{background:var(--miss-bg);color:var(--miss)} .problems li.good{background:var(--ok-bg);color:var(--ok)}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  button.next{font:700 16px "Bricolage Grotesque",sans-serif;color:var(--accent-ink);background:var(--accent);border:none;border-radius:10px;padding:11px 20px;cursor:pointer}
+  button.ghost{font:700 15px "Bricolage Grotesque",sans-serif;color:var(--accent);background:transparent;border:1.5px solid var(--accent);border-radius:10px;padding:9px 16px;cursor:pointer}
+  a{color:var(--accent);font-weight:600}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);font:600 14px "Source Sans 3",sans-serif;padding:10px 16px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+  .toast.show{opacity:1}
+  .final{text-align:center;padding:10px 10px 0}
+  .final .big{font:800 clamp(48px,12vw,72px)/1 "Bricolage Grotesque",sans-serif;color:var(--gold)}
+  .final .of{font:600 15px "IBM Plex Mono",monospace;color:var(--ink-soft)}
+  canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:9}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+  @media print{ body{background:none} nav.toc,.btns,.kgg-logo,button{display:none!important} section.card{box-shadow:none;border:none;padding:0 0 20px} }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Knowledge Checks</a></li><li aria-current="page">SKOS in One Sitting</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="kgg-logo" src="../assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Knowledge Graph Academy · Module 3 · SKOS · music genres</div>
+    <h1>SKOS in One Sitting</h1>
+    <p class="sub">Labels, hierarchy and documentation for a controlled vocabulary, with Rock as the worked example and The Beatles never far away.</p>
+  </header>
+  <nav class="toc">
+    <a href="#s1">1 · What SKOS is</a><a href="#s2">2 · Labels</a><a href="#s3">3 · Hierarchy</a><a href="#s4">4 · Documentation</a><a href="#s5">5 · Fill in the Turtle</a><a href="#s6">6 · The whole scheme</a>
+  </nav>
+  <div class="scorebar"><span>four exercises along the way</span><span>score <b id="score">0</b>/<span id="max"></span></span></div>
+
+  <section class="card" id="s1">
+    <span class="roundchip">1 · What SKOS is</span>
+    <h2>The vocabulary you built in Module 2, written so a machine can read it</h2>
+    <p>SKOS stands for Simple Knowledge Organization System. It is the W3C standard (2009) for publishing controlled vocabularies: flat lists, taxonomies and thesauri. It does not define classes of things. It describes <em>concepts</em>, the terms in your CBox, and how they are named, arranged and explained.</p>
+    <p>Two building blocks carry everything:</p>
+    <table>
+      <tr><th>Block</th><th>What it is</th><th>In the music domain</th></tr>
+      <tr><td><code>skos:ConceptScheme</code></td><td>The vocabulary as a whole. One scheme, one purpose.</td><td>The <b>Music genres</b> vocabulary for your subgraph.</td></tr>
+      <tr><td><code>skos:Concept</code></td><td>One unit of thought inside the scheme. Not a word: the idea the words point at.</td><td><b>Rock</b>, whatever you call it and however you spell it.</td></tr>
+    </table>
+    <p>Every concept says which scheme it belongs to with <code>skos:inScheme</code>, and the scheme names its entry points with <code>skos:hasTopConcept</code>. Three families of properties do the rest, and this tutorial takes them in turn: <span class="tag pref">labels</span> what the concept is called, <span class="tag alt">hierarchy</span> where it sits, <span class="tag doc">documentation</span> what it means and how to use it.</p>
+    <div class="note"><span class="lab">One idea, many words</span>Record shops, radio and streaming services file the same Beatles album under "Rock", "Rock music", "Rock (music)" and, in Germany, "Rockmusik". Four strings, one concept. SKOS lets you keep the one concept and hang every string off it, each with its proper role.</div>
+  </section>
+
+  <section class="card" id="s2">
+    <span class="roundchip">2 · Labels</span>
+    <h2>Preferred, alternative, hidden</h2>
+    <p>A label is a string attached to a concept, always with a language tag. SKOS gives you three kinds, and the difference is not how good the word is. It is what the label is <em>for</em>.</p>
+    <table>
+      <tr><th>Property</th><th>Role</th><th>Rule</th><th>Rock</th></tr>
+      <tr><td><code>skos:prefLabel</code> <span class="tag pref">display</span></td><td>The one term you show. The heading in the index, the tag on the record.</td><td><b>At most one per language.</b> "Rock"@en and "Rockmusik"@de can both be preferred; two English ones cannot.</td><td>Rock@en · Rockmusik@de</td></tr>
+      <tr><td><code>skos:altLabel</code> <span class="tag alt">also known as</span></td><td>Synonyms, other spellings, acronyms, older names. Real words people use and would expect to see.</td><td>As many as you like. Shown to users as "use for" or "see also".</td><td>Rock music@en · Rock (music)@en</td></tr>
+      <tr><td><code>skos:hiddenLabel</code> <span class="tag hid">search only</span></td><td>Strings you want search to catch but never want to display: misspellings, typos, keyboard variants.</td><td>Never shown. Indexed.</td><td>Rok@en · Rcok@en · Rockmusic@en</td></tr>
+    </table>
+    <div class="note"><span class="lab">Two integrity rules worth memorising</span>A concept has at most one preferred label per language. And the three label sets do not overlap: a string that is a preferred label cannot also be an alternative or hidden label of the same concept. Checkers enforce both, and Section 5 will too.</div>
+    <pre><span class="c"># Rock, labels only</span>
+ex:rock a skos:Concept ;
+    <span class="k">skos:prefLabel</span>   <span class="s">"Rock"@en</span>, <span class="s">"Rockmusik"@de</span> ;
+    <span class="k">skos:altLabel</span>    <span class="s">"Rock music"@en</span>, <span class="s">"Rock (music)"@en</span> ;
+    <span class="k">skos:hiddenLabel</span> <span class="h">"Rok"@en</span>, <span class="h">"Rcok"@en</span>, <span class="h">"Rockmusic"@en</span> .</pre>
+    <h3>Exercise · which label is it?</h3>
+    <p class="small muted">Each string is about the concept Rock unless it is not. Pick the right home. One point each.</p>
+    <div id="ex1"></div>
+  </section>
+
+  <section class="card" id="s3">
+    <span class="roundchip">3 · Hierarchy</span>
+    <h2>Broader, narrower, related</h2>
+    <p>SKOS hierarchy is between concepts, not between classes of things. "Punk rock is narrower than Rock" says where the term sits in your vocabulary. It does not say every punk track is a rock track, and it does not have to.</p>
+    <table>
+      <tr><th>Property</th><th>Reads as</th><th>Rule</th></tr>
+      <tr><td><code>skos:broader</code></td><td>"sits under". Rock has the broader concept Popular music: in the tree, Rock is indented beneath Popular music.</td><td rowspan="2">Inverses of each other. State one and a reasoner supplies the other, but a good file states both directions or picks one consistently. No cycles: a concept cannot be its own ancestor.</td></tr>
+      <tr><td><code>skos:narrower</code></td><td>"has beneath it". Rock has the narrower concept Punk rock: the same tree edge, written from the parent's side.</td></tr>
+      <tr><td><code>skos:related</code></td><td>"see also". A sideways link between two concepts that are not above or below each other. Rock and Blues, the music it grew out of.</td><td>Symmetric. A pair of concepts cannot be both hierarchical and related.</td></tr>
+      <tr><td><code>skos:topConceptOf</code></td><td>Marks the roots of the scheme, the concepts with nothing broader.</td><td>Pairs with <code>skos:hasTopConcept</code> on the scheme.</td></tr>
+    </table>
+    <p class="small muted">Note the words: broader and narrower say nothing about <em>why</em>. Genre-within-genre, part-of, instance-of, all look the same. If you need to say "The Beatles are an instance of Rock band", that is the TBox and ABox talking, not SKOS. Keep people out of your genre vocabulary.</p>
+    <div class="tree"><ul>
+      <li>Popular music <span class="lbl">top concept</span>
+        <ul>
+          <li>Rock <span class="rel">related: Blues, Rock and roll</span>
+            <ul><li>Punk rock</li><li>Hard rock</li><li>Indie rock</li></ul></li>
+          <li>Pop</li>
+          <li>Blues</li>
+          <li>Jazz</li>
+          <li>Rock and roll <span class="lbl">the 1950s style, its own concept</span></li>
+        </ul></li>
+    </ul></div>
+    <pre>ex:rock
+    <span class="k">skos:broader</span>  ex:popular-music ;
+    <span class="k">skos:narrower</span> ex:punk-rock, ex:hard-rock, ex:indie-rock ;
+    <span class="k">skos:related</span>  ex:blues, ex:rock-and-roll .
+ex:punk-rock <span class="k">skos:broader</span> ex:rock .</pre>
+    <h3>Exercise · put every word in its place</h3>
+    <p class="small muted">Eight genre words in the cloud, one empty tree below. Tap a word, then tap the slot where it sits. A right placement locks in and the word leaves the cloud. A wrong one bounces back and tells you why. One point per word placed right first time.</p>
+    <div class="cloud" id="cloud"></div>
+    <div class="tree slots" id="slots"></div>
+    <div class="fb" id="treeMsg"></div>
+    <div class="btns"><span class="exscore" id="exs1" style="margin:0">0 of 8</span><button class="ghost" id="treeReset">Start the tree again</button></div>
+    <div id="relStep" hidden>
+      <h3>Then the sideways links</h3>
+      <p class="small muted">The tree is done. Which of these pairs deserve a <code>skos:related</code> link? Tick the ones that do, then check. Feedback only, no points.</p>
+      <div class="opts" id="relPairs"></div>
+      <div class="btns"><button class="ghost" id="relCheck">Check the links</button></div>
+      <div id="relFb"></div>
+    </div>
+  </section>
+
+  <section class="card" id="s4">
+    <span class="roundchip">4 · Documentation</span>
+    <h2>Say what you mean, and what you meant by it</h2>
+    <p>A label names a concept. The documentation properties explain it. They are all sub-properties of <code>skos:note</code>, all plain text with a language tag, and each answers a different question. Filling them in is where the Module 2 quality checklist gets done.</p>
+    <table>
+      <tr><th>Property</th><th>Answers</th><th>Rock</th></tr>
+      <tr><td><code>skos:definition</code></td><td>What is it? A complete statement of meaning.</td><td>A popular music genre that grew out of 1950s rock and roll, built on electric guitar, bass and drums, usually in 4/4.</td></tr>
+      <tr><td><code>skos:scopeNote</code></td><td>When do I use it, and when not? The boundary.</td><td>Use for the genre from the mid-1960s onward. For the 1950s style it grew out of, use Rock and roll.</td></tr>
+      <tr><td><code>skos:example</code></td><td>Show me one.</td><td>The Beatles, <em>Abbey Road</em> (1969).</td></tr>
+      <tr><td><code>skos:historyNote</code></td><td>Where did the term come from?</td><td>Shortened from "rock and roll" during the 1960s as the music moved away from its dance-hall origins.</td></tr>
+      <tr><td><code>skos:editorialNote</code></td><td>A note to the people maintaining the vocabulary. Not for the public.</td><td>Decide whether Classic rock is a genre or a radio format before the Module 4 review.</td></tr>
+      <tr><td><code>skos:changeNote</code></td><td>What changed, when, by whom.</td><td>2026-09-10: added Indie rock as a narrower concept. JT.</td></tr>
+      <tr><td><code>skos:note</code></td><td>Anything that fits none of the above.</td><td>"Rock" is the same string in English and Spanish; each language gets its own preferred label.</td></tr>
+    </table>
+    <div class="note"><span class="lab">Definition versus scope note</span>The definition says what the thing is. The scope note says what the <em>term</em> covers in this vocabulary. "Use for the genre from the mid-1960s onward" is not a definition of Rock; it is an instruction to the person tagging a record. Keep them apart and both get shorter.</div>
+    <pre>ex:rock
+    <span class="d">skos:definition</span>    <span class="s">"A popular music genre that grew out of 1950s rock and roll, built on electric guitar, bass and drums, usually in 4/4."@en</span> ;
+    <span class="d">skos:scopeNote</span>     <span class="s">"Use for the genre from the mid-1960s onward. For the 1950s style it grew out of, use Rock and roll."@en</span> ;
+    <span class="d">skos:example</span>       <span class="s">"The Beatles, Abbey Road (1969)."@en</span> ;
+    <span class="d">skos:historyNote</span>   <span class="s">"Shortened from rock and roll during the 1960s."@en</span> ;
+    <span class="d">skos:editorialNote</span> <span class="s">"Decide whether Classic rock is a genre or a radio format."@en</span> ;
+    <span class="d">skos:changeNote</span>    <span class="s">"2026-09-10: added Indie rock as a narrower concept. JT."@en</span> .</pre>
+    <h3>Exercise · which note?</h3>
+    <p class="small muted">Each snippet was written for one property. Which?</p>
+    <div id="ex3"></div>
+  </section>
+
+  <section class="card" id="s5">
+    <span class="roundchip">5 · Fill in the Turtle</span>
+    <h2>Put each value where it belongs in the RDF</h2>
+    <p>Here is the Rock concept written in Turtle with every value missing. The values are in the cloud. Tap a value, then tap the blank it belongs in. Labels, hierarchy and documentation all come back at once, and one value in the cloud belongs nowhere in a genre vocabulary.</p>
+    <div class="cloud" id="cloud2"></div>
+    <div class="ttlfill" id="ttlfill"></div>
+    <div class="fb" id="ttlMsg"></div>
+    <div class="btns"><span class="exscore" id="exs3" style="margin:0">0 of 11</span><button class="ghost" id="ttlReset">Start again</button></div>
+    <div class="note" style="margin-top:16px"><span class="lab">Reading the syntax</span><code>ex:rock</code> is the concept's identifier. <code>a</code> means "is a". Each line is one property and its value, ending in <code>;</code> because the next line is about the same subject; the last line ends in <code>.</code> A value in quotes with <code>@en</code> is text in English. A value starting with <code>ex:</code> is another thing in your graph.</div>
+  </section>
+
+  <section class="card" id="s6">
+    <span class="roundchip">6 · The whole scheme</span>
+    <h2>Nine concepts, one scheme, everything wired</h2>
+    <p>Here is the Popular music slice from Section 3 as a complete, valid SKOS file: the scheme, its top concepts, every concept in the scheme, labels in two languages, both directions of the hierarchy, and documentation on the concept we worked on, Rock. Use it as the pattern for your subgraph's vocabulary.</p>
+    <pre id="full"></pre>
+    <div class="btns"><button class="next" id="dlFull">Download the scheme</button><button class="ghost" id="copyFull">Copy</button></div>
+    <div class="final" id="final"></div>
+    <div class="note"><span class="lab">Your turn</span>Take the flat list your group made in Module 2. Pick five terms. For each: one preferred label per language, the synonyms as alternative labels, the typos you have seen as hidden labels, a broader concept or top-concept status, a definition and a scope note. Put them in one scheme. Then load the file into Ask the Graph and query for every concept whose broader is Popular music.</div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<canvas id="confetti"></canvas>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+const slug = s => norm(s).replace(/\s+/g,'-') || 'concept';
+function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove('show'), 1800); }
+
+/* ---------- exercises ---------- */
+const LABELS = [{k:'pref',n:'skos:prefLabel'},{k:'alt',n:'skos:altLabel'},{k:'hid',n:'skos:hiddenLabel'},{k:'other',n:'A different concept'}];
+const EX1 = [
+  {s:'Rock', kind:'the English term the index shows', ans:'pref', why:'The one displayed term for English. Preferred, and the only English preferred label allowed.'},
+  {s:'Rock music', kind:'the fuller name most people say', ans:'alt', why:'A real variant people use and would expect to find. Alternative label. It cannot also be preferred, since English already has one.'},
+  {s:'Rockmusik', kind:'the German preferred term', ans:'pref', why:'Preferred label with the @de tag. One preferred label per language, and German is a second language.'},
+  {s:'Rok', kind:'a misspelling seen in search logs', ans:'hid', why:'Nobody should see it, search should catch it. Hidden label.'},
+  {s:"Rock 'n' roll", kind:'the 1950s style the genre grew out of', ans:'other', why:'The scope note on Rock sends this to its own concept, Rock and roll. Two ideas, two concepts, even though people use the words loosely.'},
+  {s:'Rcok', kind:'a typo', ans:'hid', why:'Hidden. Index it, never show it.'},
+  {s:'Heavy metal', kind:'louder, faster, darker', ans:'other', why:'A different idea altogether, with its own bands, history and fans. It gets its own concept, narrower than Rock or beside it, depending on your vocabulary.'},
+  {s:'Rock (music)', kind:'the disambiguated form Wikipedia uses', ans:'alt', why:'Real usage, so alternative. The qualifier in brackets tells a reader this is the genre, not the stone.'},
+];
+const NOTES = [{k:'definition',n:'skos:definition'},{k:'scopeNote',n:'skos:scopeNote'},{k:'example',n:'skos:example'},{k:'historyNote',n:'skos:historyNote'},{k:'editorialNote',n:'skos:editorialNote'},{k:'changeNote',n:'skos:changeNote'}];
+const EX3 = [
+  {s:'"A genre from the African American communities of the Deep South, built on the twelve-bar form and blue notes."', ans:'definition', why:'A complete statement of what Blues is. Definition.'},
+  {s:'"Use for the musical genre. For the chord progression itself, use Twelve-bar blues."', ans:'scopeNote', why:'An instruction on where the term applies in this vocabulary and where it does not. Scope note.'},
+  {s:'"B.B. King, The Thrill Is Gone (1969)."', ans:'example', why:'One instance that shows the concept. Example.'},
+  {s:'"The term was in print by 1912, in the title of W. C. Handy\'s Memphis Blues."', ans:'historyNote', why:'Where the term came from. History note.'},
+  {s:'"Katariina: check whether Rhythm and blues belongs under Blues or under Popular music."', ans:'editorialNote', why:'A message to the people maintaining the vocabulary, not to users. Editorial note.'},
+  {s:'"2026-09-10: split Twelve-bar blues (form) from Blues (genre). JT."', ans:'changeNote', why:'Dated record of a change. Change note.'},
+];
+const EXES = [{el:'#ex1', items:EX1, opts:LABELS}, {el:'#ex3', items:EX3, opts:NOTES}];
+const TREE_POINTS = 8;
+const TTL_POINTS_N = 11;
+const MAX = EXES.reduce((a,e) => a + e.items.length, 0) + TREE_POINTS + TTL_POINTS_N; $('#max').textContent = MAX;
+let score = 0, answered = 0;
+EXES.forEach((E, ei) => {
+  const host = $(E.el);
+  const exn = ei === 0 ? 0 : 2;
+  host.innerHTML = E.items.map((it, i) => `<div class="ex" id="ex${exn}-${i}"><div class="q">${it.kind ? `<span class="kind">${esc(it.kind)}</span>` : ''}${esc(it.s)}</div><div class="opts">${E.opts.map(o => `<button class="chip" data-k="${o.k}">${esc(o.n)}</button>`).join('')}</div><div class="fb"></div></div>`).join('') + `<p class="exscore" id="exs${exn}">0 of ${E.items.length}</p>`;
+  let got = 0;
+  E.items.forEach((it, i) => {
+    const box = $(`#ex${exn}-${i}`);
+    box.querySelectorAll('button.chip').forEach(b => b.addEventListener('click', () => {
+      const right = b.dataset.k === it.ans; if(right){ score++; got++; } answered++;
+      box.querySelectorAll('button.chip').forEach(x => { x.disabled = true; if(x.dataset.k === it.ans) x.classList.add('right'); else if(x === b) x.classList.add('wrong'); else x.classList.add('dim'); });
+      const name = E.opts.find(o => o.k === it.ans).n;
+      box.querySelector('.fb').innerHTML = `<span class="${right?'ok':'miss'}">${right ? 'Right.' : 'Not quite: ' + esc(name) + '.'}</span><span class="why">${esc(it.why)}</span>`;
+      box.querySelector('.fb').className = 'fb ' + (right ? 'ok' : 'miss');
+      $(`#exs${exn}`).textContent = `${got} of ${E.items.length}`; $('#score').textContent = score;
+      if(answered === MAX) finish();
+    }));
+  });
+});
+/* ---------- build the tree ---------- */
+const TREE = [
+  {id:'popular-music', name:'Popular music', under:null, why:'Nothing in this scheme is broader than Popular music. It is the top concept.'},
+  {id:'rock', name:'Rock', under:'popular-music', why:'Rock is a kind of popular music, so it sits under Popular music.'},
+  {id:'punk-rock', name:'Punk rock', under:'rock', why:'Punk rock is a kind of rock. Under Rock, not directly under Popular music: the tree should be as deep as the vocabulary is.'},
+  {id:'hard-rock', name:'Hard rock', under:'rock', why:'A kind of rock, so under Rock.'},
+  {id:'blues', name:'Blues', under:'popular-music', why:'Blues is its own genre beside Rock, not a kind of it. Rock grew out of blues, and that is a sideways link, not a parent.'},
+  {id:'jazz', name:'Jazz', under:'popular-music', why:'Its own genre under Popular music.'},
+  {id:'pop', name:'Pop', under:'popular-music', why:'Pop the genre sits under Popular music the grouping term. Same word, two concepts, and the scope note keeps them apart.'},
+  {id:'rock-and-roll', name:'Rock and roll', under:'popular-music', why:'The 1950s style is its own concept beside Rock. Rock came from it, which again is a sideways link.'},
+];
+const RELS = [
+  {a:'Rock', b:'Blues', yes:true, why:'Rock grew out of blues. Neither is above the other, so related is the right link.'},
+  {a:'Rock', b:'Rock and roll', yes:true, why:'Ancestor and descendant in history, siblings in the tree. Related.'},
+  {a:'Rock', b:'Punk rock', yes:false, why:'Already parent and child. A pair cannot be both hierarchical and related.'},
+  {a:'Popular music', b:'Rock', yes:false, why:'Already parent and child.'},
+  {a:'Jazz', b:'Pop', yes:false, why:'No particular connection in this vocabulary. Related links are for real associations, not for everything that sits side by side.'},
+];
+const SLOTS = [
+  {id:'top', parent:null, accept:['popular-music'], hint:'top concept', kids:[
+    {id:'mid', parent:'top', accept:['rock'], hint:'has two beneath it', kids:[
+      {id:'leafA', parent:'mid', accept:['punk-rock','hard-rock'], hint:'a kind of the one above'},
+      {id:'leafB', parent:'mid', accept:['punk-rock','hard-rock'], hint:'a kind of the one above'},
+    ]},
+    {id:'s1', parent:'top', accept:['blues','jazz','pop','rock-and-roll'], hint:'its own genre'},
+    {id:'s2', parent:'top', accept:['blues','jazz','pop','rock-and-roll'], hint:'its own genre'},
+    {id:'s3', parent:'top', accept:['blues','jazz','pop','rock-and-roll'], hint:'its own genre'},
+    {id:'s4', parent:'top', accept:['blues','jazz','pop','rock-and-roll'], hint:'its own genre'},
+  ]},
+];
+const flatSlots = []; (function walk(list){ list.forEach(sl => { flatSlots.push(sl); if(sl.kids) walk(sl.kids); }); })(SLOTS);
+const byId = id => TREE.find(t => t.id === id);
+let placed = {}, tried = new Set(), selWord = null, selSlot = null, treeGot = 0, treeDone = false;
+const SIZES = [30, 22, 26, 19, 24, 21, 28, 20];
+function drawCloud(){
+  const used = new Set(Object.values(placed)); const left = TREE.filter(t => !used.has(t.id));
+  $('#cloud').innerHTML = left.length ? left.map((t,i) => `<button class="word ${selWord===t.id?'sel':''}" data-w="${t.id}" style="font-size:${SIZES[TREE.indexOf(t)]}px;transform:rotate(${[-3,2,-1,3,0,-2,1,2][TREE.indexOf(t)]}deg)">${esc(t.name)}</button>`).join('') : '<span class="empty">Every word is in its place.</span>';
+  $('#cloud').querySelectorAll('.word').forEach(b => b.addEventListener('click', () => { selWord = selWord === b.dataset.w ? null : b.dataset.w; drawCloud(); if(selWord && selSlot) tryPlace(selWord, selSlot); }));
+}
+function drawSlots(){
+  const node = sl => `<li><button class="slot ${placed[sl.id]?'filled':''} ${selSlot===sl.id?'target':''}" data-s="${sl.id}" ${placed[sl.id]?'disabled':''}>${placed[sl.id] ? esc(byId(placed[sl.id]).name) : '&nbsp;'}<span class="hint">${esc(sl.hint)}</span></button>${sl.kids ? `<ul>${sl.kids.map(node).join('')}</ul>` : ''}</li>`;
+  $('#slots').innerHTML = `<ul>${SLOTS.map(node).join('')}</ul>`;
+  $('#slots').querySelectorAll('.slot:not(.filled)').forEach(b => b.addEventListener('click', () => { selSlot = selSlot === b.dataset.s ? null : b.dataset.s; drawSlots(); if(selWord && selSlot) tryPlace(selWord, selSlot); else if(!selWord) msg('Now tap the word that goes there.', ''); }));
+}
+function msg(text, cls){ const m = $('#treeMsg'); m.className = 'fb ' + cls; m.textContent = text; }
+function whyWrong(w, sl){
+  const t = byId(w); const parentSlot = flatSlots.find(x => x.id === sl.parent); const parentName = parentSlot ? (placed[parentSlot.id] ? byId(placed[parentSlot.id]).name : 'the slot above') : null;
+  if(w === 'popular-music') return 'Nothing in this scheme is broader than Popular music. It goes at the top.';
+  if(sl.id === 'top') return `${t.name} has something broader than it, so it cannot be the top concept.`;
+  if(w === 'rock' && sl.id !== 'mid') return 'Rock has Punk rock and Hard rock beneath it, so it belongs in the slot that has two beneath it.';
+  if(sl.id === 'mid') return `${t.name} has nothing beneath it in this scheme. That slot needs a concept with two narrower concepts.`;
+  if((w === 'punk-rock' || w === 'hard-rock') && sl.parent === 'top') return `${t.name} is a kind of rock. It sits one level down, under Rock.`;
+  if(sl.parent === 'mid') return `${t.name} is not a kind of rock. ${t.why}`;
+  return t.why;
+}
+function tryPlace(w, sId){
+  if(treeDone) return;
+  const sl = flatSlots.find(x => x.id === sId); const t = byId(w);
+  const first = !tried.has(w); tried.add(w);
+  if(sl.accept.includes(w)){
+    placed[sId] = w; if(first){ treeGot++; } selWord = null; selSlot = null;
+    msg(`${t.name} is in its place.${first ? '' : ' No point this time, you had a go before.'}`, 'ok');
+    $('#exs1').textContent = `${treeGot} of ${TREE_POINTS}`;
+    drawCloud(); drawSlots();
+    if(Object.keys(placed).length === TREE.length){
+      treeDone = true; score += treeGot; answered += TREE_POINTS; $('#score').textContent = score;
+      msg(`Tree complete: ${treeGot} of ${TREE_POINTS} placed right first time.`, 'ok');
+      $('#relStep').hidden = false; setTimeout(() => $('#relStep').scrollIntoView({behavior:'smooth', block:'center'}), 300);
+      if(answered === MAX) finish();
+    }
+  } else {
+    const b = $('#slots').querySelector(`[data-s="${sId}"]`); if(b){ b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); }
+    msg(`Not there. ${whyWrong(w, sl)}`, 'miss'); selSlot = null; drawSlots();
+  }
+}
+$('#treeReset').addEventListener('click', () => { if(treeDone){ toast('The tree is finished. Reload the page to redo everything.'); return; } placed = {}; tried = new Set(); selWord = null; selSlot = null; treeGot = 0; $('#exs1').textContent = `0 of ${TREE_POINTS}`; msg('', ''); drawCloud(); drawSlots(); });
+drawCloud(); drawSlots();
+const relOn = new Set();
+$('#relPairs').innerHTML = RELS.map((r,i) => `<button class="chip" data-i="${i}">${esc(r.a)} · ${esc(r.b)}</button>`).join('');
+document.querySelectorAll('#relPairs .chip').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.i; if(relOn.has(i)) relOn.delete(i); else relOn.add(i); b.classList.toggle('sel', relOn.has(i)); b.style.background = relOn.has(i) ? 'var(--accent)' : ''; b.style.color = relOn.has(i) ? '#fff' : ''; }));
+$('#relCheck').addEventListener('click', () => {
+  $('#relFb').innerHTML = RELS.map((r,i) => { const picked = relOn.has(i); const right = picked === r.yes; return `<div class="fb ${right?'ok':'miss'}" style="margin-top:6px"><b>${esc(r.a)} · ${esc(r.b)}</b>: ${r.yes ? 'related' : 'no related link'}${right ? '' : ' (you had it the other way)'}<span class="why">${esc(r.why)}</span></div>`; }).join('');
+  document.querySelectorAll('#relPairs .chip').forEach(b => { const r = RELS[+b.dataset.i]; b.disabled = true; b.classList.add(r.yes ? 'right' : (relOn.has(+b.dataset.i) ? 'wrong' : 'dim')); b.style.background = ''; b.style.color = ''; });
+});
+
+function finish(){
+  $('#final').innerHTML = `<div class="big">${score}</div><div class="of">of ${MAX} across the four exercises</div><p class="muted" style="margin-top:8px">${score === MAX ? 'Every label, branch, note and value in its place.' : score >= MAX*0.8 ? 'Solid. Re-read the notes on the ones you missed.' : 'Go back over Sections 2 to 5 and try the misses again.'}</p>`;
+  if(score >= MAX*0.8) confetti();
+  $('#final').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+/* ---------- fill in the Turtle ---------- */
+const PREFIXES = `@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix ex:   <https://checks.knowledge-graph-academy.com/music/genres#> .
+`;
+const VALS = [
+  {id:'scheme', text:'ex:scheme', kind:'iri', role:'scheme'},
+  {id:'rock-en', text:'"Rock"@en', kind:'lit', role:'pref'},
+  {id:'rock-de', text:'"Rockmusik"@de', kind:'lit', role:'pref'},
+  {id:'rockmusic', text:'"Rock music"@en', kind:'lit', role:'alt'},
+  {id:'rcok', text:'"Rcok"@en', kind:'lit', role:'hidden'},
+  {id:'popular', text:'ex:popular-music', kind:'iri', role:'broader'},
+  {id:'punk', text:'ex:punk-rock', kind:'iri', role:'narrower'},
+  {id:'blues', text:'ex:blues', kind:'iri', role:'related'},
+  {id:'def', text:'"A popular music genre that grew out of 1950s rock and roll, built on electric guitar, bass and drums."@en', kind:'lit', role:'definition'},
+  {id:'scope', text:'"Use for the genre from the mid-1960s onward. For the 1950s style, use Rock and roll."@en', kind:'lit', role:'scopeNote'},
+  {id:'example', text:'"The Beatles, Abbey Road (1969)."@en', kind:'lit', role:'example'},
+  {id:'beatles', text:'ex:the-beatles', kind:'iri', role:'none'},
+];
+const LINES = [
+  {pre:'ex:rock a skos:Concept ;'},
+  {prop:'skos:inScheme', cls:'k', blanks:[{id:'b-scheme', role:'scheme'}], end:';'},
+  {prop:'skos:prefLabel', cls:'k', blanks:[{id:'b-pref1', role:'pref'},{id:'b-pref2', role:'pref'}], end:';'},
+  {prop:'skos:altLabel', cls:'k', blanks:[{id:'b-alt', role:'alt'}], end:';'},
+  {prop:'skos:hiddenLabel', cls:'k', blanks:[{id:'b-hidden', role:'hidden'}], end:';'},
+  {prop:'skos:broader', cls:'k', blanks:[{id:'b-broader', role:'broader'}], end:';'},
+  {prop:'skos:narrower', cls:'k', blanks:[{id:'b-narrower', role:'narrower'}], end:';'},
+  {prop:'skos:related', cls:'k', blanks:[{id:'b-related', role:'related'}], end:';'},
+  {prop:'skos:definition', cls:'d', blanks:[{id:'b-definition', role:'definition'}], end:';'},
+  {prop:'skos:scopeNote', cls:'d', blanks:[{id:'b-scopeNote', role:'scopeNote'}], end:';'},
+  {prop:'skos:example', cls:'d', blanks:[{id:'b-example', role:'example'}], end:'.'},
+];
+const BLANKS = LINES.flatMap(l => l.blanks || []);
+const TTL_POINTS = BLANKS.length;
+let fill = {}, fillTried = new Set(), selVal = null, selBlank = null, fillGot = 0, fillDone = false;
+const valById = id => VALS.find(v => v.id === id);
+const ROLE_NAME = {scheme:'skos:inScheme', pref:'skos:prefLabel', alt:'skos:altLabel', hidden:'skos:hiddenLabel', broader:'skos:broader', narrower:'skos:narrower', related:'skos:related', definition:'skos:definition', scopeNote:'skos:scopeNote', example:'skos:example'};
+function drawCloud2(){
+  const used = new Set(Object.values(fill)); const left = VALS.filter(v => !used.has(v.id));
+  $('#cloud2').innerHTML = left.map(v => `<button class="word val ${selVal===v.id?'sel':''}" data-v="${v.id}">${esc(v.text)}</button>`).join('');
+  $('#cloud2').querySelectorAll('.word').forEach(b => b.addEventListener('click', () => { selVal = selVal === b.dataset.v ? null : b.dataset.v; drawCloud2(); if(selVal && selBlank) tryFill(selVal, selBlank); }));
+}
+function drawFill(){
+  $('#ttlfill').innerHTML = LINES.map(l => l.pre ? `<span class="ln">${esc(l.pre)}</span>` : `<span class="ln">    <span class="${l.cls}">${esc(l.prop)}</span> ${l.blanks.map((bl,i) => `${i ? '<span class="p">,</span> ' : ''}<button class="blank ${fill[bl.id]?'filled':''} ${selBlank===bl.id?'target':''}" data-b="${bl.id}" ${fill[bl.id]?'disabled':''}>${fill[bl.id] ? esc(valById(fill[bl.id]).text) : '…'}</button>`).join('')} <span class="p">${l.end}</span></span>`).join('');
+  $('#ttlfill').querySelectorAll('.blank:not(.filled)').forEach(b => b.addEventListener('click', () => { selBlank = selBlank === b.dataset.b ? null : b.dataset.b; drawFill(); if(selVal && selBlank) tryFill(selVal, selBlank); else if(!selVal) fmsg('Now tap the value that goes there.', ''); }));
+}
+function fmsg(text, cls){ const m = $('#ttlMsg'); m.className = 'fb ' + cls; m.textContent = text; }
+function whyNot(v, bl){
+  if(v.role === 'none') return 'The Beatles are a band: an individual, ABox data. A genre vocabulary has no place for them. Leave that one in the cloud.';
+  const slotIsIri = ['scheme','broader','narrower','related'].includes(bl.role);
+  if(v.role === 'scheme') return 'ex:scheme is the vocabulary itself. Only skos:inScheme points at it.';
+  if(bl.role === 'scheme') return 'skos:inScheme takes the scheme, ex:scheme, not a concept or a label.';
+  if(v.kind === 'lit' && slotIsIri) return `${ROLE_NAME[bl.role]} takes another concept, an ex: identifier, not text.`;
+  if(v.kind === 'iri' && !slotIsIri) return `${ROLE_NAME[bl.role]} takes text with a language tag, not an identifier.`;
+  const m = {
+    'rock-en:alt':'Rock is the displayed English term, so it is the preferred label. It cannot also be alternative: the label sets do not overlap.',
+    'rock-en:hidden':'Rock is the term you show. Hidden labels are the ones you never show.',
+    'rock-de:alt':'Rockmusik is the German preferred term. One preferred label per language, and German is a second language, so it goes on prefLabel with @de.',
+    'rock-de:hidden':'Rockmusik is a real term, the German one. Preferred, with its @de tag.',
+    'rockmusic:pref':'Only one preferred label per language, and English already has Rock. Rock music is an alternative.',
+    'rockmusic:hidden':'Rock music is a real phrase people use and expect to see. Alternative, not hidden.',
+    'rcok:pref':'A typo cannot be the displayed term.',
+    'rcok:alt':'A typo is never shown to anyone. Hidden label: indexed for search, invisible.',
+    'popular:narrower':'Popular music is above Rock, not beneath it. skos:broader.',
+    'popular:related':'Popular music is Rock\'s parent. A pair that is hierarchical cannot also be related.',
+    'punk:broader':'Punk rock sits under Rock, so from Rock\'s side it is narrower.',
+    'punk:related':'Punk rock is a kind of rock: hierarchical, not sideways.',
+    'blues:broader':'Blues is not above Rock. It is beside it: related.',
+    'blues:narrower':'Blues is not a kind of rock. It is beside it: related.',
+    'def:scopeNote':'That text says what Rock is. That is the definition.',
+    'def:example':'That is a statement of meaning, not an instance. Definition.',
+    'scope:definition':'"Use for…" is an instruction on where the term applies, not what the thing is. Scope note.',
+    'scope:example':'An instruction, not an instance. Scope note.',
+    'example:definition':'An album is an instance that shows the concept, not a statement of what it is. Example.',
+    'example:scopeNote':'An album is an instance, not a usage rule. Example.',
+  };
+  return m[v.id + ':' + bl.role] || `${v.text} does not go on ${ROLE_NAME[bl.role]}.`;
+}
+function tryFill(vId, bId){
+  if(fillDone) return;
+  const v = valById(vId), bl = BLANKS.find(x => x.id === bId);
+  const first = !fillTried.has(vId); fillTried.add(vId);
+  if(v.role === bl.role){
+    fill[bId] = vId; if(first) fillGot++; selVal = null; selBlank = null;
+    fmsg(`${v.text} is in place.${first ? '' : ' No point this time.'}`, 'ok'); $('#exs3').textContent = `${fillGot} of ${TTL_POINTS}`;
+    drawCloud2(); drawFill();
+    if(Object.keys(fill).length === TTL_POINTS){
+      fillDone = true; score += fillGot; answered += TTL_POINTS; $('#score').textContent = score;
+      fmsg(`Every blank filled: ${fillGot} of ${TTL_POINTS} right first time. ex:the-beatles stays in the cloud: a band is an individual, not a concept in a genre vocabulary.`, 'ok');
+      if(answered === MAX) finish();
+    }
+  } else {
+    const b = $('#ttlfill').querySelector(`[data-b="${bId}"]`); if(b){ b.classList.add('no'); setTimeout(() => b.classList.remove('no'), 400); }
+    fmsg(`Not there. ${whyNot(v, bl)}`, 'miss'); selBlank = null; drawFill();
+  }
+}
+$('#ttlReset').addEventListener('click', () => { if(fillDone){ toast('This one is finished. Reload the page to redo everything.'); return; } fill = {}; fillTried = new Set(); selVal = null; selBlank = null; fillGot = 0; $('#exs3').textContent = `0 of ${TTL_POINTS}`; fmsg('', ''); drawCloud2(); drawFill(); });
+drawCloud2(); drawFill();
+
+function download(name, text){ const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type:'text/turtle'})); a.download = name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500); toast('Downloaded ' + name); }
+function copy(text){ (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(()=>toast('Copied'), ()=>toast('Select the text and copy it')); }
+
+/* ---------- the whole scheme ---------- */
+const FULL = PREFIXES + `
+ex:scheme a skos:ConceptScheme ;
+    dct:title "Music genres"@en ;
+    dct:description "Genres for the Knowledge Graph Academy music knowledge graph. A slice: popular music and the concepts around rock."@en ;
+    dct:creator "Knowledge Graph Academy" ;
+    dct:created "2026-09-10"^^xsd:date ;
+    skos:hasTopConcept ex:popular-music .
+
+ex:popular-music a skos:Concept ;
+    skos:inScheme ex:scheme ;
+    skos:topConceptOf ex:scheme ;
+    skos:prefLabel "Popular music"@en, "Populäre Musik"@de ;
+    skos:altLabel "Pop music (broad sense)"@en ;
+    skos:definition "Music produced for a wide audience and distributed commercially, as opposed to art music and traditional folk music."@en ;
+    skos:scopeNote "A grouping term. Tag records with the narrowest genre that fits and let the hierarchy do the rest."@en ;
+    skos:narrower ex:rock, ex:pop, ex:blues, ex:jazz, ex:rock-and-roll .
+
+ex:rock a skos:Concept ;
+    skos:inScheme ex:scheme ;
+    skos:prefLabel "Rock"@en, "Rockmusik"@de ;
+    skos:altLabel "Rock music"@en, "Rock (music)"@en ;
+    skos:hiddenLabel "Rok"@en, "Rcok"@en, "Rockmusic"@en ;
+    skos:broader ex:popular-music ;
+    skos:narrower ex:punk-rock, ex:hard-rock, ex:indie-rock ;
+    skos:related ex:blues, ex:rock-and-roll ;
+    skos:definition "A popular music genre that grew out of 1950s rock and roll, built on electric guitar, bass and drums, usually in 4/4."@en ;
+    skos:scopeNote "Use for the genre from the mid-1960s onward. For the 1950s style it grew out of, use Rock and roll."@en ;
+    skos:example "The Beatles, Abbey Road (1969)."@en ;
+    skos:historyNote "Shortened from rock and roll during the 1960s as the music moved away from its dance-hall origins."@en ;
+    skos:editorialNote "Decide whether Classic rock is a genre or a radio format before the Module 4 review."@en ;
+    skos:changeNote "2026-09-10: added Indie rock as a narrower concept. JT."@en .
+
+ex:punk-rock a skos:Concept ;
+    skos:inScheme ex:scheme ;
+    skos:prefLabel "Punk rock"@en, "Punkrock"@de ;
+    skos:altLabel "Punk"@en ;
+    skos:broader ex:rock ;
+    skos:definition "Fast, short, loud rock from the mid-1970s that stripped the music back to a few chords and a lot of attitude."@en ;
+    skos:example "Ramones, Blitzkrieg Bop (1976)."@en .
+
+ex:hard-rock a skos:Concept ;
+    skos:inScheme ex:scheme ;
+    skos:prefLabel "Hard rock"@en ;
+    skos:broader ex:rock ;
+    skos:definition "Rock with heavier, distorted guitar, a louder rhythm section and a blues base, from the late 1960s."@en ;
+    skos:example "Led Zeppelin, Whole Lotta Love (1969)."@en .
+
+ex:indie-rock a skos:Concept ;
+    skos:inScheme ex:scheme ;
+    skos:prefLabel "Indie rock"@en ;
+    skos:altLabel "Independent rock"@en ;
+    skos:broader ex:rock ;
+    skos:definition "Rock released on independent labels or in that spirit, from the 1980s onward."@en ;
+    skos:editorialNote "Check coverage: is this a genre or a business model? Enough sources to stay as its own concept?"@en .
+
+ex:pop a skos:Concept ;
+    skos:inScheme ex:scheme ;
+    skos:prefLabel "Pop"@en, "Popmusik"@de ;
+    skos:altLabel "Pop music"@en ;
+    skos:broader ex:popular-music ;
+    skos:definition "Melodic, chart-oriented popular music with short songs and a strong hook, from the 1950s onward."@en ;
+    skos:scopeNote "Use for the genre. For popular music in the broad sense, use Popular music."@en .
+
+ex:blues a skos:Concept ;
+    skos:inScheme ex:scheme ;
+    skos:prefLabel "Blues"@en, "Blues"@de ;
+    skos:broader ex:popular-music ;
+    skos:related ex:rock ;
+    skos:definition "A genre from the African American communities of the Deep South, built on the twelve-bar form and blue notes."@en ;
+    skos:scopeNote "Use for the musical genre. For the chord progression itself, use Twelve-bar blues."@en ;
+    skos:example "B.B. King, The Thrill Is Gone (1969)."@en ;
+    skos:historyNote "The term was in print by 1912, in the title of W. C. Handy's Memphis Blues."@en .
+
+ex:jazz a skos:Concept ;
+    skos:inScheme ex:scheme ;
+    skos:prefLabel "Jazz"@en, "Jazz"@de ;
+    skos:hiddenLabel "Jass"@en ;
+    skos:broader ex:popular-music ;
+    skos:definition "A genre born in New Orleans around 1900, built on improvisation, swing rhythm and blues harmony."@en ;
+    skos:historyNote "Spelt jass on some of the earliest recordings, 1917."@en .
+
+ex:rock-and-roll a skos:Concept ;
+    skos:inScheme ex:scheme ;
+    skos:prefLabel "Rock and roll"@en ;
+    skos:altLabel "Rock 'n' roll"@en, "Rock & roll"@en ;
+    skos:broader ex:popular-music ;
+    skos:related ex:rock ;
+    skos:definition "The 1950s dance music that fused rhythm and blues with country, the direct ancestor of rock."@en ;
+    skos:scopeNote "Use for the 1950s style. For the genre from the mid-1960s onward, use Rock."@en ;
+    skos:example "Chuck Berry, Johnny B. Goode (1958)."@en .
+`;
+$('#full').textContent = FULL;
+$('#dlFull').addEventListener('click', () => download('music-genres.ttl', FULL));
+$('#copyFull').addEventListener('click', () => copy(FULL));
+
+function confetti(){
+  const c = $('#confetti'); const ctx = c.getContext('2d'); c.width = innerWidth; c.height = innerHeight;
+  const cols = ['#2456A6','#B98A12','#2F7D4F','#6B3FA0'];
+  const ps = Array.from({length:120}, () => ({x:Math.random()*c.width, y:-20-Math.random()*200, vy:2+Math.random()*3, vx:(Math.random()-.5)*2, s:6+Math.random()*6, col:cols[Math.floor(Math.random()*cols.length)], r:Math.random()*Math.PI}));
+  let t = 0;
+  (function f(){ ctx.clearRect(0,0,c.width,c.height); ps.forEach(p => { p.y += p.vy; p.x += p.vx; p.r += .1; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle = p.col; ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6); ctx.restore(); }); if(++t < 140) requestAnimationFrame(f); else ctx.clearRect(0,0,c.width,c.height); })();
+}
+</script>
+</body>
+</html>

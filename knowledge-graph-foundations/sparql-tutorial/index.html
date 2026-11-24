@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SPARQL Practice Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --paper:#F7F7F2; --grid:rgba(36,86,166,.07); --surface:#FFFFFF; --ink:#20283A; --ink-soft:#5A6478;
+    --accent:#2456A6; --accent-ink:#FFFFFF; --line:#DDDDD3; --ok:#2F7D4F; --ok-bg:#EAF3ED; --miss:#B23B26; --miss-bg:#F7ECE8;
+    --warn:#B98A12; --warn-bg:#FBF3DC; --gold:#B98A12; --chip:#EEEEE6; --extract-bg:#F1F3F8; --shadow:0 2px 10px rgba(32,40,58,.08); --purple:#6B3FA0;
+  }
+  *{box-sizing:border-box}
+  button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:inherit}
+  body{margin:0;color:var(--ink);font:400 16.5px/1.5 "Source Sans 3",system-ui,sans-serif;background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;min-height:100vh}
+  .wrap{max-width:1120px;margin:0 auto;padding:28px 20px 80px;min-width:0}
+  header{margin-bottom:12px;position:relative;padding-right:106px}
+  .kgg-logo{position:absolute;top:0;right:0;height:88px;width:auto;background:#fff;border-radius:12px;padding:4px 8px;box-shadow:var(--shadow)}
+  @media (max-width:520px){header{padding-right:76px}.kgg-logo{height:62px}}
+  .eyebrow{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(30px,6vw,42px)/1.05 "Bricolage Grotesque","Source Sans 3",sans-serif;margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0}
+  .hud{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px;box-shadow:var(--shadow)}
+  .hud .score{font:800 22px "Bricolage Grotesque",sans-serif;color:var(--accent)} .hud .score small{font:600 12px "IBM Plex Mono",monospace;color:var(--ink-soft);margin-left:4px}
+  .hud .bar{flex:1;min-width:140px;height:10px;background:var(--chip);border-radius:999px;overflow:hidden} .hud .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));width:0;transition:width .4s}
+  .hud .store{font:600 12px "IBM Plex Mono",monospace;color:var(--ink-soft)} .hud .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--line);margin-right:5px} .hud .dot.on{background:var(--ok)}
+  .lessons{display:flex;gap:6px;margin:0 0 14px;flex-wrap:wrap}
+  .lessons button{flex:1;min-width:104px;font:700 12.5px "Bricolage Grotesque",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:10px;padding:8px 9px;cursor:pointer;text-align:left}
+  .lessons button .n{font:600 10.5px "IBM Plex Mono",monospace;color:var(--accent);display:block;letter-spacing:.1em;margin-bottom:2px}
+  .lessons button.on{background:var(--surface);border-color:var(--accent);box-shadow:var(--shadow)} .lessons button.done .n{color:var(--ok)}
+  button:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:24px;overflow-wrap:anywhere;min-width:0}
+  .card h2{font:800 26px "Bricolage Grotesque",sans-serif;margin:0 0 6px} .card h3{font:800 17px "Bricolage Grotesque",sans-serif;margin:22px 0 8px}
+  .card p{margin:0 0 10px} .muted{color:var(--ink-soft)} .small{font-size:14px}
+  .mono{font:600 12px "IBM Plex Mono",monospace;letter-spacing:.06em}
+  code{font:600 13px "IBM Plex Mono",monospace;color:var(--accent);background:var(--extract-bg);border-radius:5px;padding:1px 5px}
+  .lvl{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:6px 12px;margin-bottom:10px}
+  .note{background:var(--extract-bg);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:11px 15px;font-size:15px;margin:10px 0}
+  .note .lab{display:block;margin-bottom:5px;color:var(--accent);font:600 12px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+  a{color:var(--accent);font-weight:600}
+  pre.ex{background:var(--extract-bg);border-radius:12px;padding:12px 14px;font:400 13.5px/1.6 "IBM Plex Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0;position:relative}
+  pre.ex button{position:absolute;top:8px;right:8px;font:700 12px "Bricolage Grotesque",sans-serif;color:var(--accent);background:var(--surface);border:1.5px solid var(--accent);border-radius:8px;padding:4px 9px;cursor:pointer}
+  .task{border:2px solid var(--accent);border-radius:14px;padding:14px 16px;margin:14px 0;background:#F6F9FE}
+  .task h3{margin:0 0 6px} .task.done{border-color:var(--ok);background:var(--ok-bg)}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  button.next{font:700 15px "Bricolage Grotesque",sans-serif;color:var(--accent-ink);background:var(--accent);border:none;border-radius:10px;padding:10px 18px;cursor:pointer} button.next:disabled{opacity:.45;cursor:not-allowed}
+  button.ghost{font:700 14px "Bricolage Grotesque",sans-serif;color:var(--accent);background:transparent;border:1.5px solid var(--accent);border-radius:10px;padding:8px 14px;cursor:pointer}
+  button.ghost.small{font-size:13px;padding:6px 11px} button.ghost.danger{color:var(--miss);border-color:var(--miss)}
+  button.chip{font:600 13.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:999px;padding:6px 12px;cursor:pointer} button.chip.sel{background:var(--accent);color:#fff}
+  .tag{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:4px 8px;white-space:nowrap;background:var(--chip);color:var(--ink-soft)}
+  .tag.ok{background:var(--ok-bg);color:var(--ok)} .tag.warn{background:var(--warn-bg);color:var(--warn)} .tag.bad{background:var(--miss-bg);color:var(--miss)}
+  .why{font-size:14.5px;color:var(--miss);background:var(--miss-bg);border-radius:8px;padding:8px 11px;margin:8px 0} .why.good{color:var(--ok);background:var(--ok-bg)} .why.warn{color:#7A5B0A;background:var(--warn-bg)}
+  /* the query window */
+  .qwin{border:1.5px solid var(--line);border-radius:14px;background:var(--surface);padding:12px 14px;margin:10px 0}
+  .qwin .head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px} .qwin .head b{font:800 15px "Bricolage Grotesque",sans-serif}
+  textarea.q{width:100%;min-height:150px;font:400 13.5px/1.55 "IBM Plex Mono",monospace;color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:10px;white-space:pre;overflow:auto;tab-size:2}
+  textarea.q:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+  .tbl{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
+  .tbl th{font:700 12px "Bricolage Grotesque",sans-serif;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+  .tbl td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top} .tbl td .c{font:500 12.5px "IBM Plex Mono",monospace;color:var(--accent)} .tbl td sup{color:var(--ink-soft);font:600 9.5px "IBM Plex Mono",monospace}
+  .tscroll{overflow:auto;max-height:380px;border:1px solid var(--line);border-radius:10px}
+  .exports{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px} .exports button{font:600 13px "Source Sans 3",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:10px;padding:7px 11px;cursor:pointer} .exports button:hover{border-color:var(--accent)} .exports .fmt{font:600 11px "IBM Plex Mono",monospace;color:var(--accent);margin-left:5px}
+  .datasets{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:10px 0}
+  .ds{border:1.5px solid var(--line);border-left:6px solid var(--c,#2456A6);border-radius:12px;padding:10px 12px;background:var(--paper);font-size:14px} .ds b{display:block;font:800 16px "Bricolage Grotesque",sans-serif} .ds.on{background:var(--surface);border-color:var(--accent)}
+  .drop{display:flex;align-items:center;gap:14px;border:2.5px dashed var(--accent);border-radius:16px;padding:14px 18px;margin:10px 0;cursor:pointer;background:linear-gradient(0deg,rgba(36,86,166,.06),rgba(36,86,166,.06)),var(--surface);box-shadow:0 0 0 4px rgba(36,86,166,.08)}
+  .drop .ic{flex:none;width:46px;height:46px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center} .drop .tx b{display:block;font:800 17px "Bricolage Grotesque",sans-serif} .drop .tx span{font-size:14px;color:var(--ink-soft)} .drop .pill{margin-left:auto;font:700 13.5px "Bricolage Grotesque",sans-serif;color:#fff;background:var(--gold);border-radius:999px;padding:7px 13px;white-space:nowrap}
+  .drop.over{border-style:solid;border-color:var(--gold);background:var(--warn-bg)}
+  .reveal{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+  .bcard{border:1.5px solid var(--line);border-radius:14px;padding:12px;background:var(--paper);text-align:center} .bcard .ic{font-size:30px} .bcard b{display:block;font:800 14.5px "Bricolage Grotesque",sans-serif;margin-top:4px} .bcard span{font-size:12.5px;color:var(--ink-soft)} .bcard.on{border-color:var(--gold);background:var(--warn-bg)} .bcard.off .ic{filter:grayscale(1);opacity:.4}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);font:600 14px "Source Sans 3",sans-serif;padding:10px 16px;border-radius:999px;box-shadow:var(--shadow);opacity:0;transition:opacity .2s;pointer-events:none;z-index:20;max-width:90vw;text-align:center} .toast.show{opacity:1}
+  .conf{position:fixed;inset:0;pointer-events:none;z-index:30;overflow:hidden} .conf i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:fall 2.4s linear forwards} @keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:.2}}
+  details{margin:8px 0} summary{cursor:pointer;font:700 15px "Bricolage Grotesque",sans-serif;color:var(--accent)}
+  .cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px} .cheat div{background:var(--extract-bg);border-radius:10px;padding:10px 12px;font-size:14px} .cheat b{font:800 14px "Bricolage Grotesque",sans-serif;display:block;margin-bottom:3px}
+  @media print{ body{background:none} .lessons,.btns,.exports,.kgg-logo,button,.toast,.hud{display:none!important} .card{box-shadow:none;border:none;padding:0} }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../index.html">Knowledge Checks</a></li><li aria-current="page">SPARQL Practice Room</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="kgg-logo" src="../../assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Knowledge Graph Academy · Module 5 · Querying with SPARQL</div>
+    <h1>SPARQL Practice Room</h1>
+    <p class="sub">A music knowledge graph loaded in your browser, ten lessons with a task each, and a query window that is always yours. Bring your own Turtle and query that too.</p>
+  </header>
+  <div class="hud"><span class="score"><span id="score">0</span><small>/ <span id="total">0</span> PTS</small></span><div class="bar"><i id="bar"></i></div><span class="store" id="storeinfo"><span class="dot"></span>loading the engine…</span><button class="ghost small danger" id="reset">Start over</button></div>
+  <div class="lessons" id="lessons"></div>
+  <div class="card" id="card"><p class="muted">Loading…</p></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="conf" id="conf"></div>
+
+<script type="module">
+/* ───────── engine: Oxigraph compiled to WebAssembly, the whole triple store runs in this tab ───────── */
+let ox = null, store = null, ready = false, engineError = '';
+const PREFIXES = {rdf:'http://www.w3.org/1999/02/22-rdf-syntax-ns#', rdfs:'http://www.w3.org/2000/01/rdf-schema#', owl:'http://www.w3.org/2002/07/owl#', xsd:'http://www.w3.org/2001/XMLSchema#', skos:'http://www.w3.org/2004/02/skos/core#', dct:'http://purl.org/dc/terms/', ex:'http://www.example.org/graph#'};
+const PRE = Object.entries(PREFIXES).map(([p,ns]) => `PREFIX ${p}: <${ns}>`).join('\n');
+const MUSIC = 'urn:kga:practice-room:music';
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('show'),2600); }
+function confetti(){ const c=$('#conf'); c.innerHTML=''; const cols=['#2456A6','#B98A12','#2F7D4F','#6B3FA0','#B23B26']; for(let i=0;i<90;i++){ const s=document.createElement('i'); s.style.left=Math.random()*100+'vw'; s.style.background=cols[i%cols.length]; s.style.animationDelay=(Math.random()*.8)+'s'; s.style.animationDuration=(1.8+Math.random()*1.4)+'s'; c.appendChild(s);} setTimeout(()=>c.innerHTML='',3600); }
+function download(name, text, type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:type||'text/plain'})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500); }
+
+/* ───────── state ───────── */
+const KEY='kga.sparql.v1';
+let S = {lesson:'triples', pts:{}, done:{}, misses:{}, drafts:{}, scratch:'', myFiles:[], use:'all'};
+try{ const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j) S=Object.assign(S,j); }catch(e){}
+const save=()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
+const MAX={}; const totalMax=()=>Object.values(MAX).reduce((a,b)=>a+b,0); const totalPts=()=>Object.values(S.pts).reduce((a,b)=>a+b,0);
+
+/* ───────── running queries ───────── */
+function activePrefixes(){ const out = Object.assign({}, PREFIXES); if(S.use!=='music') S.myFiles.forEach(f => (f.prefixes||[]).forEach(([p,ns]) => { out[p]=ns; })); return out; }
+function withPrefixes(q, musicOnly){ const declared = new Set([...q.matchAll(/(?:^|\n)\s*PREFIX\s+([\w-]*):/gi)].map(m=>m[1])); const missing = Object.entries(musicOnly?PREFIXES:activePrefixes()).filter(([p]) => !declared.has(p) && new RegExp('(^|[\\s(,;{])'+p+':','i').test(q)); return (missing.length ? missing.map(([p,ns])=>`PREFIX ${p}: <${ns}>`).join('\n')+'\n' : '') + q; }
+function prefixNote(){ const a=activePrefixes(); const clash = S.use!=='music' && S.myFiles.some(f => (f.prefixes||[]).some(([p,ns]) => PREFIXES[p] && PREFIXES[p]!==ns)); return `<div class="small muted" style="margin-top:6px">Prefixes filled in when a query does not declare them: ${Object.entries(a).map(([p,ns]) => `<span class="c" title="${esc(ns)}" style="font:600 12px 'IBM Plex Mono',monospace;color:${S.use!=='music'&&S.myFiles.some(f=>(f.prefixes||[]).some(x=>x[0]===p))?'var(--gold)':'var(--accent)'}">${esc(p)}:</span>`).join(' ')}${clash?' <span class="tag warn">your file rebinds a prefix; with DATA on Mine or Both, your file\'s binding wins</span>':''}. A PREFIX line in the query always wins.</div>`; }
+function scopeGraphs(){ const names=[]; if(S.use==='all'||S.use==='music') names.push(MUSIC); if(S.use==='all'||S.use==='mine') S.myFiles.forEach(f => names.push(f.graph)); return names; }
+function run(q, opts){
+  opts=opts||{}; if(!ready) throw new Error(engineError || 'The engine is still loading.');
+  const graphs = opts.graphs || scopeGraphs();
+  const res = store.query(withPrefixes(q, !!opts.musicOnly), {default_graph: graphs.map(g => ox.namedNode(g)), named_graphs: graphs.map(g => ox.namedNode(g))});
+  if(typeof res==='boolean') return {kind:'ask', value:res};
+  if(Array.isArray(res) && res.length && res[0] instanceof Map){ let vars = varsOf(q); if(!vars.length){ const ks=new Set(); res.forEach(r => r.forEach((v,k)=>ks.add(k))); vars=[...ks]; } return {kind:'select', vars, rows:res}; }
+  if(Array.isArray(res) && res.length && res[0].subject){ return {kind:'construct', quads:res}; }
+  if(Array.isArray(res) && !res.length){ const m = /\b(construct|describe)\b/i.test(q.replace(/#[^\n]*/g,'')); return m ? {kind:'construct', quads:[]} : {kind:'select', vars:varsOf(q), rows:[]}; }
+  return {kind:'select', vars:[], rows:[]};
+}
+function varsOf(q){ const body=q.replace(/#[^\n]*/g,''); const m = /select\s+(distinct\s+|reduced\s+)?([\s\S]*?)\s*(where\b|\{)/i.exec(body); if(!m) return []; if(m[2].trim()==='*') return [...new Set([...body.matchAll(/\?(\w+)/g)].map(x=>x[1]))]; const head=m[2]; const out=[]; head.replace(/\(([^()]*(?:\([^()]*\))*[^()]*)\s+AS\s+\?(\w+)\s*\)|\?(\w+)/gi,(all,expr,as,plain)=>{ out.push(as||plain); return ''; }); return [...new Set(out)]; }
+const termStr = t => !t ? '' : t.termType==='NamedNode' ? '<'+t.value+'>' : t.termType==='Literal' ? '"'+t.value+'"'+(t.language?'@'+t.language:(t.datatype&&t.datatype.value!=='http://www.w3.org/2001/XMLSchema#string'?'^^<'+t.datatype.value+'>':'')) : t.termType==='BlankNode' ? '_:b' : String(t.value);
+function rowsKey(res, ordered){ if(res.kind==='ask') return 'ASK:'+res.value; if(res.kind==='construct') return 'C:'+res.quads.map(q=>termStr(q.subject)+' '+termStr(q.predicate)+' '+termStr(q.object)).sort().join('\n'); const vars=res.vars.slice().sort(); const rows=res.rows.map(r => vars.map(v => termStr(r.get(v))).join('\t')); return 'S:'+(ordered?rows:rows.slice().sort()).join('\n'); }
+const curie = iri => { const a=activePrefixes(); const hits=Object.entries(a).filter(([p,ns]) => iri.startsWith(ns)).sort((x,y)=>y[1].length-x[1].length); if(hits.length) return hits[0][0]+':'+iri.slice(hits[0][1].length); return '<'+iri+'>'; };
+function cellHtml(t){ if(!t) return '<span class="muted">—</span>'; if(t.termType==='NamedNode') return `<span class="c" title="${esc(t.value)}">${esc(curie(t.value))}</span>`; if(t.termType==='Literal'){ const dt=t.datatype&&t.datatype.value; return esc(t.value)+(t.language?`<sup>@${esc(t.language)}</sup>`:(dt&&dt!==PREFIXES.xsd+'string'?`<sup>${esc(curie(dt))}</sup>`:'')); } return '<span class="c">_:'+esc(t.value)+'</span>'; }
+function resultHtml(res){
+  if(res.kind==='ask') return `<p style="margin:8px 0"><b style="font:800 22px 'Bricolage Grotesque',sans-serif;color:${res.value?'var(--ok)':'var(--miss)'}">${res.value?'true':'false'}</b> <span class="muted small">ASK gives one answer, not a table.</span></p>`;
+  if(res.kind==='construct'){ const ttl = res.quads.map(q => `${curie(q.subject.value)} ${curie(q.predicate.value)} ${q.object.termType==='NamedNode'?curie(q.object.value):termStr(q.object)} .`).join('\n'); return `<p class="small muted" style="margin:8px 0 4px">${res.quads.length} triple${res.quads.length===1?'':'s'} built. CONSTRUCT returns a graph, not a table.</p><pre class="ex" style="max-height:300px;overflow:auto">${esc(ttl||'(empty graph)')}</pre>`; }
+  if(!res.rows.length) return `<p class="small muted" style="margin:8px 0">No rows. The pattern matched nothing. Check spelling, prefixes and which dataset is switched on.</p>`;
+  return `<p class="small muted" style="margin:8px 0 4px">${res.rows.length} row${res.rows.length===1?'':'s'}</p><div class="tscroll"><table class="tbl"><thead><tr>${res.vars.map(v=>`<th>?${esc(v)}</th>`).join('')}</tr></thead><tbody>${res.rows.slice(0,300).map(r=>`<tr>${res.vars.map(v=>`<td>${cellHtml(r.get(v))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${res.rows.length>300?'<p class="small muted">Showing the first 300.</p>':''}`;
+}
+function friendlyError(e){ let m=String(e.message||e); let hint=''; if(/Prefix not found/i.test(m)){ const at=/at (\d+:\d+)/.exec(m); m='Unknown prefix'+(at?' at line:column '+at[1]:'')+'.'; } else if(/unbound/i.test(m)) m='A variable in SELECT is not bound by the pattern. With an aggregate, every other selected variable needs a GROUP BY.'; else { m=m.split('\n')[0]; if(m.length>160) m=m.slice(0,157)+'…'; } if(/prefix/i.test(m)) hint='A prefix is used but not declared. Add a PREFIX line at the top, or check its spelling.'; else if(/expected|unexpected|parser|syntax|token/i.test(m)) hint='A syntax slip. SPARQL is unforgiving: check for a missing dot, brace, or a variable without its question mark.'; return `<div class="why">✕ ${esc(m)}${hint?`<div class="small" style="margin-top:4px;color:var(--ink)">${hint}</div>`:''}</div>`; }
+
+/* a query window: textarea, run, results; opts.id, opts.value, opts.onRun(res, q) */
+function queryWindow(el, opts){
+  el.innerHTML = `<div class="qwin"><div class="head"><b>${esc(opts.title||'Query window')}</b><span class="small muted">${esc(opts.hint||'Ctrl/Cmd + Enter runs it.')}</span><span style="flex:1"></span>${opts.music?`<span class="mono muted">DATA</span><span class="chip sel" title="The lessons always query the music graph. Your own files are queried in lesson 10, the final task and the practice room.">Music graph</span>`:datasetChips()}</div><textarea class="q" id="${opts.id}" spellcheck="false">${esc(opts.value||'')}</textarea><div id="${opts.id}-pfx">${opts.music?'':prefixNote()}</div><div class="btns" style="margin-top:8px"><button class="next" id="${opts.id}-run">Run</button>${opts.extra||''}<span class="small muted" id="${opts.id}-info"></span></div><div id="${opts.id}-out"></div></div>`;
+  const ta=el.querySelector('#'+opts.id), out=el.querySelector('#'+opts.id+'-out'), info=el.querySelector('#'+opts.id+'-info');
+  const go = () => { const q=ta.value; const t0=performance.now(); try{ const res=run(q, opts.music?{graphs:[MUSIC], musicOnly:true}:{}); info.textContent=Math.round(performance.now()-t0)+' ms'; out.innerHTML=resultHtml(res)+(res.kind==='select'&&res.rows.length?`<div class="exports"><button id="${opts.id}-csv">Results<span class="fmt">.csv</span></button></div>`:''); const c=el.querySelector('#'+opts.id+'-csv'); if(c) c.onclick=()=>download('sparql-results.csv', [res.vars].concat(res.rows.map(r=>res.vars.map(v=>(r.get(v)||{}).value||''))).map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n'),'text/csv'); if(opts.onRun) opts.onRun(res,q); }catch(e){ info.textContent=''; out.innerHTML=friendlyError(e); if(opts.onError) opts.onError(e); } };
+  el.querySelector('#'+opts.id+'-run').onclick=go; ta.onkeydown=e=>{ if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){ e.preventDefault(); go(); } if(e.key==='Tab'){ e.preventDefault(); const s=ta.selectionStart; ta.value=ta.value.slice(0,s)+'  '+ta.value.slice(ta.selectionEnd); ta.selectionStart=ta.selectionEnd=s+2; } };
+  ta.oninput=()=>{ if(opts.onInput) opts.onInput(ta.value); };
+  el.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{ S.use=b.dataset.use; save(); document.querySelectorAll('[data-use]').forEach(x=>x.classList.toggle('sel',x.dataset.use===S.use)); document.querySelectorAll('[id$="-pfx"]').forEach(x=>x.innerHTML=prefixNote()); });
+  return {ta, go, out};
+}
+function datasetChips(){ const n=S.myFiles.length; return `<span class="mono muted">DATA</span><button class="chip${S.use==='music'?' sel':''}" data-use="music">Music</button><button class="chip${S.use==='mine'?' sel':''}" data-use="mine"${n?'':' disabled'}>Mine${n?' ('+n+')':''}</button><button class="chip${S.use==='all'?' sel':''}" data-use="all">Both</button>`; }
+
+/* ───────── lessons ───────── */
+const L = [
+{id:'triples', n:'1', title:'Triples', badge:'🔺', bname:'Pattern spotter', pts:2,
+ body:`<p>A knowledge graph is a set of triples: <b>subject, predicate, object</b>. SPARQL finds triples by matching <b>graph patterns</b> that look like triples with holes in them. A hole is a <b>variable</b>: a name with a question mark, such as <code>?musician</code>. Anything the pattern fixes must match exactly; anything left as a variable is filled in from the graph, one row per match.</p>
+ <p>The catch-all pattern <code>?s ?p ?o</code> matches every triple. With <code>LIMIT</code> it is the first thing to run against any graph you have never seen.</p><p class="small muted">The triples live in a triple store, which is what SPARQL queries. Every triple store is a graph database; not every graph database is a triple store.</p>`,
+ example:`SELECT ?s ?p ?o WHERE {\n  ?s ?p ?o .\n}\nLIMIT 10`,
+ task:'Show every triple whose subject is <code>ex:dana-k</code>: the predicate and the object, nothing else.', starter:`SELECT ?p ?o WHERE {\n  ex:dana-k ?p ?o .\n}`, ref:`SELECT ?p ?o WHERE { ex:dana-k ?p ?o }`, hint:'Fix the subject, leave the predicate and object as variables.'},
+{id:'select', n:'2', title:'SELECT & WHERE', badge:'🎯', bname:'Selector', pts:2,
+ body:`<p>A query has three parts. <b>PREFIX</b> lines give short names to namespaces, exactly as in Turtle. <b>SELECT</b> names the variables you want back, one column each; <code>SELECT *</code> means all of them. <b>WHERE</b> holds the pattern.</p>
+ <p>Patterns can share a subject with <code>;</code>, as in Turtle, so a musician and all their facts read as one block. The example is the query from the module deck, on this graph.</p>`,
+ example:`PREFIX ex: <http://www.example.org/graph#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?musician ?name ?birthday ?instrument WHERE {\n  ?musician rdf:type ex:person ;\n            ex:has-occupation ex:musician ;\n            ex:name ?name ;\n            ex:date-of-birth ?birthday ;\n            ex:plays-instrument ?instrument .\n}`,
+ task:'Every <b>event</b>, with its <b>name</b> and the <b>venue</b> it is held at. Columns: <code>?event ?name ?venue</code>. Events are typed <code>ex:concert</code> or <code>ex:festival</code>, so match on the properties rather than the type.', starter:`SELECT ?event ?name ?venue WHERE {\n  \n}`, ref:`SELECT ?event ?name ?venue WHERE { ?event ex:name ?name ; ex:held-at ?venue }`, hint:'Two patterns, one subject: ex:name and ex:held-at. Only events have ex:held-at.'},
+{id:'filter', n:'3', title:'FILTER', badge:'🔍', bname:'Sifter', pts:3,
+ body:`<p>Patterns match structure. <b>FILTER</b> tests values: comparisons, string functions, dates. <code>FILTER(?capacity > 5000)</code>, <code>FILTER(CONTAINS(?name, "Blue"))</code>, <code>FILTER(YEAR(?born) >= 1990)</code>, <code>FILTER(LANG(?label) = "de")</code>.</p>
+ <p>Literals carry types and language tags. A date compares as a date only if it was typed <code>xsd:date</code>; a label matches <code>@de</code> only if it was tagged. That is why Turtle was fussy about them.</p>`,
+ example:`SELECT ?name ?capacity WHERE {\n  ?venue ex:name ?name ; ex:capacity ?capacity .\n  FILTER(?capacity > 5000)\n}`,
+ task:'The <b>names</b> of people born <b>in or after 1993</b>. One column, <code>?name</code>.', starter:`SELECT ?name WHERE {\n  ?person ex:name ?name ; ex:date-of-birth ?born .\n  FILTER( )\n}`, ref:`SELECT ?name WHERE { ?p ex:name ?name ; ex:date-of-birth ?born . FILTER(YEAR(?born) >= 1993) }`, hint:'YEAR(?born) pulls the year out of an xsd:date.'},
+{id:'optional', n:'4', title:'OPTIONAL', badge:'🫥', bname:'Open-worlder', pts:3,
+ body:`<p>A pattern only matches when <i>every</i> triple in it exists. Jo M has no date of birth in this graph, so a query that asks for name and birthday together drops Jo. Under the open world assumption a missing fact is unknown, not false, and you usually want the row anyway.</p>
+ <p><b>OPTIONAL { … }</b> keeps the row and leaves the variable empty when the inner pattern has no match. Run the example, then remove the word OPTIONAL and count the rows.</p>`,
+ example:`SELECT ?name ?born WHERE {\n  ?p rdf:type ex:person ; ex:name ?name .\n  OPTIONAL { ?p ex:date-of-birth ?born }\n}`,
+ task:'Every <b>band</b> with its name and, <b>where there is one</b>, the name of an album it released. Columns <code>?band ?bandName ?albumName</code>. All five bands must appear, including the one with no album.', starter:`SELECT ?band ?bandName ?albumName WHERE {\n  ?band rdf:type ex:band ; ex:name ?bandName .\n  \n}`, ref:`SELECT ?band ?bandName ?albumName WHERE { ?band rdf:type ex:band ; ex:name ?bandName . OPTIONAL { ?album ex:released-by ?band ; ex:name ?albumName } }`, hint:'The album points at the band: ?album ex:released-by ?band. Wrap that and the album name in OPTIONAL.'},
+{id:'bind', n:'5', title:'BIND & NOT EXISTS', badge:'🧮', bname:'Binder', pts:3,
+ body:`<p><b>BIND</b> computes a value and gives it a name: arithmetic, string building, a function call. <code>BIND(?price * 2 AS ?forTwo)</code>, <code>BIND(CONCAT(?first, " ", ?last) AS ?full)</code>, <code>BIND(YEAR(?born) AS ?year)</code>. The new variable can be selected, filtered and sorted like any other.</p>
+ <p><b>FILTER NOT EXISTS { … }</b> keeps a row only when the inner pattern has <i>no</i> match. It is how you ask for what is missing: people with no birth date, events with no price, concepts with no definition. The opposite, <code>FILTER EXISTS</code>, keeps rows that do have a match without binding anything.</p>`,
+ example:`SELECT ?name WHERE {\n  ?p rdf:type ex:person ; ex:name ?name .\n  FILTER NOT EXISTS { ?p ex:date-of-birth ?born }\n}`,
+ task:'For every event that has a ticket price, its <b>name</b> and the <b>cost of two tickets</b>. Columns <code>?name ?forTwo</code>.', starter:`SELECT ?name ?forTwo WHERE {\n  ?e ex:name ?name ; ex:ticket-price ?price .\n  \n}`, ref:`SELECT ?name ?forTwo WHERE { ?e ex:name ?name ; ex:ticket-price ?price . BIND(?price * 2 AS ?forTwo) }`, hint:'BIND(?price * 2 AS ?forTwo) inside the braces, after the pattern that binds ?price.'},
+{id:'order', n:'6', title:'ORDER, LIMIT, DISTINCT', badge:'📐', bname:'Sorter', pts:3,
+ body:`<p>Result rows come back in no promised order. <b>ORDER BY</b> sorts them; <code>DESC(?x)</code> reverses. <b>LIMIT</b> caps the count and <b>OFFSET</b> skips. <b>DISTINCT</b> removes duplicate rows, which appear as soon as a pattern matches the same thing more than once, for instance a musician who plays two instruments.</p>`,
+ example:`SELECT DISTINCT ?name WHERE {\n  ?p ex:plays-instrument ?i ; ex:name ?name .\n}\nORDER BY ?name`,
+ task:'The <b>three most expensive events</b>: name and ticket price, most expensive first. Columns <code>?name ?price</code>.', starter:`SELECT ?name ?price WHERE {\n  ?e ex:name ?name ; ex:ticket-price ?price .\n}\n`, ref:`SELECT ?name ?price WHERE { ?e ex:name ?name ; ex:ticket-price ?price } ORDER BY DESC(?price) LIMIT 3`, ordered:true, hint:'ORDER BY DESC(?price) then LIMIT 3. Sol Sessions has no price, so it is out anyway.'},
+{id:'aggregate', n:'7', title:'COUNT & GROUP BY', badge:'∑', bname:'Counter', pts:3,
+ body:`<p>Aggregates fold many rows into one: <code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code>, <code>MAX</code>, <code>GROUP_CONCAT</code>. <b>GROUP BY</b> says what to fold over; every non-aggregated variable in SELECT must be in it. <b>HAVING</b> filters groups after folding, the way FILTER filters rows before.</p>
+ <p><code>(COUNT(?x) AS ?n)</code> is how an aggregate gets a column name. <code>COUNT(DISTINCT ?x)</code> counts unique values.</p>`,
+ example:`SELECT ?city (COUNT(?venue) AS ?venues) WHERE {\n  ?venue ex:city ?city .\n}\nGROUP BY ?city`,
+ task:'For each <b>band</b>, how many <b>members</b> it has. Columns <code>?bandName ?members</code>. Lee P is in two bands and counts for both.', starter:`SELECT ?bandName (COUNT(?p) AS ?members) WHERE {\n  ?p ex:member-of ?band .\n  ?band ex:name ?bandName .\n}\n`, ref:`SELECT ?bandName (COUNT(?p) AS ?members) WHERE { ?p ex:member-of ?band . ?band ex:name ?bandName } GROUP BY ?bandName`, hint:'The pattern is already there. What is missing is the GROUP BY line.'},
+{id:'paths', n:'8', title:'Property paths', badge:'🪜', bname:'Path walker', pts:3,
+ body:`<p>Hierarchies need more than one hop. A <b>property path</b> walks them: <code>skos:broader+</code> means one or more broader steps, <code>skos:broader*</code> zero or more, <code>rdfs:subClassOf*</code> climbs a class tree, <code>^ex:member-of</code> follows a property backwards, and <code>ex:held-at/ex:city</code> chains two properties.</p>
+ <p>This is query expansion from Module 3: ask for Jazz and get Bebop and Latin jazz too, because they sit under it.</p>`,
+ example:`SELECT ?event ?genreLabel WHERE {\n  ?event ex:performs-genre ?g .\n  ?g skos:broader* ex:jazz ; skos:prefLabel ?genreLabel .\n  FILTER(LANG(?genreLabel) = "en")\n}`,
+ task:'Everyone who plays <b>any string instrument</b>: their name and the instrument, using the SKOS hierarchy under <code>ex:strings</code>. Columns <code>?name ?instrument</code>.', starter:`SELECT ?name ?instrument WHERE {\n  ?p ex:name ?name ; ex:plays-instrument ?instrument .\n  \n}`, ref:`SELECT ?name ?instrument WHERE { ?p ex:name ?name ; ex:plays-instrument ?instrument . ?instrument skos:broader+ ex:strings }`, hint:'?instrument skos:broader+ ex:strings. The + matters: guitar is one step down, electric guitar is two.'},
+{id:'forms', n:'9', title:'ASK, CONSTRUCT, DESCRIBE', badge:'🧱', bname:'Builder', pts:3,
+ body:`<p>SELECT is one of four query forms.</p><table class="tbl"><thead><tr><th>Form</th><th>Returns</th><th>Use it to</th></tr></thead><tbody><tr><td><code>SELECT</code></td><td>a table of variable bindings</td><td>get matching values for chosen variables</td></tr><tr><td><code>ASK</code></td><td>true or false</td><td>test whether the pattern has any match at all</td></tr><tr><td><code>CONSTRUCT</code></td><td>an RDF graph</td><td>build new triples from a template, filled in from the matches: reshape, extract, export</td></tr><tr><td><code>DESCRIBE</code></td><td>an RDF graph</td><td>get the triples describing a resource</td></tr></tbody></table>
+ <p>CONSTRUCT is how you would turn this graph into your own vocabulary, or pull one band's world out as a file.</p>`,
+ example:`CONSTRUCT {\n  ?band ex:has-member ?p .\n} WHERE {\n  ?p ex:member-of ?band .\n}`,
+ task:'Is there a venue in <b>Seattle</b> with a capacity <b>over 20,000</b>? Write it as an <b>ASK</b>.', starter:`ASK {\n  \n}`, ref:`ASK { ?v ex:city "Seattle" ; ex:capacity ?c . FILTER(?c > 20000) }`, hint:'ASK takes the same pattern as WHERE. North Field holds 30,000.'},
+{id:'mine', n:'10', title:'Your own data', badge:'📂', bname:'Loader', pts:3,
+ body:`<p>Bring the Turtle you wrote for Activity 2 (or any <code>.ttl</code>) and query it here. Each file becomes a named graph in this tab's store; nothing is sent anywhere. Switch the DATA chips in any query window to query your file, the music graph, or both, and use <code>GRAPH ?g { … }</code> to see which graph a triple came from.</p>
+ <p>Once a file is in, a library of query patterns is written for it from its own prefixes, classes and properties; tap one and it runs. Your file's <code>@prefix</code> lines are filled in for you whenever DATA is on Mine or Both, and where your file binds a prefix differently from the music graph (most files call their namespace <code>ex:</code>), your file's binding wins. A <code>PREFIX</code> line in the query itself always wins.</p>`,
+ example:`SELECT ?g (COUNT(*) AS ?triples) WHERE {\n  GRAPH ?g { ?s ?p ?o }\n}\nGROUP BY ?g`,
+ taskKind:'upload'},
+{id:'cq', n:'★', title:'Your CQ', badge:'🏆', bname:'Question answerer', pts:4,
+ body:`<p>Activity 3 in the module: take one of your competency questions and answer it with SPARQL. If you can write the query, your ontology meets the definition of done the CQ sets. If the query returns results, your knowledge graph does too. Write the question in words, then the query. It passes here when it runs and returns at least one row, on the music graph or on your own file (load it in lesson 10, the same file you would paste into SPARQL Playground). Two more points for a FILTER, an OPTIONAL, a BIND, an aggregate, an ORDER BY or a property path.</p>`,
+ example:`# CQ: which venues in Portland host jazz, and when?\nSELECT ?venueName ?eventName ?date WHERE {\n  ?e ex:held-at ?v ; ex:name ?eventName ; ex:date ?date ; ex:performs-genre ?g .\n  ?g skos:broader* ex:jazz .\n  ?v ex:city "Portland" ; ex:name ?venueName .\n}\nORDER BY ?date`,
+ taskKind:'cq'},
+{id:'room', n:'⌘', title:'Practice room', badge:'', bname:'', pts:0, taskKind:'room'}
+];
+L.forEach(l => MAX[l.id]=l.pts);
+
+/* ───────── HUD ───────── */
+function hud(){
+  $('#score').textContent=totalPts(); $('#total').textContent=totalMax(); $('#bar').style.width=(totalMax()?100*totalPts()/totalMax():0)+'%';
+  $('#storeinfo').innerHTML = ready ? (()=>{ const mine=S.myFiles.reduce((a,f)=>a+(f.triples||0),0); return `<span class="dot on"></span>music graph ${store.size-mine} triples${S.myFiles.length?` · your file${S.myFiles.length===1?'':'s'} ${mine} triples · DATA on ${S.use==='mine'?'Mine':S.use==='all'?'Both':'Music'}`:''}`; })() : `<span class="dot"></span>${engineError?esc(engineError):'loading the engine…'}`;
+  $('#lessons').innerHTML = L.map(l => `<button data-l="${l.id}" class="${S.lesson===l.id?'on':''}${S.done[l.id]?' done':''}"><span class="n">${S.done[l.id]?'✓ ':''}${l.n==='⌘'?'FREE':l.n==='★'?'FINAL':'LESSON '+l.n}</span>${esc(l.title)}</button>`).join('');
+  document.querySelectorAll('#lessons button').forEach(b => b.onclick = () => { S.lesson=b.dataset.l; save(); render(); window.scrollTo({top:0,behavior:'smooth'}); });
+}
+$('#reset').onclick=()=>{ if(confirm('Start over? Points, drafts and your uploaded files on this device are removed.')){ localStorage.removeItem(KEY); S={lesson:'triples',pts:{},done:{},misses:{},drafts:{},scratch:'',myFiles:[],use:'all'}; clearMine(); render(); } };
+
+/* ───────── render ───────── */
+function render(){ hud(); const l=L.find(x=>x.id===S.lesson)||L[0]; if(l.taskKind==='room') return renderRoom(l); if(l.taskKind==='upload') return renderUpload(l); if(l.taskKind==='cq') return renderCQ(l); renderLesson(l); }
+function nextBtn(id){ const i=L.findIndex(l=>l.id===id), n=L[i+1]; return n?`<div class="btns"><button class="next" id="nextl">Next: ${esc(n.title)} →</button></div>`:''; }
+function wireNext(){ const b=$('#nextl'); if(b) b.onclick=()=>{ const i=L.findIndex(l=>l.id===S.lesson); S.lesson=L[i+1].id; save(); render(); window.scrollTo({top:0,behavior:'smooth'}); }; }
+function complete(l, pts){ const had=S.pts[l.id]||0; if(pts>had){ S.pts[l.id]=pts; } if(!S.done[l.id]){ S.done[l.id]=true; confetti(); toast('Lesson complete. Badge: '+l.bname+'.'); } save(); hud(); }
+function renderLesson(l){
+  $('#card').innerHTML = `<span class="lvl">Lesson ${l.n} · ${esc(l.title)}</span><h2>${esc(l.title)}</h2>${l.body}
+    <h3>Try it</h3><p class="small muted" style="margin:0 0 6px">The example has a window of its own. Run it, change it, break it: nothing here touches your answer below.</p><div id="exwin"></div>
+    <h3>Your answer</h3><div id="win"></div>
+    <div class="task${S.done[l.id]?' done':''}" id="task"><h3>${S.done[l.id]?'✓ ':''}Task · ${l.pts} points</h3><p>${l.task}</p><p class="small muted">Write it in the window above and press <b>Check</b>. Full points first time; one point comes off for each check that misses, never below one.</p><div id="taskmsg"></div></div>
+    ${S.done[l.id]?nextBtn(l.id):''}`;
+  const ex = queryWindow($('#exwin'), {id:'ex', music:true, title:'Try it', value:l.example, hint:'Ctrl/Cmd + Enter runs. Edit it freely.', extra:`<button class="ghost small" id="ex-reset">Restore the example</button>`});
+  $('#ex-reset').onclick = () => { ex.ta.value=l.example; ex.go(); };
+  const draft = S.drafts[l.id] || l.starter;
+  const win = queryWindow($('#win'), {id:'q', music:true, title:'Your answer', value:draft, hint:'Ctrl/Cmd + Enter runs, on the music graph.', extra:`<button class="ghost" id="check">Check the task</button><button class="ghost small" id="hint">Hint</button>`, onInput:v=>{ S.drafts[l.id]=v; save(); }});
+  $('#hint').onclick = () => { $('#taskmsg').innerHTML=`<div class="why warn">💡 ${esc(l.hint)}</div>`; };
+  $('#check').onclick = () => {
+    const q=win.ta.value, msg=$('#taskmsg');
+    if(q.trim()===l.example.trim()){ msg.innerHTML=`<div class="why warn">That is the example from Try it, not an answer to the task. Write the task's query here. This did not cost a point.</div>`; return; }
+    try{
+      const got = run(q, {graphs:[MUSIC]}), want = run(l.ref, {graphs:[MUSIC]});
+      win.go();
+      if(got.kind!==want.kind){ miss(l); msg.innerHTML=`<div class="why">✕ The task wants a ${want.kind.toUpperCase()} query.</div>`; return; }
+      if(got.kind==='select'){ const gv=got.vars.slice().sort().join(','), wv=want.vars.slice().sort().join(','); if(gv!==wv){ miss(l); msg.innerHTML=`<div class="why">✕ Columns should be ${want.vars.map(v=>'?'+v).join(' ')}; yours are ${got.vars.map(v=>'?'+v).join(' ')||'none'}.</div>`; return; } }
+      if(rowsKey(got, !!l.ordered)===rowsKey(want, !!l.ordered)){ const pts=Math.max(1, l.pts-(S.misses[l.id]||0)); complete(l, pts); renderLesson(l); $('#q-run').click(); $('#taskmsg').innerHTML=`<div class="why good">✓ Right. ${pts} point${pts===1?'':'s'}.</div>`; $('#task').scrollIntoView({block:'center'}); }
+      else { miss(l); const g=got.kind==='select'?got.rows.length:'', w=want.kind==='select'?want.rows.length:''; msg.innerHTML=`<div class="why">✕ Not yet. ${got.kind==='select'?`You have ${g} row${g===1?'':'s'}; the answer has ${w}.`:'The answer differs.'} ${l.ordered?'Order counts in this task.':''}</div>`; }
+    }catch(e){ miss(l); msg.innerHTML=friendlyError(e); }
+  };
+  wireNext();
+}
+function miss(l){ S.misses[l.id]=(S.misses[l.id]||0)+1; save(); }
+
+/* ───────── lesson 9: upload ───────── */
+function renderUpload(l){
+  $('#card').innerHTML = `<span class="lvl">Lesson ${l.n} · ${esc(l.title)}</span><h2>${esc(l.title)}</h2>${l.body}
+    <div class="drop" id="drop" tabindex="0" role="button"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span><span class="tx"><b>Drop a .ttl file here, or tap to choose</b><span>Parsed in your browser. If it does not parse, you get the line and column.</span></span><span class="pill">Choose file</span><input type="file" id="file" accept=".ttl,.turtle,.txt,text/turtle" multiple hidden></div>
+    <div id="upmsg"></div>
+    ${S.myFiles.length?`<h3>Your files</h3><div class="datasets">${S.myFiles.map(f=>{ const g=f.glance||{}; return `<div class="ds" style="--c:#B98A12"><b>${esc(f.name)}</b>${f.triples} triples · ${(g.classes||[]).length} classes · ${(g.props||[]).length} properties · ${g.concepts||0} concepts<div class="small muted" style="margin-top:3px">${f.prefixes.length?'prefixes: '+esc(f.prefixes.map(p=>p[0]+':').join(' ')):'no prefixes found: declare them in the query'}</div>${(g.types||[]).length?`<div class="small" style="margin-top:3px">${g.types.slice(0,6).map(([t,n])=>`<span class="pill">${esc(curie(t))} ×${n}</span>`).join('')}</div>`:''}<div class="btns" style="margin-top:6px"><button class="ghost small" data-use-file="${esc(f.graph)}">Query it</button><button class="ghost small danger" data-rm="${esc(f.graph)}">Remove</button></div></div>`; }).join('')}</div>
+    <h3>Query patterns for your file</h3><p class="small muted">Written from the file itself: its prefixes, a class and a property it declares. Tap one, it lands in the window with DATA set to Mine; change what you like and run.</p><div class="btns" style="margin:0 0 6px" id="patlib">${S.myFiles.flatMap(f => patternsFor(f).map(([t,q]) => `<button class="chip" data-pat="${esc(q)}" title="${esc(f.name)}">${esc(t)}</button>`)).join('')}</div>`:''}
+    <h3>Try it</h3><pre class="ex">${esc(l.example)}<button data-load="ex">Run this ↓</button></pre><div id="win"></div>
+    <details><summary>Pattern reminders</summary><div class="cheat">
+      <div><b>Look first</b><code>SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 20</code> · what types: <code>?s a ?type</code> + COUNT · which properties: <code>?s ?p ?o</code> GROUP BY ?p</div>
+      <div><b>By class</b><code>?x a ex:Class</code> · everything about them: <code>?x a ex:Class ; ?p ?o</code> · sub classes: <code>?x rdfs:subClassOf* ex:Class</code></div>
+      <div><b>By property</b><code>?s ex:prop ?value</code> · missing it: <code>FILTER NOT EXISTS { ?s ex:prop ?v }</code> · either label: <code>?s rdfs:label|skos:prefLabel ?l</code></div>
+      <div><b>Follow links</b><code>?a ex:memberOf ?b . ?b ex:name ?n</code> · backwards: <code>?b ^ex:memberOf ?a</code> · two hops: <code>?a ex:memberOf/ex:name ?n</code></div>
+      <div><b>Prefixes</b>your file's <code>@prefix</code> lines are filled in for you when DATA is Mine or Both; if your <code>ex:</code> differs from the music graph's, yours wins there. To be sure, put a <code>PREFIX</code> line at the top of the query.</div>
+      <div><b>Nothing back?</b>check DATA is on Mine or Both · check the prefix namespace matches the file exactly (# vs /) · try <code>?s ?p ?o</code> and read a real IRI, then copy it into your pattern</div>
+    </div></details>
+    <div class="task${S.done[l.id]?' done':''}" id="task"><h3>${S.done[l.id]?'✓ ':''}Task · ${l.pts} points</h3><p>Load one of your own Turtle files and run any query against it that returns at least one row. Then press <b>Check</b>.</p><div id="taskmsg"></div></div>${S.done[l.id]?nextBtn(l.id):''}`;
+  const drop=$('#drop'), file=$('#file');
+  const take = async files => { let last=null; for(const f of files){ const text = await f.text(); try{ addMine(f.name, text); last=S.myFiles[S.myFiles.length-1]; }catch(e){ $('#upmsg').innerHTML=`<div class="why">✕ ${esc(f.name)}: ${esc(e.message)}<div class="small" style="margin-top:4px;color:var(--ink)">Fix the file and drop it again. SPARQL Playground reports the same kind of error.</div></div>`; return; } } if(!S.myFiles.length) return; S.use='mine'; S.drafts[l.id]=patternsFor(last)[0][1]; save(); toast(files.length+' file'+(files.length===1?'':'s')+' loaded. First query run for you.'); render(); document.querySelector('#q-run').click(); document.querySelector('#win').scrollIntoView({block:'start'}); };
+  drop.onclick=()=>file.click(); drop.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); file.click(); } }; file.onchange=()=>take([...file.files]);
+  drop.ondragover=e=>{ e.preventDefault(); drop.classList.add('over'); }; drop.ondragleave=()=>drop.classList.remove('over'); drop.ondrop=e=>{ e.preventDefault(); drop.classList.remove('over'); take([...e.dataTransfer.files]); };
+  document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ removeMine(b.dataset.rm); render(); });
+  document.querySelectorAll('[data-use-file]').forEach(b=>b.onclick=()=>{ S.use='mine'; const f=S.myFiles.find(x=>x.graph===b.dataset.useFile); S.drafts[l.id]=patternsFor(f)[0][1]; save(); render(); document.querySelector('#q-run').click(); document.querySelector('#win').scrollIntoView({block:'start'}); });
+  document.querySelectorAll('[data-pat]').forEach(b=>b.onclick=()=>{ S.use='mine'; S.drafts[l.id]=b.dataset.pat; save(); render(); document.querySelector('#q-run').click(); document.querySelector('#win').scrollIntoView({block:'start'}); });
+  const win = queryWindow($('#win'), {id:'q', value:S.drafts[l.id]||l.example, extra:`<button class="ghost" id="check">Check the task</button>`, onInput:v=>{ S.drafts[l.id]=v; save(); }});
+  $('#card [data-load="ex"]').onclick=()=>{ win.ta.value=l.example; S.drafts[l.id]=l.example; save(); render(); document.querySelector('#q-run').click(); document.querySelector('#win').scrollIntoView({block:'start'}); };
+  $('#check').onclick=()=>{ const msg=$('#taskmsg'); if(!S.myFiles.length){ msg.innerHTML='<div class="why">✕ Load a file of your own first.</div>'; return; } try{ const res=run(win.ta.value, {graphs:S.myFiles.map(f=>f.graph)}); win.go(); const ok = res.kind==='ask'?res.value : res.kind==='construct'?res.quads.length>0 : res.rows.length>0; if(ok){ complete(l, l.pts); renderUpload(l); $('#q-run').click(); $('#taskmsg').innerHTML=`<div class="why good">✓ Your data, your query, ${res.kind==='select'?res.rows.length+' rows':'a result'}. ${l.pts} points.</div>`; } else msg.innerHTML='<div class="why">✕ That returned nothing from your file. Try ?s ?p ?o first to see what is in it.</div>'; }catch(e){ msg.innerHTML=friendlyError(e); } };
+  wireNext();
+}
+function addMine(name, text){
+  const graph = 'urn:kga:mine:'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  if(S.myFiles.some(f=>f.graph===graph)) removeMine(graph);
+  const before = store.size;
+  store.load(text, {format:'text/turtle', base_iri:'https://example.org/'+encodeURIComponent(name)+'/', to_graph_name:ox.namedNode(graph)});
+  const prefixes = [...text.matchAll(/(?:@prefix|^\s*PREFIX)\s+([\w-]*):\s*<([^>]*)>/gmi)].map(m=>[m[1],m[2]]).filter(p=>p[0]);
+  const f = {name, graph, triples:store.size-before, prefixes, text, glance:glance(graph)};
+  S.myFiles.push(f);
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast('The file is loaded, but it is too large to keep across a reload.'); }
+}
+function glance(graph){
+  const g=[ox.namedNode(graph)]; const q=(sparql)=>{ try{ return store.query(withPrefixes(sparql), {default_graph:g, named_graphs:g}); }catch(e){ return []; } };
+  const v=(r,k)=>r.get(k)?r.get(k).value:'';
+  return {
+    classes: q('SELECT DISTINCT ?c ?l WHERE { { ?c a owl:Class } UNION { ?c a rdfs:Class } OPTIONAL { ?c rdfs:label ?l } } ORDER BY ?c').map(r=>[v(r,'c'),v(r,'l')]),
+    types: q('SELECT ?t (COUNT(?s) AS ?n) WHERE { ?s a ?t } GROUP BY ?t ORDER BY DESC(?n)').map(r=>[v(r,'t'),v(r,'n')]),
+    props: q('SELECT ?p (COUNT(*) AS ?n) WHERE { ?s ?p ?o } GROUP BY ?p ORDER BY DESC(?n)').map(r=>[v(r,'p'),v(r,'n')]),
+    concepts: q('SELECT (COUNT(?c) AS ?n) WHERE { ?c a skos:Concept }').map(r=>+v(r,'n'))[0]||0,
+    subject: (q('SELECT ?s WHERE { ?s ?p ?o FILTER(isIRI(?s)) } LIMIT 1')[0]||new Map()).get('s')?.value||''
+  };
+}
+/* a pattern library written for one file: real prefixes, classes and properties from it */
+function patternsFor(f){
+  const g=f.glance||{}; const pfx = (f.prefixes||[]).map(([p,ns])=>`PREFIX ${p}: <${ns}>`).join('\n'); const head = pfx ? pfx+'\n\n' : '';
+  const c = i => curie(i);
+  const cls = (g.classes&&g.classes[0]&&g.classes[0][0]) || (g.types&&g.types[0]&&g.types[0][0]) || '';
+  const prop = (g.props||[]).find(([p]) => !p.startsWith(PREFIXES.rdf) && !p.startsWith(PREFIXES.rdfs) && !p.startsWith(PREFIXES.owl) && !p.startsWith(PREFIXES.skos) && !p.startsWith(PREFIXES.dct));
+  const P=[];
+  P.push(['Everything (first 20)', head+`SELECT ?s ?p ?o WHERE {\n  ?s ?p ?o .\n}\nLIMIT 20`]);
+  P.push(['What types of thing are in the file', head+`SELECT ?type (COUNT(?s) AS ?n) WHERE {\n  ?s rdf:type ?type .\n}\nGROUP BY ?type ORDER BY DESC(?n)`]);
+  P.push(['Which properties are used, how often', head+`SELECT ?p (COUNT(*) AS ?n) WHERE {\n  ?s ?p ?o .\n}\nGROUP BY ?p ORDER BY DESC(?n)`]);
+  P.push(['Classes, with labels and comments', head+`SELECT ?class ?label ?comment WHERE {\n  ?class rdf:type owl:Class .\n  OPTIONAL { ?class rdfs:label ?label }\n  OPTIONAL { ?class rdfs:comment ?comment }\n}`]);
+  P.push(['Properties, with domain and range', head+`SELECT ?property ?domain ?range WHERE {\n  ?property rdf:type ?kind .\n  FILTER(?kind IN (owl:ObjectProperty, owl:DatatypeProperty, rdf:Property))\n  OPTIONAL { ?property rdfs:domain ?domain }\n  OPTIONAL { ?property rdfs:range ?range }\n}`]);
+  if(cls) P.push([`All instances of ${c(cls)}`, head+`SELECT ?thing ?label WHERE {\n  ?thing rdf:type ${c(cls)} .\n  OPTIONAL { ?thing rdfs:label ?label }\n  OPTIONAL { ?thing skos:prefLabel ?label }\n}`]);
+  if(cls) P.push([`Everything about each ${c(cls)}`, head+`SELECT ?thing ?p ?o WHERE {\n  ?thing rdf:type ${c(cls)} ;\n         ?p ?o .\n}\nORDER BY ?thing`]);
+  if(prop) P.push([`Every value of ${c(prop[0])}`, head+`SELECT ?s ?value WHERE {\n  ?s ${c(prop[0])} ?value .\n}`]);
+  if(g.concepts) P.push(['SKOS concepts and their broader concept', head+`SELECT ?concept ?label ?broader WHERE {\n  ?concept rdf:type skos:Concept ; skos:prefLabel ?label .\n  OPTIONAL { ?concept skos:broader ?broader }\n}`]);
+  if(g.concepts) P.push(['Concepts that are also typed with a class', head+`SELECT ?concept ?class WHERE {\n  ?concept rdf:type skos:Concept ; rdf:type ?class .\n  FILTER(?class != skos:Concept)\n}`]);
+  if(g.subject) P.push([`Everything about ${c(g.subject)}`, head+`SELECT ?p ?o WHERE {\n  ${c(g.subject)} ?p ?o .\n}`]);
+  P.push(['Find by label text', head+`SELECT ?s ?label WHERE {\n  ?s rdfs:label|skos:prefLabel ?label .\n  FILTER(CONTAINS(LCASE(STR(?label)), "a"))\n}`]);
+  P.push(['Things with no label', head+`SELECT ?s WHERE {\n  ?s rdf:type ?t .\n  FILTER NOT EXISTS { ?s rdfs:label|skos:prefLabel ?l }\n}`]);
+  P.push(['Which graph holds what', head+`SELECT ?g (COUNT(*) AS ?n) WHERE {\n  GRAPH ?g { ?s ?p ?o }\n}\nGROUP BY ?g`]);
+  return P;
+}
+function removeMine(graph){ const f=S.myFiles.find(x=>x.graph===graph); if(!f) return; for(const q of store.match(null,null,null,ox.namedNode(graph))) store.delete(q); S.myFiles=S.myFiles.filter(x=>x.graph!==graph); if(!S.myFiles.length && S.use==='mine') S.use='all'; save(); }
+function clearMine(){ S.myFiles.forEach(f => { for(const q of store.match(null,null,null,ox.namedNode(f.graph))) store.delete(q); }); S.myFiles=[]; }
+
+/* ───────── final: your CQ ───────── */
+function renderCQ(l){
+  $('#card').innerHTML = `<span class="lvl">Final · ${esc(l.title)}</span><h2>Answer a competency question</h2>${l.body}
+    <div class="task${S.done[l.id]?' done':''}" id="task"><h3>${S.done[l.id]?'✓ ':''}Task · ${l.pts} points</h3>
+      <label class="small" for="cqtext" style="font-weight:700">Your competency question, in words</label><textarea id="cqtext" style="width:100%;min-height:54px;font:400 15px 'Source Sans 3',sans-serif;border:1.5px solid var(--line);border-radius:8px;padding:8px;margin:4px 0 8px" placeholder="e.g. Which venues in Portland host jazz, and when?">${esc(S.drafts.cqtext||'')}</textarea>
+      <div id="win"></div><div id="taskmsg"></div></div>
+    <h3>Worked example</h3><pre class="ex">${esc(l.example)}<button data-load="ex">Run this ↓</button></pre>
+    <div class="exports"><button id="x-md">Export my CQ and query<span class="fmt">.md</span></button></div>
+    ${S.done[l.id]?`<h3>Your field badge</h3>${badgesHtml()}`:''}`;
+  $('#cqtext').oninput=e=>{ S.drafts.cqtext=e.target.value; save(); };
+  const win = queryWindow($('#win'), {id:'q', value:S.drafts[l.id]||'', extra:`<button class="ghost" id="check">Check the task</button>`, onInput:v=>{ S.drafts[l.id]=v; save(); }});
+  $('#card [data-load="ex"]').onclick=()=>{ win.ta.value=l.example; S.drafts[l.id]=l.example; save(); win.go(); };
+  $('#check').onclick=()=>{ const msg=$('#taskmsg'), q=win.ta.value; if(!(S.drafts.cqtext||'').trim()){ msg.innerHTML='<div class="why">✕ Write the question in words first.</div>'; return; } try{ const res=run(q); win.go(); const ok = res.kind==='ask'?true : res.kind==='construct'?res.quads.length>0 : res.rows.length>0; if(!ok){ msg.innerHTML='<div class="why">✕ It runs, but returns nothing. A CQ answered with no rows is a CQ the graph cannot answer yet.</div>'; return; } const fancy = /\b(FILTER|OPTIONAL|BIND|COUNT|SUM|AVG|MIN|MAX|GROUP BY|ORDER BY)\b/i.test(q) || /[\/^+*]\s*(ex:|skos:|rdfs:|\?)/.test(q.replace(/PREFIX[^\n]*/gi,'')) || /skos:broader[+*]|subClassOf[+*]/.test(q); const pts = fancy ? 4 : 2; complete(l, pts); renderCQ(l); $('#q-run').click(); $('#taskmsg').innerHTML=`<div class="why good">✓ Answered. ${pts} points${fancy?'':' (two more if the query uses a FILTER, OPTIONAL, aggregate, ORDER BY or property path)'}.</div>`; }catch(e){ msg.innerHTML=friendlyError(e); } };
+  $('#x-md').onclick=()=>download('my-competency-question.md', `# Competency question\n\n${S.drafts.cqtext||''}\n\n## SPARQL\n\n\`\`\`sparql\n${win.ta.value}\n\`\`\`\n`, 'text/markdown');
+}
+function badgesHtml(){ const earned=L.filter(l=>l.badge&&S.done[l.id]); const rank = earned.length>=10?'Query master':earned.length>=7?'Graph interrogator':earned.length>=4?'Pattern matcher':'Apprentice'; return `<p><b>${esc(rank)}</b> · ${totalPts()} of ${totalMax()} points · ${earned.length} of ${L.filter(l=>l.badge).length} badges</p><div class="reveal">${L.filter(l=>l.badge).map(l=>`<div class="bcard ${S.done[l.id]?'on':'off'}"><div class="ic">${l.badge}</div><b>${esc(l.bname)}</b><span>${esc(l.title)} · ${S.pts[l.id]||0}/${l.pts}</span></div>`).join('')}</div>`; }
+
+/* ───────── the practice room: free query window + cheat sheet + resources ───────── */
+function renderRoom(l){
+  $('#card').innerHTML = `<span class="lvl">Practice room</span><h2>Query anything</h2><p>The music graph, your files, or both. Nothing here is scored. Starters on the left, cheat sheet and links below.</p>
+    <div class="btns" style="margin:0 0 6px">${[['Everything (20)','SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 20'],['Classes','SELECT ?class ?label WHERE { ?class rdf:type owl:Class . OPTIONAL { ?class rdfs:label ?label } } ORDER BY ?label'],['Properties, domain, range','SELECT ?p ?domain ?range WHERE { ?p rdf:type ?t . FILTER(?t IN (owl:ObjectProperty, owl:DatatypeProperty)) OPTIONAL { ?p rdfs:domain ?domain } OPTIONAL { ?p rdfs:range ?range } }'],['Concept trees','SELECT ?scheme ?concept ?label ?broader WHERE { ?concept skos:inScheme ?scheme ; skos:prefLabel ?label . FILTER(LANG(?label)="en") OPTIONAL { ?concept skos:broader ?broader } } ORDER BY ?scheme ?broader'],['Events by date','SELECT ?name ?date ?venueName ?city WHERE { ?e ex:name ?name ; ex:date ?date ; ex:held-at ?v . ?v ex:name ?venueName ; ex:city ?city } ORDER BY ?date'],['Who is in which band','SELECT ?bandName (GROUP_CONCAT(?name; separator=", ") AS ?members) WHERE { ?p ex:member-of ?b ; ex:name ?name . ?b ex:name ?bandName } GROUP BY ?bandName'],['Which graph','SELECT ?g (COUNT(*) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } } GROUP BY ?g'],['Export as Turtle','CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }']].map(([t,q],i)=>`<button class="chip" data-st="${i}" data-q="${esc(q)}">${esc(t)}</button>`).join('')}</div>
+    ${S.myFiles.length?`<p class="small muted" style="margin:6px 0 4px">Patterns for your file${S.myFiles.length===1?'':'s'}:</p><div class="btns" style="margin:0 0 6px">${S.myFiles.flatMap(f => patternsFor(f).map(([t,q]) => `<button class="chip" data-pat="${esc(q)}" title="${esc(f.name)}">${esc(t)}</button>`)).join('')}</div>`:''}
+    <div id="win"></div>
+    <details open><summary>Cheat sheet</summary><div class="cheat">
+      <div><b>Shape</b><code>PREFIX ex: &lt;…#&gt;</code><br><code>SELECT ?a ?b WHERE { pattern }</code><br>modifiers after the braces</div>
+      <div><b>Pattern</b><code>?s ?p ?o .</code> · share a subject with <code>;</code> · share subject and predicate with <code>,</code> · <code>a</code> is <code>rdf:type</code></div>
+      <div><b>FILTER</b><code>FILTER(?n &gt; 5)</code> · <code>CONTAINS(?s,"x")</code> · <code>STRSTARTS</code> · <code>REGEX(?s,"^A")</code> · <code>YEAR(?d)</code> · <code>LANG(?l)="en"</code> · <code>BOUND(?x)</code> · <code>?x IN (…)</code></div>
+      <div><b>OPTIONAL</b><code>OPTIONAL { ?s ex:p ?o }</code> keeps the row when nothing matches · <code>FILTER(!BOUND(?o))</code> finds the gaps · <code>MINUS { … }</code> removes matches</div>
+      <div><b>Modifiers</b><code>ORDER BY DESC(?x)</code> · <code>LIMIT 10 OFFSET 10</code> · <code>DISTINCT</code></div>
+      <div><b>Aggregates</b><code>(COUNT(?x) AS ?n)</code> · <code>SUM AVG MIN MAX</code> · <code>GROUP_CONCAT(?x; separator=", ")</code> · <code>GROUP BY ?g</code> · <code>HAVING(COUNT(?x) &gt; 1)</code></div>
+      <div><b>Paths</b><code>p+</code> one or more · <code>p*</code> zero or more · <code>^p</code> inverse · <code>p/q</code> chain · <code>p|q</code> either</div>
+      <div><b>Forms</b><code>ASK { }</code> · <code>CONSTRUCT { template } WHERE { }</code> · <code>DESCRIBE ex:x</code> · <code>GRAPH ?g { }</code> · <code>UNION</code> · <code>VALUES ?x { ex:a ex:b }</code> · <code>BIND(expr AS ?v)</code></div>
+    </div></details>
+    <details><summary>The dataset</summary><p class="small">${store?store.size:0} triples in the namespace <code>ex: = http://www.example.org/graph#</code>, the same prefix as the module deck. TBox: person, band, venue, event (concert, festival), instrument (string, keyboard, percussion), genre, album; properties name, date-of-birth, has-occupation, plays-instrument, member-of, performs-genre, held-at, headliner, date, city, capacity, released-by, release-year, ticket-price. CBox: instruments, genres and occupations as SKOS schemes, the instrument and genre concepts also typed with a class. ABox: ten people, five bands, four venues in Portland and Seattle, five events, four albums. Two people have no birth date; one event has no price; two instrument labels have German forms.</p><div class="exports"><button id="x-data">Download the dataset<span class="fmt">.ttl</span></button></div></details>
+    <details><summary>Resources</summary><ul class="small">
+      <li><a href="https://www.w3.org/TR/sparql11-query/" target="_blank" rel="noopener">SPARQL 1.1 Query Language</a>, the W3C specification. Section 5 is graph patterns, 15 is solution modifiers, 9 is property paths, 11 is aggregates.</li>
+      <li><a href="https://atomgraph.github.io/SPARQL-Playground/" target="_blank" rel="noopener">SPARQL Playground</a>, the sandbox Activity 3 uses: paste your ontology, taxonomies and instances into the RDF input, and it validates the syntax before you query. The same file loads here in lesson 10.</li>
+      <li><a href="https://query.wikidata.org/" target="_blank" rel="noopener">Wikidata Query Service</a>, the largest public graph to practise on, with an autocompleting editor.</li>
+      <li><a href="https://sparql-anything.cc/" target="_blank" rel="noopener">SPARQL Anything</a>, a tool that lets SPARQL query JSON, CSV, XML, spreadsheets and HTML as if they were RDF, for the day your data is not yet a graph.</li>
+      <li>This room runs <a href="https://github.com/oxigraph/oxigraph" target="_blank" rel="noopener">Oxigraph</a> compiled to WebAssembly, so every query is evaluated inside your browser.</li></ul></details>`;
+  const win = queryWindow($('#win'), {id:'q', value:S.scratch||'SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 20', onInput:v=>{ S.scratch=v; save(); }});
+  document.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{ win.ta.value=b.dataset.q; S.scratch=b.dataset.q; save(); win.go(); });
+  document.querySelectorAll('[data-pat]').forEach(b=>b.onclick=()=>{ S.use='mine'; S.scratch=b.dataset.pat; save(); renderRoom(l); document.querySelector('#q-run').click(); });
+  $('#x-data').onclick=async()=>download('practice-room-music.ttl', await (await fetch('data/music.ttl')).text(), 'text/turtle');
+}
+
+/* ───────── boot ───────── */
+/* The engine is served from this site first, so the room works with no outside host.
+   The two CDNs are fallbacks for a copy that fails to load. */
+const ENGINE_SOURCES = [
+  new URL('../../assets/vendor/oxigraph/web.js', location.href).href,
+  'https://cdn.jsdelivr.net/npm/oxigraph@0.5.11/web.js',
+  'https://unpkg.com/oxigraph@0.5.11/web.js',
+];
+async function loadEngine(){
+  const failures=[];
+  for(const src of ENGINE_SOURCES){
+    try{ const mod = await import(src); await mod.default(); return mod; }
+    catch(e){ failures.push(src.replace(/^https?:\/\//,'').split('/')[0]+': '+(e.message||e)); }
+  }
+  throw new Error('no source answered. '+failures.join('; '));
+}
+(async function(){
+  try{
+    ox = await loadEngine();
+    store = new ox.Store();
+    const ttl = await (await fetch('data/music.ttl', {cache:'no-store'})).text();
+    store.load(ttl, {format:'text/turtle', base_iri:'http://www.example.org/graph#', to_graph_name:ox.namedNode(MUSIC)});
+    (S.myFiles||[]).forEach(f => { try{ store.load(f.text, {format:'text/turtle', base_iri:'https://example.org/', to_graph_name:ox.namedNode(f.graph)}); f.glance=glance(f.graph); }catch(e){} });
+    ready = true;
+  }catch(e){ engineError='The query engine could not load ('+(e.message||e)+'). Check the connection and reload.'; }
+  render();
+})();
+</script>
+</body>
+</html>

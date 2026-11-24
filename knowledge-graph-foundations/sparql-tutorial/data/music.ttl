@@ -1,0 +1,104 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix ex:   <http://www.example.org/graph#> .
+
+# ── TBox ─────────────────────────────────────────────────────────────
+ex:ontology rdf:type owl:Ontology ; rdfs:label "Practice Room music ontology"@en ; dct:creator "Knowledge Graph Academy" ; dct:created "2026-09-28"^^xsd:date ; owl:versionInfo "1.0" ;
+    rdfs:comment "A small music knowledge graph for learning SPARQL: people, bands, instruments, genres, venues and events."@en .
+
+ex:person rdf:type owl:Class ; rdfs:label "Person"@en ; rdfs:comment "A human being."@en .
+ex:band rdf:type owl:Class ; rdfs:label "Band"@en ; rdfs:comment "A group of musicians performing under one name."@en .
+ex:venue rdf:type owl:Class ; rdfs:label "Venue"@en ; rdfs:comment "A place where music events are held."@en .
+ex:event rdf:type owl:Class ; rdfs:label "Event"@en ; rdfs:comment "A scheduled music performance."@en .
+ex:concert rdf:type owl:Class ; rdfs:subClassOf ex:event ; rdfs:label "Concert"@en .
+ex:festival rdf:type owl:Class ; rdfs:subClassOf ex:event ; rdfs:label "Festival"@en .
+ex:instrument rdf:type owl:Class ; rdfs:label "Instrument"@en .
+ex:string-instrument rdf:type owl:Class ; rdfs:subClassOf ex:instrument ; rdfs:label "String instrument"@en .
+ex:keyboard-instrument rdf:type owl:Class ; rdfs:subClassOf ex:instrument ; rdfs:label "Keyboard instrument"@en .
+ex:percussion-instrument rdf:type owl:Class ; rdfs:subClassOf ex:instrument ; rdfs:label "Percussion instrument"@en .
+ex:genre rdf:type owl:Class ; rdfs:label "Genre"@en .
+ex:album rdf:type owl:Class ; rdfs:label "Album"@en .
+
+ex:name rdf:type owl:DatatypeProperty ; rdfs:label "name"@en ; rdfs:range xsd:string .
+ex:date-of-birth rdf:type owl:DatatypeProperty ; rdfs:label "date of birth"@en ; rdfs:domain ex:person ; rdfs:range xsd:date .
+ex:has-occupation rdf:type owl:ObjectProperty ; rdfs:label "has occupation"@en ; rdfs:domain ex:person .
+ex:plays-instrument rdf:type owl:ObjectProperty ; rdfs:label "plays instrument"@en ; rdfs:domain ex:person ; rdfs:range ex:instrument .
+ex:member-of rdf:type owl:ObjectProperty ; rdfs:label "member of"@en ; rdfs:domain ex:person ; rdfs:range ex:band .
+ex:performs-genre rdf:type owl:ObjectProperty ; rdfs:label "performs genre"@en ; rdfs:range ex:genre .
+ex:held-at rdf:type owl:ObjectProperty ; rdfs:label "held at"@en ; rdfs:domain ex:event ; rdfs:range ex:venue .
+ex:headliner rdf:type owl:ObjectProperty ; rdfs:label "headliner"@en ; rdfs:domain ex:event .
+ex:date rdf:type owl:DatatypeProperty ; rdfs:label "date"@en ; rdfs:domain ex:event ; rdfs:range xsd:date .
+ex:city rdf:type owl:DatatypeProperty ; rdfs:label "city"@en ; rdfs:domain ex:venue ; rdfs:range xsd:string .
+ex:capacity rdf:type owl:DatatypeProperty ; rdfs:label "capacity"@en ; rdfs:domain ex:venue ; rdfs:range xsd:integer .
+ex:released-by rdf:type owl:ObjectProperty ; rdfs:label "released by"@en ; rdfs:domain ex:album .
+ex:release-year rdf:type owl:DatatypeProperty ; rdfs:label "release year"@en ; rdfs:domain ex:album ; rdfs:range xsd:gYear .
+ex:ticket-price rdf:type owl:DatatypeProperty ; rdfs:label "ticket price"@en ; rdfs:domain ex:event ; rdfs:range xsd:decimal .
+
+# ── CBox: instruments and genres as SKOS, each also typed with a class ──
+ex:instruments rdf:type skos:ConceptScheme ; dct:title "Instruments"@en ; skos:hasTopConcept ex:strings, ex:keyboards, ex:percussion .
+ex:strings rdf:type skos:Concept ; skos:inScheme ex:instruments ; skos:topConceptOf ex:instruments ; skos:prefLabel "Strings"@en ; skos:altLabel "String instruments"@en .
+ex:keyboards rdf:type skos:Concept ; skos:inScheme ex:instruments ; skos:topConceptOf ex:instruments ; skos:prefLabel "Keyboards"@en .
+ex:percussion rdf:type skos:Concept ; skos:inScheme ex:instruments ; skos:topConceptOf ex:instruments ; skos:prefLabel "Percussion"@en .
+ex:guitar rdf:type skos:Concept, ex:string-instrument ; skos:inScheme ex:instruments ; skos:broader ex:strings ; skos:prefLabel "Guitar"@en ; skos:prefLabel "Gitarre"@de .
+ex:electric-guitar rdf:type skos:Concept, ex:string-instrument ; skos:inScheme ex:instruments ; skos:broader ex:guitar ; skos:prefLabel "Electric guitar"@en ; skos:altLabel "Axe"@en .
+ex:bass-guitar rdf:type skos:Concept, ex:string-instrument ; skos:inScheme ex:instruments ; skos:broader ex:guitar ; skos:prefLabel "Bass guitar"@en ; skos:altLabel "Bass"@en .
+ex:violin rdf:type skos:Concept, ex:string-instrument ; skos:inScheme ex:instruments ; skos:broader ex:strings ; skos:prefLabel "Violin"@en ; skos:altLabel "Fiddle"@en ; skos:prefLabel "Geige"@de .
+ex:cello rdf:type skos:Concept, ex:string-instrument ; skos:inScheme ex:instruments ; skos:broader ex:strings ; skos:prefLabel "Cello"@en .
+ex:piano rdf:type skos:Concept, ex:keyboard-instrument ; skos:inScheme ex:instruments ; skos:broader ex:keyboards ; skos:prefLabel "Piano"@en ; skos:altLabel "Keys"@en .
+ex:synthesizer rdf:type skos:Concept, ex:keyboard-instrument ; skos:inScheme ex:instruments ; skos:broader ex:keyboards ; skos:prefLabel "Synthesizer"@en ; skos:altLabel "Synth"@en .
+ex:drum-kit rdf:type skos:Concept, ex:percussion-instrument ; skos:inScheme ex:instruments ; skos:broader ex:percussion ; skos:prefLabel "Drum kit"@en ; skos:altLabel "Drums"@en .
+ex:congas rdf:type skos:Concept, ex:percussion-instrument ; skos:inScheme ex:instruments ; skos:broader ex:percussion ; skos:prefLabel "Congas"@en .
+
+ex:genres rdf:type skos:ConceptScheme ; dct:title "Genres"@en ; skos:hasTopConcept ex:jazz, ex:rock, ex:electronic .
+ex:jazz rdf:type skos:Concept, ex:genre ; skos:inScheme ex:genres ; skos:topConceptOf ex:genres ; skos:prefLabel "Jazz"@en ; skos:definition "A genre rooted in improvisation and swing."@en .
+ex:bebop rdf:type skos:Concept, ex:genre ; skos:inScheme ex:genres ; skos:broader ex:jazz ; skos:prefLabel "Bebop"@en .
+ex:latin-jazz rdf:type skos:Concept, ex:genre ; skos:inScheme ex:genres ; skos:broader ex:jazz ; skos:prefLabel "Latin jazz"@en .
+ex:rock rdf:type skos:Concept, ex:genre ; skos:inScheme ex:genres ; skos:topConceptOf ex:genres ; skos:prefLabel "Rock"@en ; skos:definition "A genre built on amplified guitar, bass and drums."@en .
+ex:punk-rock rdf:type skos:Concept, ex:genre ; skos:inScheme ex:genres ; skos:broader ex:rock ; skos:prefLabel "Punk rock"@en ; skos:altLabel "Punk"@en .
+ex:indie-rock rdf:type skos:Concept, ex:genre ; skos:inScheme ex:genres ; skos:broader ex:rock ; skos:prefLabel "Indie rock"@en .
+ex:electronic rdf:type skos:Concept, ex:genre ; skos:inScheme ex:genres ; skos:topConceptOf ex:genres ; skos:prefLabel "Electronic"@en .
+ex:house rdf:type skos:Concept, ex:genre ; skos:inScheme ex:genres ; skos:broader ex:electronic ; skos:prefLabel "House"@en .
+
+ex:occupations rdf:type skos:ConceptScheme ; dct:title "Occupations"@en .
+ex:musician rdf:type skos:Concept ; skos:inScheme ex:occupations ; skos:prefLabel "Musician"@en .
+ex:composer rdf:type skos:Concept ; skos:inScheme ex:occupations ; skos:prefLabel "Composer"@en .
+ex:producer rdf:type skos:Concept ; skos:inScheme ex:occupations ; skos:prefLabel "Producer"@en .
+ex:luthier rdf:type skos:Concept ; skos:inScheme ex:occupations ; skos:prefLabel "Luthier"@en .
+
+# ── ABox ─────────────────────────────────────────────────────────────
+ex:the-bluenotes rdf:type ex:band ; ex:name "The Bluenotes" ; ex:performs-genre ex:jazz, ex:bebop .
+ex:tidewater rdf:type ex:band ; ex:name "Tidewater" ; ex:performs-genre ex:indie-rock .
+ex:static-bloom rdf:type ex:band ; ex:name "Static Bloom" ; ex:performs-genre ex:punk-rock .
+ex:sol-collective rdf:type ex:band ; ex:name "Sol Collective" ; ex:performs-genre ex:latin-jazz .
+ex:night-bus rdf:type ex:band ; ex:name "Night Bus" ; ex:performs-genre ex:house .
+
+ex:dana-k rdf:type ex:person ; ex:name "Dana K" ; ex:date-of-birth "1991-03-14"^^xsd:date ; ex:has-occupation ex:musician ; ex:plays-instrument ex:electric-guitar, ex:guitar ; ex:member-of ex:the-bluenotes .
+ex:sam-o rdf:type ex:person ; ex:name "Sam O" ; ex:date-of-birth "1988-11-02"^^xsd:date ; ex:has-occupation ex:musician, ex:composer ; ex:plays-instrument ex:piano ; ex:member-of ex:the-bluenotes .
+ex:lee-p rdf:type ex:person ; ex:name "Lee P" ; ex:date-of-birth "1995-07-21"^^xsd:date ; ex:has-occupation ex:musician ; ex:plays-instrument ex:drum-kit ; ex:member-of ex:the-bluenotes, ex:tidewater .
+ex:ana-b rdf:type ex:person ; ex:name "Ana B" ; ex:date-of-birth "1990-01-30"^^xsd:date ; ex:has-occupation ex:musician ; ex:plays-instrument ex:bass-guitar ; ex:member-of ex:tidewater .
+ex:noor-h rdf:type ex:person ; ex:name "Noor H" ; ex:date-of-birth "1999-09-09"^^xsd:date ; ex:has-occupation ex:musician ; ex:plays-instrument ex:synthesizer, ex:piano ; ex:member-of ex:tidewater, ex:night-bus .
+ex:kit-r rdf:type ex:person ; ex:name "Kit R" ; ex:date-of-birth "1993-05-05"^^xsd:date ; ex:has-occupation ex:musician ; ex:plays-instrument ex:electric-guitar ; ex:member-of ex:static-bloom .
+ex:jo-m rdf:type ex:person ; ex:name "Jo M" ; ex:has-occupation ex:musician ; ex:plays-instrument ex:drum-kit ; ex:member-of ex:static-bloom .
+ex:rafa-c rdf:type ex:person ; ex:name "Rafa C" ; ex:date-of-birth "1985-12-12"^^xsd:date ; ex:has-occupation ex:musician, ex:producer ; ex:plays-instrument ex:congas, ex:piano ; ex:member-of ex:sol-collective .
+ex:ines-v rdf:type ex:person ; ex:name "Inés V" ; ex:date-of-birth "1997-04-18"^^xsd:date ; ex:has-occupation ex:musician ; ex:plays-instrument ex:violin, ex:cello ; ex:member-of ex:sol-collective .
+ex:mara-t rdf:type ex:person ; ex:name "Mara T" ; ex:date-of-birth "1979-08-23"^^xsd:date ; ex:has-occupation ex:luthier .
+
+ex:riverside-arena rdf:type ex:venue ; ex:name "Riverside Arena" ; ex:city "Portland" ; ex:capacity 12000 .
+ex:blue-door rdf:type ex:venue ; ex:name "The Blue Door" ; ex:city "Portland" ; ex:capacity 250 .
+ex:harbour-hall rdf:type ex:venue ; ex:name "Harbour Hall" ; ex:city "Seattle" ; ex:capacity 1800 .
+ex:north-field rdf:type ex:venue ; ex:name "North Field" ; ex:city "Seattle" ; ex:capacity 30000 .
+
+ex:summer-jazz-2026 rdf:type ex:festival ; ex:name "Summer Jazz 2026" ; ex:held-at ex:riverside-arena ; ex:date "2026-07-18"^^xsd:date ; ex:headliner ex:the-bluenotes, ex:sol-collective ; ex:performs-genre ex:jazz ; ex:ticket-price 85.00 .
+ex:late-set rdf:type ex:concert ; ex:name "The Late Set" ; ex:held-at ex:blue-door ; ex:date "2026-09-30"^^xsd:date ; ex:headliner ex:the-bluenotes ; ex:performs-genre ex:bebop ; ex:ticket-price 20.00 .
+ex:harbour-nights rdf:type ex:concert ; ex:name "Harbour Nights" ; ex:held-at ex:harbour-hall ; ex:date "2026-10-11"^^xsd:date ; ex:headliner ex:tidewater ; ex:performs-genre ex:indie-rock ; ex:ticket-price 35.00 .
+ex:loud-weekend rdf:type ex:festival ; ex:name "Loud Weekend" ; ex:held-at ex:north-field ; ex:date "2026-08-02"^^xsd:date ; ex:headliner ex:static-bloom, ex:tidewater ; ex:performs-genre ex:rock ; ex:ticket-price 120.00 .
+ex:sol-sessions rdf:type ex:concert ; ex:name "Sol Sessions" ; ex:held-at ex:blue-door ; ex:date "2026-11-05"^^xsd:date ; ex:headliner ex:sol-collective ; ex:performs-genre ex:latin-jazz .
+
+ex:blue-hour rdf:type ex:album ; ex:name "Blue Hour" ; ex:released-by ex:the-bluenotes ; ex:release-year "2025"^^xsd:gYear ; ex:performs-genre ex:jazz .
+ex:tideline rdf:type ex:album ; ex:name "Tideline" ; ex:released-by ex:tidewater ; ex:release-year "2024"^^xsd:gYear ; ex:performs-genre ex:indie-rock .
+ex:noise-floor rdf:type ex:album ; ex:name "Noise Floor" ; ex:released-by ex:static-bloom ; ex:release-year "2023"^^xsd:gYear ; ex:performs-genre ex:punk-rock .
+ex:sol-sol rdf:type ex:album ; ex:name "Sol Sol" ; ex:released-by ex:sol-collective ; ex:release-year "2026"^^xsd:gYear ; ex:performs-genre ex:latin-jazz .

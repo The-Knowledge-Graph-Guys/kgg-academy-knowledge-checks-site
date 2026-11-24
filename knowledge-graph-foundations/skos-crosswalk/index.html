@@ -1,0 +1,1072 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SKOS Crosswalk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --paper:#F7F7F2; --grid:rgba(36,86,166,.07); --surface:#FFFFFF; --ink:#20283A;
+    --ink-soft:#5A6478; --accent:#2456A6; --accent-ink:#FFFFFF; --line:#DDDDD3;
+    --ok:#2F7D4F; --ok-bg:#EAF3ED; --miss:#B23B26; --miss-bg:#F7ECE8; --warn:#B98A12; --warn-bg:#FBF3DC;
+    --gold:#B98A12; --chip:#EEEEE6; --extract-bg:#F1F3F8; --shadow:0 2px 10px rgba(32,40,58,.08); --purple:#6B3FA0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;color:var(--ink);font:400 16.5px/1.5 "Source Sans 3",system-ui,sans-serif;background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;min-height:100vh}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 80px;min-width:0}
+  header{margin-bottom:16px;position:relative;padding-right:106px}
+  .kgg-logo{position:absolute;top:0;right:0;height:88px;width:auto;background:#fff;border-radius:12px;padding:4px 8px;box-shadow:var(--shadow)}
+  @media (max-width:520px){header{padding-right:76px}.kgg-logo{height:62px}}
+  .eyebrow{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(30px,6vw,42px)/1.05 "Bricolage Grotesque","Source Sans 3",sans-serif;margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0}
+  .teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0}
+  button.team{text-align:left;background:var(--paper);border:1.5px solid var(--line);border-left:7px solid var(--c);border-radius:12px;padding:12px 14px;cursor:pointer;color:var(--ink);font-family:inherit}
+  button.team b{display:block;font:800 17px "Bricolage Grotesque",sans-serif} button.team span{font-size:13px;color:var(--ink-soft)}
+  button.team.sel{background:var(--surface);border-color:var(--c);box-shadow:0 0 0 2px var(--c)}
+  .todo{list-style:none;margin:10px 0;padding:0;counter-reset:t}
+  .todo li{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:7px;background:var(--paper)}
+  .todo li .tick{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font:800 15px "Bricolage Grotesque",sans-serif;color:var(--ink-soft);background:var(--surface)}
+  .todo li.ok{background:var(--ok-bg);border-color:#BFDCCB} .todo li.ok .tick{background:var(--ok);border-color:var(--ok);color:#fff}
+  .todo li.wait{background:var(--warn-bg);border-color:#EAD9A0} .todo li.wait .tick{border-color:var(--warn);color:var(--warn)}
+  .todo li.next{border-color:var(--accent);box-shadow:0 0 0 2px #C9D8F0;background:var(--surface)}
+  .todo li b{font:800 16px "Bricolage Grotesque",sans-serif;display:block} .todo li .s{font-size:14px;color:var(--ink-soft)} .todo li.ok .s{color:var(--ok)} .todo li.wait .s{color:#7A5B0A}
+  .board{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:8px 0}
+  .slot{border:1.5px dashed var(--line);border-left:7px solid var(--c);border-radius:12px;padding:10px 12px;background:transparent;font-size:14px;color:var(--ink-soft)}
+  .slot.in{border-style:solid;background:var(--ok-bg);border-color:#BFDCCB;border-left-color:var(--c);color:var(--ink)}
+  .slot b{display:block;font:800 15.5px "Bricolage Grotesque",sans-serif;color:var(--ink)} .slot .big{font:800 15px "Bricolage Grotesque",sans-serif;color:var(--ok)}
+  .classbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 0;font-size:14.5px}
+  .classbar b{font:800 16px "Bricolage Grotesque",sans-serif} .classbar input{font:400 14.5px "Source Sans 3",sans-serif;border:1.5px solid var(--line);border-radius:8px;padding:6px 9px;background:var(--surface);color:var(--ink);width:170px}
+  .classbar .sp{flex:1}
+  .steps{display:flex;gap:6px;margin:18px 0 14px;flex-wrap:wrap}
+  .steps button{flex:1;min-width:128px;font:700 13.5px "Bricolage Grotesque",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left}
+  .steps button .n{font:600 11px "IBM Plex Mono",monospace;color:var(--accent);display:block;letter-spacing:.1em;margin-bottom:2px}
+  .steps button .c{font:600 11px "IBM Plex Mono",monospace;color:var(--ink-soft);display:block;margin-top:2px;min-height:14px}
+  .steps button.on{background:var(--surface);border-color:var(--accent);box-shadow:var(--shadow)}
+  button:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:24px;overflow-wrap:anywhere;min-width:0}
+  .card h2{font:800 24px "Bricolage Grotesque",sans-serif;margin:0 0 8px}
+  .card h3{font:800 16.5px "Bricolage Grotesque",sans-serif;margin:20px 0 8px}
+  .card p{margin:0 0 10px} .muted{color:var(--ink-soft)} .small{font-size:14px}
+  .mono{font:600 12px "IBM Plex Mono",monospace;letter-spacing:.04em}
+  .iri{font:400 12px "IBM Plex Mono",monospace;color:var(--ink-soft);overflow-wrap:anywhere}
+  .note{background:var(--extract-bg);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:11px 15px;font-size:15px;margin:10px 0}
+  .note .lab{display:block;margin-bottom:5px;color:var(--accent);font:600 12px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+  a{color:var(--accent);font-weight:600}
+  .field{margin:8px 0} .field label{display:block;font:600 13.5px "Source Sans 3",sans-serif;margin-bottom:3px}
+  .field input,.field textarea,.field select,input.cell,select.cell{width:100%;font:400 14.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:7px 9px}
+  .field input:focus,.field textarea:focus,.field select:focus,.cell:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px} @media (max-width:700px){.grid2{grid-template-columns:1fr}}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  button.next{font:700 15px "Bricolage Grotesque",sans-serif;color:var(--accent-ink);background:var(--accent);border:none;border-radius:10px;padding:10px 18px;cursor:pointer}
+  button.next:disabled{opacity:.45;cursor:not-allowed}
+  button.ghost{font:700 14px "Bricolage Grotesque",sans-serif;color:var(--accent);background:transparent;border:1.5px solid var(--accent);border-radius:10px;padding:8px 14px;cursor:pointer}
+  a.linkbtn{font:700 14px "Bricolage Grotesque",sans-serif;color:var(--accent);border:1.5px solid var(--accent);border-radius:10px;padding:8px 14px;text-decoration:none}
+  button.ghost.small{font-size:13px;padding:6px 11px} button.ghost.danger{color:var(--miss);border-color:var(--miss)}
+  button.chip{font:600 13.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:999px;padding:6px 12px;cursor:pointer}
+  button.chip.sel{background:var(--accent);color:var(--accent-ink)}
+  .tag{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:4px 8px;white-space:nowrap;background:var(--chip);color:var(--ink-soft)}
+  .tag.ok{background:var(--ok-bg);color:var(--ok)} .tag.warn{background:var(--warn-bg);color:var(--warn)} .tag.bad{background:var(--miss-bg);color:var(--miss)} .tag.acc{background:#E6EDF8;color:var(--accent)}
+  .tbl{width:100%;border-collapse:collapse;font-size:14.5px;margin:8px 0}
+  .tbl th{font:700 12px "Bricolage Grotesque",sans-serif;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+  .tbl td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  @media (max-width:640px){ .tbl thead{display:none} .tbl tr{display:block;border-bottom:1px solid var(--line);padding:6px 0} .tbl td{display:block;border:none;padding:2px 0} }
+  .meters{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:10px 0}
+  .meter{background:var(--extract-bg);border-radius:10px;padding:10px 12px}
+  .meter b{display:block;font:800 26px/1 "Bricolage Grotesque",sans-serif;color:var(--accent)} .meter span{font-size:13px;color:var(--ink-soft)}
+  .meter.done b{color:var(--ok)}
+  .flags{margin:8px 0 0;padding:0;list-style:none} .flags li{font-size:14.5px;padding:8px 11px;border-radius:8px;margin-bottom:5px}
+  .flags li.bad{background:var(--miss-bg);color:var(--miss)} .flags li.warn{background:var(--warn-bg);color:#7A5B0A} .flags li.good{background:var(--ok-bg);color:var(--ok)} .flags li.info{background:var(--extract-bg);color:var(--ink)}
+  .flags li .d{display:block;color:var(--ink);font-size:13.5px;margin-top:3px}
+  textarea.paste{width:100%;min-height:180px;font:400 13px/1.5 "IBM Plex Mono",monospace;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:10px;white-space:pre;overflow:auto}
+  .drop{display:flex;align-items:center;gap:16px;border:2.5px dashed var(--accent);border-radius:16px;padding:18px 20px;margin:12px 0 10px;cursor:pointer;color:var(--ink);
+    background:linear-gradient(0deg,rgba(36,86,166,.06),rgba(36,86,166,.06)),var(--surface);box-shadow:0 0 0 4px rgba(36,86,166,.08);transition:box-shadow .12s,background .12s,border-color .12s,transform .12s}
+  .drop .ic{flex:none;width:54px;height:54px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(36,86,166,.3)}
+  .drop .tx{flex:1;min-width:0;text-align:left} .drop .tx b{display:block;font:800 19px/1.2 "Bricolage Grotesque",sans-serif;color:var(--ink)} .drop .tx span{font-size:14.5px;color:var(--ink-soft)}
+  .drop .pill{flex:none;font:700 14.5px "Bricolage Grotesque",sans-serif;color:#fff;background:var(--gold);border-radius:999px;padding:9px 16px;box-shadow:0 2px 6px rgba(185,138,18,.35)}
+  .drop:hover,.drop:focus-visible{box-shadow:0 0 0 5px rgba(36,86,166,.18);border-style:solid;outline:none}
+  .drop.over{border-style:solid;border-color:var(--gold);background:var(--warn-bg);box-shadow:0 0 0 6px rgba(185,138,18,.22);transform:scale(1.01)} .drop.over .ic{background:var(--gold)}
+  .drop.has{border-style:solid;border-color:var(--ok);background:var(--ok-bg);box-shadow:0 0 0 4px rgba(47,125,79,.12)} .drop.has .ic{background:var(--ok);box-shadow:0 3px 8px rgba(47,125,79,.3)} .drop.has .pill{background:var(--ok);box-shadow:none}
+  @media (max-width:560px){ .drop{flex-wrap:wrap;justify-content:center;text-align:center} .drop .tx{text-align:center;flex-basis:100%} }
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);font:600 14px "Source Sans 3",sans-serif;padding:10px 16px;border-radius:999px;box-shadow:var(--shadow);opacity:0;transition:opacity .2s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
+  .toast.show{opacity:1}
+  /* browse */
+  .filters{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;align-items:center}
+  .filters input{flex:1;min-width:180px;font:400 14.5px "Source Sans 3",sans-serif;border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;background:var(--surface);color:var(--ink)}
+  .schemes{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:12px 0}
+  button.scheme{text-align:left;background:var(--paper);border:1.5px solid var(--line);border-left-width:6px;border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:5px;color:var(--ink);font-family:inherit;font-size:14.5px}
+  div.scheme.wait{background:transparent;border:1.5px dashed var(--line);border-left-width:6px;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:5px;color:var(--ink-soft);font-size:14.5px} div.scheme.wait b{font:800 18px/1.15 "Bricolage Grotesque",sans-serif}
+  button.scheme:hover{border-color:var(--accent);box-shadow:var(--shadow)}
+  button.scheme b{font:800 18px/1.15 "Bricolage Grotesque",sans-serif}
+  button.scheme .by{color:var(--ink-soft);font-size:13.5px}
+  .viewer{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:18px;align-items:start} @media (max-width:820px){.viewer{grid-template-columns:1fr}}
+  .tree{border:1.5px solid var(--line);border-radius:12px;background:var(--paper);padding:8px;max-height:520px;overflow:auto}
+  .tree button.cn{display:block;width:100%;text-align:left;background:transparent;border:1.5px solid transparent;border-radius:8px;padding:5px 8px;font:400 15px "Source Sans 3",sans-serif;color:var(--ink);cursor:pointer}
+  .tree button.cn:hover{background:var(--surface);border-color:var(--line)}
+  .tree button.cn.sel{background:var(--accent);color:#fff;font-weight:700}
+  .tree button.cn.top{font-weight:700}
+  .tree button.cn .m{font:600 10.5px "IBM Plex Mono",monospace;background:var(--warn-bg);color:#7A5B0A;border-radius:999px;padding:1px 6px;margin-left:6px}
+  .tree button.cn.sel .m{background:#fff}
+  .tree .empty{padding:14px;color:var(--ink-soft);text-align:center;font-size:14px}
+  .detail{border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface)}
+  .detail h4{font:800 20px "Bricolage Grotesque",sans-serif;margin:0 0 4px}
+  .detail dl{margin:8px 0 0;display:grid;grid-template-columns:110px minmax(0,1fr);gap:4px 10px;font-size:14.5px}
+  .detail dt{font:600 11px "IBM Plex Mono",monospace;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;padding-top:3px}
+  .detail dd{margin:0}
+  .pill{display:inline-block;font-size:13px;background:var(--chip);border-radius:999px;padding:1px 8px;margin:0 4px 3px 0}
+  .pill.hid{border:1px dashed var(--ink-soft);background:transparent}
+  .pill sup{color:var(--ink-soft);font:600 9.5px "IBM Plex Mono",monospace;margin-left:2px}
+  /* mapping bench */
+  .bench{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start} @media (max-width:760px){.bench{grid-template-columns:1fr}}
+  .pane h3{margin-top:0}
+  .pickscheme{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+  .pickscheme .sch{text-align:left;background:var(--paper);border:1.5px solid var(--line);border-left:5px solid var(--c);border-radius:10px;padding:6px 9px;cursor:pointer;color:var(--ink);font-family:inherit;line-height:1.25}
+  .pickscheme .sch b{display:block;font:700 13.5px "Bricolage Grotesque",sans-serif} .pickscheme .sch span{font-size:12.5px;color:var(--ink-soft)}
+  .pickscheme .sch:hover{border-color:var(--c)} .pickscheme .sch.sel{background:var(--surface);border-color:var(--c);box-shadow:0 0 0 2px var(--c)}
+  .pane .tree{max-height:340px}
+  .pick{border:2px solid var(--accent);border-radius:14px;padding:14px 16px;margin:14px 0;background:#F6F9FE}
+  .pick .pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px} @media (max-width:760px){.pick .pair{grid-template-columns:1fr}}
+  .pick .side{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14.5px;min-height:74px}
+  .pick .side b{font:800 17px "Bricolage Grotesque",sans-serif;display:block}
+  .rels{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:12px 0 4px}
+  button.rel{text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;cursor:pointer;font:400 13.5px/1.35 "Source Sans 3",sans-serif;color:var(--ink)}
+  button.rel b{display:block;font:600 13px "IBM Plex Mono",monospace;color:var(--accent);margin-bottom:3px}
+  button.rel:hover{border-color:var(--accent)} button.rel.sel{border-color:var(--accent);box-shadow:0 0 0 2px #C9D8F0;background:#fff}
+  .say{font:600 15.5px "Source Sans 3",sans-serif;background:var(--surface);border-radius:10px;padding:9px 12px;margin:8px 0;border:1px solid var(--line)}
+  .say code{font:600 13px "IBM Plex Mono",monospace;color:var(--accent)}
+  .sugg{display:flex;flex-direction:column;gap:5px;margin:6px 0}
+  button.sg{text-align:left;background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:7px 11px;cursor:pointer;font:400 14.5px "Source Sans 3",sans-serif;color:var(--ink)}
+  button.sg:hover{border-color:var(--accent)} button.sg .mono{color:var(--ink-soft)}
+  .relname{font:600 12.5px "IBM Plex Mono",monospace;color:var(--accent);white-space:nowrap}
+  /* graph */
+  .graphwrap{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px;overflow-x:auto;margin:10px 0}
+  svg.graph{display:block;min-width:820px;width:100%;height:auto;font-family:"Source Sans 3",sans-serif}
+  svg.graph .col{font:800 13px "Bricolage Grotesque",sans-serif;fill:var(--ink)} svg.graph .colby{font:600 10.5px "IBM Plex Mono",monospace;fill:var(--ink-soft)}
+  svg.graph .n rect{fill:#fff;stroke-width:1.6} svg.graph .n text{font-size:12px;fill:var(--ink)}
+  svg.graph .e{fill:none;stroke-width:2;opacity:.8}
+  svg.allg{display:block;min-width:900px;width:100%;height:auto;font-family:"Source Sans 3",sans-serif}
+  svg.allg .blk{fill:var(--paper);stroke-width:1.5} svg.allg .bt{font:800 13.5px "Bricolage Grotesque",sans-serif;fill:var(--ink)} svg.allg .bb{font:600 10.5px "IBM Plex Mono",monospace;fill:var(--ink-soft)}
+  svg.allg .h{fill:none;stroke:#C4C7CE;stroke-width:1.2} svg.allg .h.poly{stroke-dasharray:3 3}
+  svg.allg .gn{cursor:pointer} svg.allg .gn text{font-size:12.5px;fill:var(--ink);paint-order:stroke;stroke:var(--paper);stroke-width:3px;stroke-linejoin:round}
+  svg.allg .gn.top text{font-weight:700} svg.allg .gn circle{stroke-width:1.6;fill:#fff}
+  svg.allg .gn:hover text{fill:var(--accent)} svg.allg .gn.sel text{fill:var(--accent);font-weight:700} svg.allg .gn.sel circle{stroke-width:3}
+  svg.allg .gn.hit rect{fill:var(--warn-bg);stroke:var(--gold)} svg.allg .gn rect{fill:none;stroke:none}
+  svg.allg .gn.dim{opacity:.3} svg.allg .gn:focus-visible{outline:none} svg.allg .gn:focus-visible text{fill:var(--accent);text-decoration:underline}
+  svg.allg .me{fill:none;opacity:.75} svg.allg .me.dim{opacity:.1} svg.allg .me.hl{opacity:1}
+  .netwrap{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:12px;margin:10px 0;overflow:hidden}
+  svg.net{display:block;width:100%;height:min(78vh,860px);min-height:460px;font-family:"Source Sans 3",sans-serif;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
+  svg.net.panning{cursor:grabbing}
+  svg.net .hl{stroke:#C4C7CE;stroke-width:1.6;fill:none} svg.net .hl.poly{stroke-dasharray:4 4} svg.net .hl.rel{stroke:#6B3FA0;stroke-width:1.2;stroke-dasharray:1 5;stroke-linecap:round;opacity:.7}
+  svg.net .ml{fill:none;opacity:.85} svg.net .dim{opacity:.12} svg.net .ml.lit{opacity:1}
+  svg.net .nb{cursor:pointer;touch-action:none} svg.net .nb circle{stroke-width:2;fill:#fff} svg.net .nb text{font-size:12px;fill:var(--ink);paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}
+  svg.net .nb.top text{font-weight:700} svg.net .nb.sch text{font:800 14px "Bricolage Grotesque",sans-serif} svg.net .nb.sch{cursor:grab}
+  svg.net .nb.sel circle{stroke-width:4} svg.net .nb.sel text{fill:var(--accent);font-weight:700} svg.net .nb.hit circle{stroke:var(--gold);stroke-width:4;fill:var(--warn-bg)!important}
+  svg.net .nb:focus-visible{outline:none} svg.net .nb:focus-visible circle{stroke-width:4}
+  .netbtns{position:absolute;top:8px;right:8px;display:flex;gap:4px} .netbtns button{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:700 17px "Source Sans 3",sans-serif;cursor:pointer} .netbtns button.w{width:auto;padding:0 10px;font-size:13px} .netbtns button:hover{border-color:var(--accent)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink-soft);margin:4px 0 8px;align-items:center}
+  .legend svg{vertical-align:middle;margin-right:4px}
+  .exports{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .exports button{font:600 13.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:10px;padding:8px 12px;cursor:pointer}
+  .exports button:hover{border-color:var(--accent)} .exports .fmt{font:600 11px "IBM Plex Mono",monospace;color:var(--accent);margin-left:5px}
+  pre.ttl{background:var(--extract-bg);border-radius:10px;padding:12px;font:400 12.5px/1.55 "IBM Plex Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:320px;overflow:auto;margin:8px 0}
+  details{margin:8px 0} summary{cursor:pointer;font:700 15px "Bricolage Grotesque",sans-serif;color:var(--accent)}
+  @media print{ body{background:none} .steps,.btns,.exports,.kgg-logo,button,.toast{display:none!important} .card{box-shadow:none;border:none;padding:0} }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../index.html">Knowledge Checks</a></li><li aria-current="page">SKOS Crosswalk</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="kgg-logo" src="../../assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Knowledge Graph Academy · Module 3 · SKOS</div>
+    <h1>SKOS Crosswalk</h1>
+    <p class="sub">Hand in your subgraph's SKOS scheme, read everyone else's, then link the vocabularies to each other with SKOS mapping relations.</p>
+  </header>
+  <div class="classbar" id="classbar"></div>
+  <div class="steps" id="steps">
+    <button data-step="start"><span class="n">START</span>Your team's to-do<span class="c" id="c-start"></span></button>
+    <button data-step="submit"><span class="n">1</span>Check &amp; submit<span class="c" id="c-submit"></span></button>
+    <button data-step="browse"><span class="n">2</span>Browse the class<span class="c" id="c-browse"></span></button>
+    <button data-step="graph"><span class="n">3</span>The class graph<span class="c" id="c-graph"></span></button>
+    <button data-step="map"><span class="n">4</span>Map across schemes<span class="c" id="c-map"></span></button>
+    <button data-step="review"><span class="n">5</span>Review &amp; export<span class="c" id="c-review"></span></button>
+  </div>
+  <div class="card" id="card"><p class="muted">Loading the class submissions…</p></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/n3@1.17.4/browser/n3.min.js"></script>
+<script>
+/* ───────── configuration (instructors: edit here) ─────────
+   samples / folder   the example schemes, and one folder of .ttl files per class code under submissions/
+             (rebuild every manifest with build_manifest.py)
+   liveCsv   optional: a Google Sheet "published to the web" as CSV, fed by a Google Form
+             with three questions: Name, Subgraph, Turtle. New responses show up on reload.
+   formUrl   optional: the link to that Google Form, shown as a Submit button
+   handIn    what students are told to do with the file they download
+   api       optional: the address of the class API in front of Apache Jena Fuseki (see server/).
+             When set, students submit from the page and everyone sees the result on reload.
+             For a local test without editing this file: localStorage.setItem('kga.crosswalk.api','http://127.0.0.1:8075') */
+const CONFIG = {
+  api: '',
+  samples: 'submissions/examples/manifest.json',      // the example schemes
+  folder: 'submissions/{class}/manifest.json',        // one folder per class code
+  liveCsv: '',
+  formUrl: '',
+  handIn: 'Upload the downloaded file to this week\'s Classroom assignment. Once it has been added to the class folder, everyone sees it under Browse the class.'
+};
+
+try{ const a = localStorage.getItem('kga.crosswalk.api'); if(a) CONFIG.api = a; }catch(e){}
+CONFIG.api = CONFIG.api.replace(/\/+$/,'');
+let passcode = '';         // typed by the student, kept for this visit only
+
+const GROUPS = [
+  {id:'events',      name:'Events and venues',            c:'#2F7D4F'},
+  {id:'instruments', name:'Instruments',                  c:'#B98A12'},
+  {id:'musicians',   name:'Musicians',                    c:'#6B3FA0'},
+  {id:'genres',      name:'Genres and musical works',     c:'#2456A6'},
+  {id:'mapping',     name:'Mapping file',                 c:'#5A6478'},
+  {id:'other',       name:'Other',                        c:'#5A6478'}
+];
+const G = id => GROUPS.find(g => g.id === id) || GROUPS[GROUPS.length-1];
+const SK='http://www.w3.org/2004/02/skos/core#', XL='http://www.w3.org/2008/05/skos-xl#', RDFT='http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+      DCT='http://purl.org/dc/terms/', DC='http://purl.org/dc/elements/1.1/', RDFS='http://www.w3.org/2000/01/rdf-schema#';
+const RELS = [
+  {p:'exactMatch',   short:'Same concept', say:(a,b)=>`${a} and ${b} are the same concept.`, tip:'Interchangeable across almost any application. Transitive: every exact match chains to the next, so use it sparingly.'},
+  {p:'closeMatch',   short:'Nearly the same', say:(a,b)=>`${a} is close enough to ${b} to swap in some applications.`, tip:'Similar enough to swap in some applications, not all. Not transitive, so it does not chain.'},
+  {p:'broadMatch',   short:'The other one is broader', say:(a,b)=>`${b} is the broader concept; ${a} sits under it.`, tip:'The concept on the right is more general than yours. Hierarchy across two schemes.'},
+  {p:'narrowMatch',  short:'The other one is narrower', say:(a,b)=>`${b} is the narrower concept; it sits under ${a}.`, tip:'The concept on the right is more specific than yours. The inverse of broadMatch.'},
+  {p:'relatedMatch', short:'Associated', say:(a,b)=>`${a} is associated with ${b}, and neither is a kind of the other.`, tip:'A useful link between two different things: a role and its instrument, an event and its genre.'}
+];
+const REL = p => RELS.find(r => r.p === p);
+const INV = {exactMatch:'exactMatch', closeMatch:'closeMatch', relatedMatch:'relatedMatch', broadMatch:'narrowMatch', narrowMatch:'broadMatch'};
+const GOAL = {maps:8, rels:3, schemes:2};
+
+/* ───────── state ───────── */
+// One link per class: …/skos-crosswalk/?class=class-a  Each class has its own saved work, folder and graph-store space.
+const CLASSROOM = ((new URLSearchParams(location.search).get('class')||'').toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,'')).slice(0,40);
+const KEY = 'kga.crosswalk.v1' + (CLASSROOM ? ':'+CLASSROOM : '');
+const FRESH = () => ({step:'start', done:{}, me:{name:'', team:'', group:'events'}, draft:'', mine:[], maps:[], mapL:'', mapR:'', view:'', layer:'mine', bgroup:'all', bview2:'trees', glayer:'both', samples:'auto'});
+let S = FRESH();
+try{ const j = JSON.parse(localStorage.getItem(KEY)||'null'); if(j){ S = Object.assign(S, j); S.me = Object.assign({name:'', team:'', group:'events'}, j.me||{}); S.done = S.done||{}; if(S.samples==='on') S.samples='auto'; } }catch(e){}
+const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
+let CLASS = [];            // parsed models loaded from this class's folder / live feed / graph store
+let SAMPLES = [];          // the example schemes: shown only while nothing real is loaded, or when asked for
+let MINE = [];             // parsed models saved on this device
+let loadNote = '';
+let pick = {L:null, R:null, p:null};
+let loadedFile = '';       // name of the file last dropped or chosen in step 1
+let report = null;         // last validation report in step 1
+let vsel = null;
+let gsel = null;           // selected node in the all-schemes graph: {src, iri}           // selected concept in the viewer
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const slug = s => String(s||'').toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g,'').trim().replace(/[\s_]+/g,'-').replace(/-+/g,'-') || 'unnamed';
+const today = () => { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('show'),2600); }
+function download(name, text, type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:type||'text/plain'})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500); }
+
+/* ───────── Turtle → model ───────── */
+function parseSource(src){
+  const m = Object.assign({ok:false, error:null, title:'', schemes:[], concepts:new Map(), mappings:[], triples:0, usesXL:false, untyped:[]}, src);
+  if(typeof N3 === 'undefined'){ m.error = 'The Turtle parser did not load. Check your connection and reload.'; return m; }
+  let quads;
+  try{ quads = new N3.Parser({baseIRI:'https://example.org/submission/'+encodeURIComponent(src.id)+'/'}).parse(src.ttl||''); }
+  catch(e){ m.error = e.message || String(e); return m; }
+  m.triples = quads.length;
+  const key = t => t.termType==='BlankNode' ? '_:'+t.value : t.value;
+  const idx = new Map();
+  for(const q of quads){ const s=key(q.subject); let pm=idx.get(s); if(!pm){ pm=new Map(); idx.set(s,pm); } let a=pm.get(q.predicate.value); if(!a){ a=[]; pm.set(q.predicate.value,a); } a.push(q.object); }
+  const objs = (s,p) => (idx.get(s) && idx.get(s).get(p)) || [];
+  const types = s => objs(s,RDFT).map(o=>o.value);
+  const lit = o => ({v:o.value, l:o.language||''});
+  const lits = (s,ps) => { const out=[]; for(const p of ps) for(const o of objs(s,p)) if(o.termType==='Literal') out.push(lit(o)); return out; };
+  const labels = (s,kind) => { const out = lits(s,[SK+kind]); for(const o of objs(s,XL+kind)){ m.usesXL = true; for(const f of objs(key(o),XL+'literalForm')) if(f.termType==='Literal') out.push(lit(f)); } return out; };
+  for(const [s] of idx){
+    const t = types(s);
+    if(t.includes(SK+'ConceptScheme')){
+      const tl = lits(s,[DCT+'title',DC+'title',RDFS+'label',SK+'prefLabel']);
+      m.schemes.push({iri:s, title:(tl.find(x=>x.l.startsWith('en'))||tl[0]||{}).v||'', creator:(lits(s,[DCT+'creator',DC+'creator'])[0]||{}).v||'', desc:(lits(s,[DCT+'description',DC+'description'])[0]||{}).v||''});
+      continue;
+    }
+    if(s.startsWith('_:') || t.includes(SK+'Collection') || t.includes(SK+'OrderedCollection') || t.includes(XL+'Label')) continue;
+    const typed = t.includes(SK+'Concept');
+    const looks = (objs(s,SK+'prefLabel').length || objs(s,XL+'prefLabel').length) && (objs(s,SK+'inScheme').length || objs(s,SK+'broader').length || objs(s,SK+'narrower').length || objs(s,SK+'topConceptOf').length);
+    if(!typed && !looks) continue;
+    if(!typed) m.untyped.push(s);
+    m.concepts.set(s, {iri:s, src:src.id, pref:labels(s,'prefLabel'), alt:labels(s,'altLabel'), hidden:labels(s,'hiddenLabel'),
+      def:lits(s,[SK+'definition']), scope:lits(s,[SK+'scopeNote']), example:lits(s,[SK+'example']), notation:lits(s,[SK+'notation']),
+      notes:lits(s,[SK+'note',SK+'historyNote',SK+'editorialNote',SK+'changeNote']),
+      broader:new Set(objs(s,SK+'broader').map(key)), related:new Set(objs(s,SK+'related').map(key)),
+      inScheme:new Set(objs(s,SK+'inScheme').concat(objs(s,SK+'topConceptOf')).map(key)), top:objs(s,SK+'topConceptOf').length>0, dangling:[]});
+  }
+  for(const q of quads){
+    const s=key(q.subject), o=key(q.object), p=q.predicate.value;
+    if(p===SK+'narrower' && m.concepts.has(o)) m.concepts.get(o).broader.add(s);
+    if(p===SK+'hasTopConcept' && m.concepts.has(o)){ m.concepts.get(o).top = true; m.concepts.get(o).inScheme.add(s); }
+    if(p===SK+'related' && m.concepts.has(o)) m.concepts.get(o).related.add(s);
+    if(p.startsWith(SK) && INV[p.slice(SK.length)] && q.object.termType==='NamedNode') m.mappings.push({a:s, p:p.slice(SK.length), b:o, by:src.by, src:src.id});
+  }
+  for(const c of m.concepts.values()) for(const b of [...c.broader]) if(!m.concepts.has(b)){ c.dangling.push(b); c.broader.delete(b); }
+  m.title = (m.schemes[0] && m.schemes[0].title) || (m.group==='mapping' ? 'Mappings' : G(m.group).name);
+  m.ok = true;
+  buildTree(m);
+  return m;
+}
+function buildTree(m){
+  m.kids = new Map(); for(const c of m.concepts.values()) for(const b of c.broader){ if(!m.kids.has(b)) m.kids.set(b,[]); m.kids.get(b).push(c.iri); }
+  const byLabel = (a,b) => label(m.concepts.get(a)).localeCompare(label(m.concepts.get(b)));
+  for(const k of m.kids.values()) k.sort(byLabel);
+  m.roots = [...m.concepts.values()].filter(c => c.broader.size===0).map(c=>c.iri).sort(byLabel);
+  m.flat = []; const seen = new Set();
+  const walk = (iri,d) => { if(seen.has(iri)) return; seen.add(iri); m.flat.push({iri, d}); (m.kids.get(iri)||[]).forEach(k => walk(k,d+1)); };
+  m.roots.forEach(r => walk(r,0));
+  for(const c of m.concepts.values()) if(!seen.has(c.iri)) walk(c.iri,0);   // members of a cycle
+  m.depth = m.flat.reduce((x,n)=>Math.max(x,n.d+1),0);
+}
+function namespaceOf(m){ const n=new Map(); for(const c of m.concepts.values()){ const k=c.iri.replace(/[^#\/]*$/,''); n.set(k,(n.get(k)||0)+1); } return [...n.entries()].sort((a,b)=>b[1]-a[1]).map(e=>e[0]); }
+const whoOf = m => m.origin==='sample' ? 'sample' : m.by;
+const schemeName = m => G(m.group).name+' · '+whoOf(m)+(m.origin==='mine'?' (this device)':'');
+function label(c){ if(!c) return ''; const p = c.pref.find(x=>x.l.startsWith('en')) || c.pref[0]; return p ? p.v : localName(c.iri); }
+const localName = iri => decodeURIComponent((iri.split(/[#\/]/).filter(Boolean).pop()||iri));
+// One scheme per subgraph. A sample only ever fills a subgraph that has no real scheme, so a sample can never sit next to a real one.
+const realGroups = () => new Set(CLASS.concat(MINE).filter(m => m.ok && m.concepts.size).map(m => m.group));
+const visibleSamples = () => { if(S.samples==='off') return []; const rg=realGroups(); return SAMPLES.filter(m => m.concepts.size ? !rg.has(m.group) : rg.size===0); };
+const shared = () => CLASS.concat(visibleSamples());
+const all = () => shared().concat(MINE).filter(m => m.ok);
+const teamName = () => (S.me.team||'').trim() || (S.me.name||'').trim();
+const myName = () => (S.me.name||'').trim() || (S.me.team||'').trim();
+// one scheme per subgraph is the norm: a device copy steps aside once the same group's file is in the class folder
+const schemesOnly = () => all().filter(m => m.concepts.size && !(m.origin==='mine' && shared().some(c => c.ok && c.concepts.size && c.group===m.group && c.by.toLowerCase()===m.by.toLowerCase()))).sort((a,b) => GROUPS.findIndex(g=>g.id===a.group)-GROUPS.findIndex(g=>g.id===b.group));
+const srcById = id => all().find(m => m.id === id);
+function findConcept(iri, prefer){ const p = prefer && srcById(prefer); if(p && p.concepts.has(iri)) return p.concepts.get(iri); for(const m of all()) if(m.concepts.has(iri)) return m.concepts.get(iri); return null; }
+const nameOf = (iri, prefer) => { const c = findConcept(iri, prefer); return c ? label(c) : localName(iri); };
+
+/* ───────── validation (SKOS integrity conditions are cited as S-numbers) ───────── */
+const STD = {rdf:'http://www.w3.org/1999/02/22-rdf-syntax-ns#', rdfs:RDFS, skos:SK, skosxl:XL, dct:DCT, dcterms:DCT, dc:DC, owl:'http://www.w3.org/2002/07/owl#', xsd:'http://www.w3.org/2001/XMLSchema#'};
+function prefixesOf(ttl){ const out=new Map(), re=/(?:@prefix|\bPREFIX)\s+([A-Za-z][\w.-]*)?:\s*<([^>]*)>/gi; let m; const body=String(ttl||'').split('\n').filter(l => !/^\s*#/.test(l)).join('\n'); while((m=re.exec(body))) out.set(m[1]||'', m[2]); return out; }
+function validate(m){
+  const R = []; const add = (lvl,t,d) => R.push({lvl,t,d:d||[]});
+  if(m.error){ add('bad','The file does not parse as Turtle.',[m.error, 'Check for a missing full stop at the end of a statement, a missing prefix declaration, or a quote that was never closed.']); return R; }
+  add('good', `Parses as Turtle: ${m.triples} triples.`);
+  const pf = prefixesOf(m.ttl), nsList = [...pf.values()];
+  const wrong = [...pf.entries()].filter(([k,v]) => STD[k] && v!==STD[k] && !(k==='dc' && v===DCT));
+  if(wrong.length) add('bad','A standard prefix points at the wrong namespace, so its terms are not the terms you meant.', wrong.map(([k,v]) => `${k}: is <${v}> and should be <${STD[k]}>`));
+  if(!nsList.includes(STD.rdf)) add('bad','The RDF namespace is not declared.', ['Add  @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .  at the top. Every concept is an rdf:type statement (the keyword "a" is shorthand for it), so the file should say where rdf: comes from.']);
+  if(!nsList.includes(SK) && !wrong.some(([k])=>k==='skos')) add('bad','The SKOS namespace is not declared.', ['Add  @prefix skos: <http://www.w3.org/2004/02/skos/core#> .']);
+  if(pf.size) add('info', 'Namespaces declared: '+[...pf.keys()].map(k => (k||'(default)')+':').join(' '));
+  const cs = [...m.concepts.values()], L = c => label(c);
+  if(!cs.length){
+    if(m.mappings.length) add('good', `A mapping file: ${m.mappings.length} mapping statement${m.mappings.length===1?'':'s'}, no concepts of its own.`);
+    else add('bad','No skos:Concept found.',['Each concept needs  a skos:Concept  and a skos:prefLabel.']);
+    return R;
+  }
+  if(m.schemes.length===0) add('bad','No skos:ConceptScheme declared.',['Add one resource typed skos:ConceptScheme with a dct:title, and point each concept at it with skos:inScheme.']);
+  else add('good', `Concept scheme: ${m.schemes.map(s=>s.title||localName(s.iri)).join(', ')}.`);
+  add('good', `${cs.length} concepts, ${cs.filter(c=>c.top).length} declared as top concepts, ${m.depth} level${m.depth===1?'':'s'} deep.`);
+  if(m.untyped.length) add('warn', `${m.untyped.length} concept${m.untyped.length===1?' is':'s are'} not typed skos:Concept.`, m.untyped.slice(0,6).map(localName));
+  const noScheme = cs.filter(c => !c.inScheme.size); if(noScheme.length) add('warn', `${noScheme.length} concept${noScheme.length===1?' has':'s have'} no skos:inScheme.`, noScheme.slice(0,8).map(L));
+  const noPref = cs.filter(c => !c.pref.length); if(noPref.length) add('bad', `${noPref.length} concept${noPref.length===1?' has':'s have'} no skos:prefLabel.`, noPref.slice(0,8).map(c=>localName(c.iri)));
+  const multi = cs.filter(c => { const n={}; return c.pref.some(p => (n[p.l]=(n[p.l]||0)+1)>1); });
+  if(multi.length) add('bad', 'More than one preferred label in the same language (S14).', multi.slice(0,8).map(c => `${L(c)}: ${c.pref.map(p=>`"${p.v}"${p.l?'@'+p.l:''}`).join(', ')}`));
+  const clash = []; for(const c of cs){ const seen = new Map(); for(const [k,arr] of [['prefLabel',c.pref],['altLabel',c.alt],['hiddenLabel',c.hidden]]) for(const x of arr){ const id = x.v+'@'+x.l; if(seen.has(id) && seen.get(id)!==k) clash.push(`${L(c)}: "${x.v}" is both ${seen.get(id)} and ${k}`); seen.set(id,k); } }
+  if(clash.length) add('bad','The same label is used in two label slots on one concept (S13).', clash.slice(0,8));
+  const noLang = cs.filter(c => c.pref.concat(c.alt).some(x => !x.l)); if(noLang.length) add('warn', `${noLang.length} concept${noLang.length===1?' has':'s have'} labels without a language tag.`, ['Write "Rock"@en, not "Rock".'].concat(noLang.slice(0,5).map(L)));
+  const dupPref = new Map(); for(const c of cs) for(const p of c.pref){ const k=p.v.toLowerCase()+'@'+p.l; if(!dupPref.has(k)) dupPref.set(k,[]); dupPref.get(k).push(c); }
+  const dups = [...dupPref.values()].filter(a => a.length>1); if(dups.length) add('warn','Two concepts share a preferred label. Allowed by SKOS, confusing for people.', dups.slice(0,6).map(a => `"${L(a[0])}": ${a.map(c=>localName(c.iri)).join(', ')}`));
+  const defd = cs.filter(c => c.def.length).length;
+  add(defd===cs.length?'good':'warn', `Definitions on ${defd} of ${cs.length} concepts.`, defd===cs.length?[]:['Your classmates can only map to a concept they can understand. Missing: '+cs.filter(c=>!c.def.length).slice(0,8).map(L).join(', ')]);
+  // hierarchy
+  const anc = iri => { const out=new Set(), st=[...(m.concepts.get(iri)||{broader:[]}).broader]; while(st.length){ const x=st.pop(); if(out.has(x)) continue; out.add(x); const c=m.concepts.get(x); if(c) st.push(...c.broader); } return out; };
+  const cyc = cs.filter(c => anc(c.iri).has(c.iri)); if(cyc.length) add('bad','The hierarchy loops back on itself: a concept is its own ancestor.', cyc.slice(0,8).map(L));
+  const s27 = []; for(const c of cs){ const a = anc(c.iri); for(const r of c.related) if(a.has(r)) s27.push(`${L(c)} is both narrower than and related to ${nameOf(r,m.id)}`); }
+  if(s27.length) add('bad','skos:related used between a concept and its own ancestor (S27).', s27.slice(0,6));
+  const dang = cs.filter(c => c.dangling.length); if(dang.length) add('warn','skos:broader points at something that is not a concept in this file.', dang.slice(0,6).map(c => `${L(c)} → ${c.dangling.map(localName).join(', ')}`));
+  const orphans = cs.filter(c => !c.broader.size && !c.top && !(m.kids.get(c.iri)||[]).length); if(orphans.length) add('warn', `${orphans.length} concept${orphans.length===1?' floats':'s float'} free: no broader concept, no narrower concept, not a top concept.`, orphans.slice(0,8).map(L));
+  const undeclared = cs.filter(c => !c.broader.size && !c.top && (m.kids.get(c.iri)||[]).length); if(undeclared.length) add('warn','Sits at the top of a branch but is not declared a top concept.', undeclared.slice(0,8).map(L));
+  // identifiers
+  if(cs.some(c => /^https?:\/\/(www\.)?example\.(org|com|net)/.test(c.iri))) add('info','Concept IRIs use example.org. Fine for class. A published vocabulary needs a namespace its owner controls.');
+  const coll = []; for(const o of all()) if(o.origin!=='sample' && o.id!==m.id && !(o.by===m.by && o.group===m.group)){ const same = cs.filter(c => o.concepts.has(c.iri)); if(same.length) coll.push(`${same.length} IRI${same.length===1?'':'s'} also used in ${G(o.group).name} by ${o.by}: ${same.slice(0,4).map(L).join(', ')}`); }   // samples are never compared
+  if(coll.length) add('warn','Some of your concept IRIs are already used in another team\'s scheme.', coll.slice(0,4).concat(['IRIs are global: two teams using the same IRI are talking about one and the same resource. If that is not what you mean, give your team its own namespace.']));
+  if(m.usesXL) add('info','SKOS-XL labels found. Their literal forms are read as the labels.');
+  if(m.mappings.length) add('info', `${m.mappings.length} mapping statement${m.mappings.length===1?'':'s'} inside this file; they show up under Review.`);
+  return R;
+}
+
+/* ───────── loading the class ───────── */
+function parseCsv(text){ const rows=[]; let row=[], cell='', q=false; for(let i=0;i<text.length;i++){ const ch=text[i]; if(q){ if(ch==='"'){ if(text[i+1]==='"'){ cell+='"'; i++; } else q=false; } else cell+=ch; } else if(ch==='"') q=true; else if(ch===','){ row.push(cell); cell=''; } else if(ch==='\n'){ row.push(cell); rows.push(row); row=[]; cell=''; } else if(ch!=='\r') cell+=ch; } if(cell.length||row.length){ row.push(cell); rows.push(row); } return rows; }
+function groupFromText(t){ t=(t||'').toLowerCase(); if(/mapping|crosswalk/.test(t)) return 'mapping'; if(/genre/.test(t)) return 'genres'; if(/event|venue/.test(t)) return 'events'; if(/instrument/.test(t)) return 'instruments'; if(/musician|artist|performer/.test(t)) return 'musicians'; return 'other'; }
+async function loadFolder(manifest, origin, notes, quiet){
+  const out=[];
+  try{
+    const r = await fetch(manifest, {cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status);
+    const man = await r.json(), base = manifest.replace(/[^\/]+$/, '');
+    await Promise.all((man.files||[]).map(async f => { try{ const t = await fetch(base+f.file, {cache:'no-store'}); if(!t.ok) throw new Error('HTTP '+t.status); out.push({id:origin+':'+f.file, file:f.file, group:f.group||'other', by:f.by||'Unnamed', origin, ttl:await t.text()}); }catch(e){ notes.push(`${f.file} could not be read`); } }));
+  }catch(e){ if(!quiet) notes.push('The class folder could not be read ('+e.message+'). If you opened this page from a file on disk, use the published link instead.'); }
+  return out;
+}
+async function loadClass(){
+  const out = [], notes = [];
+  if(!SAMPLES.length) SAMPLES = (await loadFolder(CONFIG.samples, 'sample', notes, true)).map(parseSource).filter(m=>m.ok).sort((a,b) => GROUPS.findIndex(g=>g.id===a.group)-GROUPS.findIndex(g=>g.id===b.group));
+  if(CLASSROOM) out.push(...await loadFolder(CONFIG.folder.replace('{class}', CLASSROOM), 'class', notes, true));
+  if(CONFIG.api){
+    try{
+      const r = await fetch(CONFIG.api+'/submissions?class='+encodeURIComponent(CLASSROOM||'sandbox'), {cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status);
+      for(const x of ((await r.json()).submissions||[])) out.push({id:'api:'+x.id, file:x.group+'--'+slug(x.by)+'.ttl', group:GROUPS.some(g=>g.id===x.group)?x.group:'other', by:x.by||'Unnamed', origin:'class', modified:x.modified, ttl:x.turtle||''});
+    }catch(e){ notes.push('The class graph store could not be reached ('+e.message+'). Showing the class folder only.'); }
+  }
+  if(CONFIG.liveCsv){
+    try{
+      const r = await fetch(CONFIG.liveCsv, {cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status);
+      const rows = parseCsv(await r.text()); const head = (rows.shift()||[]).map(h=>h.toLowerCase());
+      const col = re => head.findIndex(h => re.test(h)); const iN=col(/name|who|team/), iG=col(/subgraph|group|domain/), iT=col(/turtle|skos|ttl|paste/);
+      const latest = new Map();
+      for(const row of rows){ const ttl=(row[iT]||'').trim(); if(!ttl) continue; const by=(row[iN]||'Unnamed').trim(), group=groupFromText(row[iG]); latest.set(group+'|'+by.toLowerCase(), {id:'live:'+group+':'+slug(by), file:group+'--'+slug(by)+'.ttl', group, by, origin:'class', ttl}); }
+      out.push(...latest.values());
+    }catch(e){ notes.push('The live submissions sheet could not be read ('+e.message+').'); }
+  }
+  CLASS = out.map(parseSource).sort((a,b) => GROUPS.findIndex(g=>g.id===a.group)-GROUPS.findIndex(g=>g.id===b.group) || a.by.localeCompare(b.by));
+  const broken = CLASS.filter(m => !m.ok); if(broken.length) notes.push(broken.length+' submitted file'+(broken.length===1?' does':'s do')+' not parse: '+broken.map(m=>m.file).join(', '));
+  loadNote = notes.join(' ');
+}
+function loadMine(){ MINE = S.mine.map(x => parseSource(Object.assign({origin:'mine'}, x))); }
+
+/* ───────── render shell ───────── */
+function drawClassbar(){
+  const el=$('#classbar'), n=S.mine.length, k=S.maps.length;
+  el.innerHTML = (CLASSROOM
+    ? `<span class="mono" style="color:var(--ink-soft)">CLASS</span> <b>${esc(CLASSROOM)}</b> <button class="ghost small" id="cb-leave">Leave this class</button>`
+    : `<span class="mono" style="color:var(--ink-soft)">PRACTICE SPACE</span> <span class="muted">Nothing here is shared. To join your class, open the link your instructor gave you, or type the class code:</span> <input id="cb-code" placeholder="class code" autocomplete="off"> <button class="ghost small" id="cb-go">Go</button>`)
+    + `<span class="sp"></span><button class="ghost small danger" id="cb-clear">Start over on this device</button>`;
+  const go = () => { const v=($('#cb-code').value||'').trim().toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,''); if(!v) return toast('Type the class code first.'); location.search='?class='+encodeURIComponent(v); };
+  if($('#cb-go')){ $('#cb-go').onclick=go; $('#cb-code').onkeydown = e => { if(e.key==='Enter') go(); }; }
+  if($('#cb-leave')) $('#cb-leave').onclick = () => { location.search=''; };
+  $('#cb-clear').onclick = () => {
+    if(!confirm(`Start over${CLASSROOM?' in class '+CLASSROOM:''}?\n\nThis removes from this browser: ${n} file${n===1?'':'s'} you added, ${k} mapping${k===1?'':'s'}, your draft and your names.\n\nFiles already handed in to the class are not touched. Export your mappings first if you want to keep them.`)) return;
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    S = FRESH(); report=null; loadedFile=''; pick={L:null,R:null,p:null}; vsel=null; gsel=null; NET.key=''; NET.sel=null; bfilter=''; passcode=''; loadMine(); render(); toast('Clean slate.');
+  };
+}
+function samplesBanner(){
+  if(!SAMPLES.length) return '';
+  const vis = visibleSamples().filter(m => m.concepts.size), rg = realGroups();
+  if(vis.length) return `<div class="note"><span class="lab">Sample schemes</span>${rg.size ? `Samples are filling the ${vis.length===1?'subgraph':vis.length+' subgraphs'} with no real scheme yet: <b>${vis.map(m=>esc(G(m.group).name)).join(', ')}</b>. Each one steps aside when a real scheme for that subgraph arrives.` : 'Nothing real is loaded yet, so the four sample schemes are shown for practice. Each one steps aside when a real scheme for its subgraph arrives.'} <button class="ghost small" data-samples="off" style="margin-left:6px">Hide the samples</button></div>`;
+  if(S.samples==='off' && rg.size<4) return `<p class="small muted" style="margin:4px 0 8px">The sample schemes are hidden. <button class="ghost small" data-samples="auto" style="margin-left:4px">Show samples for the empty subgraphs</button></p>`;
+  return '';
+}
+function wireSamples(){ document.querySelectorAll('[data-samples]').forEach(b => b.onclick = () => { S.samples=b.dataset.samples; NET.key=''; render(); }); }
+function render(){
+  drawClassbar();
+  document.querySelectorAll('#steps button').forEach(b => b.classList.toggle('on', b.dataset.step===S.step));
+  const st=todo(); $('#c-start').textContent = st.filter(t=>t.ok).length+' of '+st.length+' done';
+  $('#c-submit').textContent = MINE.length ? MINE.length+' on this device' : '';
+  $('#c-browse').textContent = schemesOnly().length+' scheme'+(schemesOnly().length===1?'':'s');
+  $('#c-graph').textContent = schemesOnly().reduce((n,m)=>n+m.concepts.size,0)+' concepts';
+  $('#c-map').textContent = S.maps.length+' mapping'+(S.maps.length===1?'':'s');
+  $('#c-review').textContent = classMaps().length ? classMaps().length+' from the class' : '';
+  ({start:renderStart, submit:renderSubmit, browse:renderBrowse, graph:renderGraph, map:renderMap, review:renderReview}[S.step])();
+  wireSamples();
+  save();
+}
+document.querySelectorAll('#steps button').forEach(b => b.onclick = () => { S.step=b.dataset.step; if(S.step==='browse'){ S.view=''; vsel=null; vfilter=''; } render(); window.scrollTo({top:0,behavior:'smooth'}); });
+
+/* ───────── start here: what this team does, and what has been uploaded ───────── */
+const realShared = () => CLASS.filter(m => m.ok);
+const handedScheme = () => teamName() ? realShared().find(m => m.concepts.size && m.group===S.me.group && slug(m.by)===slug(teamName())) : null;
+const handedMaps = () => myName() ? realShared().find(m => !m.concepts.size && m.mappings.length && slug(m.by)===slug(myName())) : null;
+const when = iso => { if(!iso) return ''; const d=new Date(iso); return isNaN(d) ? '' : ' at '+d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); };
+function todo(){
+  const others = GROUPS.slice(0,4).filter(g => g.id!==S.me.group), hs=handedScheme(), hm=handedMaps();
+  const inClass = realShared().filter(m => m.concepts.size), groupsIn = new Set(inClass.map(m=>m.group));
+  const othersIn = others.filter(g => groupsIn.has(g.id)).length;
+  const rels = new Set(S.maps.map(x=>x.p)).size, reach = new Set(S.maps.flatMap(x => [x.aSrc,x.bSrc]).map(id => (srcById(id)||{}).group).filter(g => g && g!==S.me.group)).size;
+  const live = !!CONFIG.api;
+  return [
+    {k:'who', go:null, t:'Say who you are', ok:!!(S.me.team||'').trim() && !!(S.me.name||'').trim(), s: (S.me.team||'').trim()&&(S.me.name||'').trim() ? `${S.me.team.trim()} · ${G(S.me.group).name} · ${S.me.name.trim()}` : 'Pick your subgraph, then type your team name and your own name above.'},
+    {k:'check', go:'submit', t:'Check your team\'s scheme', ok:!!S.done.checked||!!hs, s: S.done.checked||hs ? 'Checked: no problems found.' : 'One person per team loads the team\'s .ttl file. Fix anything marked as a problem.'},
+    {k:'upload', go:'submit', t:'Upload the scheme', ok:!!hs, wait:!hs && !!S.done.schemeFile, s: hs ? `Uploaded${when(hs.modified||S.done.schemeSent)}: the class can see ${G(S.me.group).name} by ${hs.by} (${hs.concepts.size} concepts).` : S.done.schemeFile ? `Downloaded ${S.done.schemeFile}. Upload it to the Classroom assignment. This turns green once your instructor has added it to the class.` : live ? 'One person per team presses Submit my scheme to the class.' : 'One person per team downloads the checked file and uploads it to the Classroom assignment.'},
+    {k:'others', go:'browse', t:'Read the other three schemes', ok:othersIn===3, wait:othersIn>0&&othersIn<3, s: `${othersIn} of 3 are in: ${others.map(g => (groupsIn.has(g.id)?'✓ ':'… ')+g.name).join(' · ')}.`},
+    {k:'map', go:'map', t:`Map your concepts to ${others.map(g=>g.name).join(', ')}`, ok:S.maps.length>=GOAL.maps && rels>=GOAL.rels && reach>=GOAL.schemes, wait:S.maps.length>0, s:`${S.maps.length} of ${GOAL.maps} mappings · ${rels} of ${GOAL.rels} different relations · ${reach} of ${GOAL.schemes} other subgraphs reached. Everyone does this on their own.`},
+    {k:'mapup', go:'review', t:'Upload your mappings', ok:!!hm, wait:!hm && !!S.done.mapFile, s: hm ? `Uploaded${when(hm.modified||S.done.mapSent)}: ${hm.mappings.length} mappings by ${hm.by} are in the class view.` : S.done.mapFile ? `Downloaded ${S.done.mapFile}. Upload it to the Classroom assignment. This turns green once it has been added to the class.` : live ? 'Under Review & export, press Submit my mappings to the class.' : 'Under Review & export, download your mapping file and upload it to Classroom.'}
+  ];
+}
+function boardHtml(){
+  const ins = realShared(), schemes = ins.filter(m=>m.concepts.size), maps = ins.filter(m=>!m.concepts.size && m.mappings.length);
+  const n = new Set(schemes.map(m=>m.group)).size;
+  return `<h3>What the class has uploaded <span class="tag ${n===4?'ok':'warn'}" style="margin-left:6px">${n} of 4 schemes in</span> <span class="tag ${maps.length?'ok':''}">${maps.length} mapping file${maps.length===1?'':'s'}</span> <button class="ghost small" id="refresh" style="margin-left:6px">Check again</button></h3>
+    <div class="board">${GROUPS.slice(0,4).map(g => { const got = schemes.filter(m=>m.group===g.id); return `<div class="slot${got.length?' in':''}" style="--c:${g.c}"><b>${esc(g.name)}</b>${got.length ? got.map(m => `<span class="big">✓ Uploaded</span> by ${esc(m.by)}${when(m.modified)} · ${m.concepts.size} concepts`).join('<br>') : 'Waiting for this team'}</div>`; }).join('')}</div>
+    <p class="small muted" style="margin:6px 0 0"><b>Mappings uploaded by:</b> ${maps.length ? maps.map(m => `${esc(m.by)} (${m.mappings.length})`).join(' · ') : 'nobody yet'}.</p>
+    ${CLASSROOM ? '' : '<p class="small muted">This is the practice space, so nothing is shared here. Your class has its own link.</p>'}`;
+}
+let boardTimer = 0;
+function renderStart(){
+  const T = todo(), firstOpen = T.findIndex(t => !t.ok);
+  $('#card').innerHTML = `
+    <h2>Your team's to-do</h2>
+    <p>Four teams, four subgraphs of one music knowledge graph. Each team hands in one SKOS scheme, then every student maps their team's concepts to the other three. This page tells you what is next and shows what has reached the class.</p>
+    <h3 style="margin-top:6px">Which subgraph is your team's?</h3>
+    <div class="teams">${GROUPS.slice(0,4).map(g => `<button class="team${S.me.group===g.id?' sel':''}" data-team="${g.id}" style="--c:${g.c}"><b>${esc(g.name)}</b><span>${S.me.group===g.id?'Your team':'Tap if this is yours'}</span></button>`).join('')}</div>
+    <div class="grid2">
+      <div class="field"><label for="st-team">Team name <span class="muted" style="font-weight:400">(the same for all three of you)</span></label><input id="st-team" value="${esc(S.me.team)}" placeholder="e.g. Team Tempo" autocomplete="off"></div>
+      <div class="field"><label for="st-name">Your own name</label><input id="st-name" value="${esc(S.me.name)}" placeholder="e.g. Dana K" autocomplete="off"></div>
+    </div>
+    <h3>What to do, in order</h3>
+    <ol class="todo" id="todo"></ol>
+    <div id="board"></div>`;
+  const drawTodo = () => { const T=todo(), first=T.findIndex(t=>!t.ok); $('#todo').innerHTML = T.map((t,i) => `<li class="${t.ok?'ok':t.wait?'wait':''}${i===first?' next':''}"><span class="tick">${t.ok?'✓':i+1}</span><div><b>${esc(t.t)}</b><span class="s">${esc(t.s)}</span></div>${t.go?`<button class="${i===first?'next':'ghost small'}" data-goto="${t.go}">${t.ok?'Open':'Go'}</button>`:'<span></span>'}</li>`).join('');
+    document.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => { S.step=b.dataset.goto; render(); window.scrollTo({top:0,behavior:'smooth'}); });
+    $('#c-start').textContent = T.filter(t=>t.ok).length+' of '+T.length+' done'; };
+  const drawBoard = () => { $('#board').innerHTML = boardHtml(); $('#refresh').onclick = async () => { $('#refresh').textContent='Checking…'; await loadClass(); drawBoard(); drawTodo(); toast('Up to date.'); }; };
+  document.querySelectorAll('[data-team]').forEach(b => b.onclick = () => { S.me.group=b.dataset.team; render(); });
+  const te=$('#st-team'), ne=$('#st-name'); te.oninput = () => { S.me.team=te.value; save(); drawTodo(); }; ne.oninput = () => { S.me.name=ne.value; save(); drawTodo(); };
+  drawTodo(); drawBoard();
+  clearInterval(boardTimer); boardTimer = setInterval(async () => { if(S.step!=='start' || document.hidden) return; await loadClass(); if(S.step==='start' && $('#board')){ drawBoard(); drawTodo(); } }, 60000);   // keeps the upload board current while the page is open
+}
+
+/* ───────── step 1 · check & submit ───────── */
+function flagsHtml(R){ return '<ul class="flags">'+R.map(f => `<li class="${f.lvl}">${f.lvl==='bad'?'✕ ':f.lvl==='warn'?'! ':f.lvl==='good'?'✓ ':'· '}${esc(f.t)}${f.d.map(d=>`<span class="d">${esc(d)}</span>`).join('')}</li>`).join('')+'</ul>'; }
+function treeHtml(m, opts){
+  opts = opts||{}; const f = (opts.filter||'').trim().toLowerCase();
+  let rows = m.flat;
+  if(f) rows = rows.filter(n => { const c=m.concepts.get(n.iri); return c.pref.concat(c.alt,c.hidden).some(x => x.v.toLowerCase().includes(f)); }).map(n => ({iri:n.iri, d:0}));
+  if(!rows.length) return `<div class="empty">${f?'Nothing matches.':'No concepts.'}</div>`;
+  return rows.map(n => { const c=m.concepts.get(n.iri); const k=opts.count?opts.count(n.iri):0;
+    return `<button class="cn${c.top&&!f?' top':''}${opts.sel===n.iri?' sel':''}" data-iri="${esc(n.iri)}" style="padding-left:${8+n.d*18}px" title="${esc((c.def[0]||{}).v||'')}">${esc(label(c))}${k?`<span class="m">${k}</span>`:''}</button>`; }).join('');
+}
+function renderSubmit(){
+  const gopts = GROUPS.slice(0,4).map(g => `<option value="${g.id}"${S.me.group===g.id?' selected':''}>${esc(g.name)}</option>`).join('');
+  $('#card').innerHTML = `
+    <h2>Check your scheme, then hand it in</h2>
+    <p>Your group has built a SKOS vocabulary for its subgraph. Load the Turtle file here. It is checked against the SKOS rules from this module, you see it the way your classmates will, and you download it ready to submit. Nothing leaves your browser at this step.</p>
+    <div class="grid2">
+      <div class="field"><label for="me-team">Team name <span class="muted" style="font-weight:400">(goes on the scheme your group hands in)</span></label><input id="me-team" value="${esc(S.me.team)}" placeholder="e.g. Team Tempo" autocomplete="off"></div>
+      <div class="field"><label for="me-group">Your team's subgraph</label><select id="me-group">${gopts}</select></div>
+    </div>
+    <div class="field" style="max-width:calc(50% - 8px);min-width:240px"><label for="me-name">Your own name <span class="muted" style="font-weight:400">(goes on the mappings you make)</span></label><input id="me-name" value="${esc(S.me.name)}" placeholder="e.g. Dana K" autocomplete="off"></div>
+    <div class="drop${loadedFile?' has':''}" id="drop" tabindex="0" role="button" aria-label="Upload your team's Turtle file">
+      <span class="ic" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${loadedFile?'<path d="M5 12.5l4.5 4.5L19 7.5"/>':'<path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>'}</svg></span>
+      <span class="tx"><b>${loadedFile ? esc(loadedFile)+' is loaded' : 'Upload your team\'s .ttl file'}</b><span>${loadedFile ? 'Checked below. Drop or choose another file to replace it.' : 'Drag the file onto this box, or tap to choose it from your computer.'}</span></span>
+      <span class="pill">${loadedFile?'Replace file':'Choose file'}</span>
+      <input type="file" id="file" accept=".ttl,.turtle,.txt,text/turtle" hidden></div>
+    <div class="field"><label for="ttl">…or paste the Turtle</label><textarea class="paste" id="ttl" spellcheck="false" placeholder="@prefix skos: &lt;http://www.w3.org/2004/02/skos/core#&gt; .">${esc(S.draft)}</textarea></div>
+    <div class="btns"><button class="next" id="check">Check my file</button><button class="ghost small" id="sample">Load a sample to try it</button></div>
+    <div id="report"></div>
+    ${MINE.length ? `<h3>On this device</h3><table class="tbl"><thead><tr><th>Scheme</th><th>Subgraph</th><th>Concepts</th><th></th></tr></thead><tbody>${MINE.map(m => `<tr><td><b>${esc(m.title)}</b> <span class="muted">by ${esc(m.by)}</span></td><td>${esc(G(m.group).name)}</td><td>${m.ok?m.concepts.size:'does not parse'}</td><td><button class="ghost small danger" data-rm="${esc(m.id)}">Remove</button></td></tr>`).join('')}</tbody></table><p class="small muted">These are visible to you only, until the file is handed in and added to the class folder.</p>` : ''}`;
+  const nameEl=$('#me-name'), teamEl=$('#me-team'), grpEl=$('#me-group'), ta=$('#ttl');
+  nameEl.oninput = () => { S.me.name = nameEl.value; save(); };
+  teamEl.oninput = () => { S.me.team = teamEl.value; save(); };
+  grpEl.onchange = () => { S.me.group = grpEl.value; save(); };
+  ta.oninput = () => { S.draft = ta.value; save(); if(loadedFile){ loadedFile=''; const d=$('#drop'); if(d) d.classList.remove('has'); } };
+  const readFile = f => { if(!f) return; const r=new FileReader(); r.onload=()=>{ S.draft=r.result; loadedFile=f.name; save(); renderSubmit(); $('#ttl').value=r.result; runCheck(); }; r.readAsText(f); };
+  const drop=$('#drop'), file=$('#file');
+  drop.onclick = () => file.click(); drop.onkeydown = e => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); file.click(); } };
+  file.onchange = () => readFile(file.files[0]);
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); }; drop.ondragleave = () => drop.classList.remove('over');
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); readFile(e.dataTransfer.files[0]); };
+  $('#check').onclick = runCheck;
+  $('#sample').onclick = () => { const ex = SAMPLES.find(m => m.group===S.me.group) || SAMPLES.find(m => m.concepts.size); if(!ex) return toast('No sample available.'); ta.value = ex.ttl; S.draft = ex.ttl; save(); runCheck(); };
+  document.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { S.mine = S.mine.filter(x => x.id!==b.dataset.rm); loadMine(); render(); });
+  if(report) drawReport();
+}
+function runCheck(){
+  const ttl = $('#ttl').value; if(!ttl.trim()) return toast('Load or paste a Turtle file first.');
+  const by = teamName() || 'Unnamed';     // only for the check itself; keeping, downloading and submitting all require a team name
+  const m = parseSource({id:'mine:'+S.me.group+':'+slug(by), file:S.me.group+'--'+slug(by)+'.ttl', group:S.me.group, by, origin:'mine', ttl});
+  report = {m, R:validate(m)}; S.done.checked = !report.R.some(f=>f.lvl==='bad') && m.concepts.size>0; save(); drawReport();
+  $('#report').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function drawReport(){
+  const {m,R} = report; const bad = R.filter(f=>f.lvl==='bad').length, warn = R.filter(f=>f.lvl==='warn').length;
+  const verdict = bad ? `<span class="tag bad">Fix ${bad} problem${bad===1?'':'s'} first</span>` : warn ? `<span class="tag warn">Ready · ${warn} thing${warn===1?'':'s'} to look at</span>` : `<span class="tag ok">Ready to submit</span>`;
+  const defd = m.ok ? [...m.concepts.values()].filter(c=>c.def.length).length : 0;
+  $('#report').innerHTML = `<h3>The check ${verdict}</h3>
+    ${m.ok && m.concepts.size ? `<div class="meters"><div class="meter"><b>${m.concepts.size}</b><span>concepts</span></div><div class="meter"><b>${[...m.concepts.values()].filter(c=>c.top).length}</b><span>top concepts</span></div><div class="meter"><b>${m.depth}</b><span>levels deep</span></div><div class="meter"><b>${Math.round(100*defd/m.concepts.size)}%</b><span>defined</span></div><div class="meter"><b>${[...m.concepts.values()].reduce((n,c)=>n+c.alt.length+c.hidden.length,0)}</b><span>alt and hidden labels</span></div></div>` : ''}
+    ${flagsHtml(R)}
+    ${m.ok && m.concepts.size ? `<details open><summary>How your classmates will see it</summary><div class="tree" style="margin-top:8px">${treeHtml(m)}</div></details>` : ''}
+    ${!bad && handedScheme() ? `<ul class="flags"><li class="good">✓ Uploaded${when(handedScheme().modified||S.done.schemeSent)}. The class can see ${esc(G(S.me.group).name)} by ${esc(handedScheme().by)}. Submitting again replaces it.</li></ul>` : !bad && S.done.schemeFile ? `<ul class="flags"><li class="warn">! Downloaded ${esc(S.done.schemeFile)}, not yet in the class. Upload it to the Classroom assignment; this turns green once it has been added.</li></ul>` : ''}
+    ${!bad ? `${CONFIG.api ? `<div class="note"><span class="lab">Hand it in</span>Submit it to the class graph store. It replaces anything your team submitted before for this subgraph, and everyone sees it when they reload.</div>${submitBox('sendscheme','my scheme')}` : `<div class="note"><span class="lab">Hand it in</span>${esc(CONFIG.handIn)}${CONFIG.formUrl?' Or paste the Turtle into the class submission form.':''}</div>`}
+    <div class="btns"><button class="${CONFIG.api?'ghost':'next'}" id="dl">Download ${esc(m.file)}</button><button class="ghost" id="keep">Add to my view</button>${CONFIG.formUrl?`<button class="ghost" id="copy">Copy the Turtle</button><a class="linkbtn" href="${esc(CONFIG.formUrl)}" target="_blank" rel="noopener">Open the submission form</a>`:''}</div>
+    <p class="small muted">"Add to my view" keeps the scheme on this device so you can browse and map it straight away.</p>` : ''}`;
+  const send=$('#sendscheme'); if(send) send.onclick = () => submitToClass(m.group, m.ttl, send);
+  const dl=$('#dl'); if(dl) dl.onclick = () => { if(!teamName()) return toast('Add your team name first, so the file is named after your team.'); download(m.file, m.ttl, 'text/turtle'); S.done.schemeFile = m.file; save(); toast('Downloaded '+m.file+'. Now upload it to Classroom.'); render(); };
+  const keep=$('#keep'); if(keep) keep.onclick = () => { if(!teamName()){ toast('Add your team name first, so the scheme is not left unnamed.'); $('#me-team').focus(); return; } S.mine = S.mine.filter(x => x.id!==m.id).concat([{id:m.id, file:m.file, group:m.group, by:m.by, ttl:m.ttl}]); loadMine(); toast('Added. Find it under Browse the class.'); render(); };
+  const cp=$('#copy'); if(cp) cp.onclick = () => navigator.clipboard.writeText(m.ttl).then(()=>toast('Turtle copied.'));
+}
+
+async function submitToClass(group, ttl, btn){
+  const by = group==='mapping' ? myName() : teamName(); if(!by) return toast(group==='mapping' ? 'Add your own name under Check & submit first.' : 'Add your team name first.');
+  const pc = $('#passcode'); if(pc) passcode = pc.value.trim(); if(!passcode) return toast('Type the class passcode first.');
+  const label = btn.textContent; btn.disabled = true; btn.textContent = 'Submitting…';
+  try{
+    const r = await fetch(CONFIG.api+'/submissions', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({class:CLASSROOM||'sandbox', name:by, group, turtle:ttl, passcode})});
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(j.error || ('HTTP '+r.status));
+    await loadClass(); S.done[group==='mapping'?'mapSent':'schemeSent'] = j.modified || new Date().toISOString(); save(); toast('Uploaded. The class sees it when they reload.'); render(); return true;
+  }catch(e){ btn.disabled=false; btn.textContent=label; const el=$('#submitmsg'); if(el) el.innerHTML = `<ul class="flags"><li class="bad">✕ Not submitted.<span class="d">${esc(e.message)}</span></li></ul>`; else toast('Not submitted: '+e.message); return false; }
+}
+const submitBox = (id, what) => `<div class="field" style="max-width:320px"><label for="passcode">Class passcode</label><input id="passcode" type="text" autocomplete="off" value="${esc(passcode)}" placeholder="From your instructor"></div><div class="btns" style="margin-top:4px"><button class="next" id="${id}">Submit ${what} to the class</button></div><div id="submitmsg"></div>`;
+
+/* ───────── step 2 · browse ───────── */
+let bfilter = '';
+function mappingCount(iri){ return S.maps.filter(x => x.a===iri || x.b===iri).length + classMaps().filter(x => x.a===iri || x.b===iri).length; }
+function renderBrowse(){
+  const view = S.view && srcById(S.view);
+  if(view && view.concepts.size) return renderViewer(view);
+  S.view = '';
+  const list = schemesOnly();
+  $('#card').innerHTML = `
+    <h2>Browse the class</h2>
+    <p>Every scheme handed in so far, all on one page. <b>One at a time</b> opens a single scheme in full. For bubbles and lines, go to <b>The class graph</b>.</p>
+    ${loadNote?`<div class="note"><span class="lab">Heads up</span>${esc(loadNote)}</div>`:''}
+    ${samplesBanner()}
+    <div class="filters"><span class="mono" style="color:var(--ink-soft)">VIEW</span><button class="chip${S.bview2==='trees'?' sel':''}" data-bv="trees">Every scheme side by side</button><button class="chip${S.bview2==='cards'?' sel':''}" data-bv="cards">One at a time</button><button class="chip" id="tonet">Bubbles and lines →</button></div>
+    <div class="filters"><button class="chip${S.bgroup==='all'?' sel':''}" data-g="all">All</button>${GROUPS.slice(0,4).map(g=>`<button class="chip${S.bgroup===g.id?' sel':''}" data-g="${g.id}">${esc(g.name)}</button>`).join('')}
+      <input id="bq" placeholder="${S.bview2==='trees'?'Highlight a label in every scheme…':'Search every scheme for a label…'}" value="${esc(bfilter)}"><button class="ghost small" id="reload">Reload submissions</button><button class="ghost small" id="addfiles">Add files from this computer</button><input type="file" id="manyfiles" accept=".ttl,.turtle,.txt,text/turtle" multiple hidden></div>
+    <div id="blist"></div>`;
+  document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { S.bgroup=b.dataset.g; gsel=null; render(); });
+  $('#tonet').onclick = () => { S.step='graph'; render(); window.scrollTo({top:0,behavior:'smooth'}); };
+  document.querySelectorAll('[data-bv]').forEach(b => b.onclick = () => { S.bview2=b.dataset.bv; render(); });
+  $('#reload').onclick = async () => { $('#reload').textContent='Loading…'; await loadClass(); toast(CLASS.length+' file'+(CLASS.length===1?'':'s')+' loaded.'); render(); };
+  $('#addfiles').onclick = () => $('#manyfiles').click();
+  $('#manyfiles').onchange = e => addFiles([...e.target.files]);
+  const bq=$('#bq'); bq.oninput = () => { bfilter=bq.value; drawBrowseList(list); };
+  drawBrowseList(list);
+}
+// several Turtle files at once, straight into the common view on this device (names like genres--team-tempo.ttl carry the subgraph and the team)
+async function addFiles(files){
+  if(!files.length) return; let ok=0; const failed=[];
+  for(const f of files){
+    const ttl = await f.text(), stem = f.name.replace(/\.[^.]+$/,''), hit = /^(genres|events|instruments|musicians|mapping)--(.+)$/i.exec(stem);
+    const probe = parseSource({id:'probe', file:f.name, group:'other', by:'', ttl});
+    if(!probe.ok){ failed.push(f.name); continue; }
+    const sc = probe.schemes[0]||{};
+    let group = hit ? hit[1].toLowerCase() : groupFromText(stem); if(group==='other') group = groupFromText(sc.title); if(group==='other' && !probe.concepts.size && probe.mappings.length) group='mapping';
+    const by = hit ? hit[2].replace(/[-_]+/g,' ').replace(/\b\w/g, ch=>ch.toUpperCase()) : (sc.creator || stem);
+    const id = 'mine:'+group+':'+slug(by);
+    S.mine = S.mine.filter(x => x.id!==id).concat([{id, file:group+'--'+slug(by)+'.ttl', group, by, ttl}]); ok++;
+  }
+  loadMine(); render();
+  toast(ok+' file'+(ok===1?'':'s')+' added to this view'+(failed.length?' · not valid Turtle: '+failed.join(', '):''));
+}
+function drawBrowseList(list){
+  const q = bfilter.trim().toLowerCase(); const el = $('#blist');
+  list = list.filter(m => S.bgroup==='all' || m.group===S.bgroup);
+  if(S.bview2==='trees') return drawAllGraph(list, q);
+  if(q){
+    const hits = []; for(const m of list) for(const c of m.concepts.values()){ const hit = c.pref.concat(c.alt,c.hidden).find(x => x.v.toLowerCase().includes(q)); if(hit) hits.push({m,c,hit}); }
+    el.innerHTML = hits.length ? `<table class="tbl"><thead><tr><th>Concept</th><th>Matched label</th><th>Scheme</th><th>Definition</th></tr></thead><tbody>${hits.slice(0,80).map(h => `<tr><td><button class="ghost small" data-open="${esc(h.m.id)}" data-c="${esc(h.c.iri)}">${esc(label(h.c))}</button></td><td>${esc(h.hit.v)}</td><td>${esc(h.m.title)} <span class="muted">· ${esc(h.m.by)}</span></td><td class="small">${esc((h.c.def[0]||{}).v||'—')}</td></tr>`).join('')}</tbody></table><p class="small muted">The same label in two schemes is a lead, not a match. Read both definitions.</p>` : '<p class="muted">No label matches.</p>';
+  } else {
+    el.innerHTML = list.length ? `<div class="schemes">${list.map(m => { const defd=[...m.concepts.values()].filter(c=>c.def.length).length; return `<button class="scheme" data-open="${esc(m.id)}" style="border-left-color:${G(m.group).c}"><span class="tag" style="align-self:flex-start;color:${G(m.group).c}">${esc(G(m.group).name)}</span><b>${esc(m.title)}</b><span class="by">${m.origin==='sample'?'sample scheme':'by '+esc(m.by)}${m.origin==='mine'?' · <i>on this device only</i>':''}</span><span class="mono" style="color:var(--ink-soft)">${m.concepts.size} concepts · ${m.depth} levels · ${Math.round(100*defd/m.concepts.size)}% defined</span></button>`; }).join('')}${GROUPS.slice(0,4).filter(g => (S.bgroup==='all'||S.bgroup===g.id) && !list.some(m=>m.group===g.id)).map(g => `<div class="scheme wait" style="border-left-color:${g.c}"><span class="tag" style="align-self:flex-start;color:${g.c}">${esc(g.name)}</span><b>Not handed in yet</b><span class="by">This group's scheme will appear here.</span></div>`).join('')}</div>` : '<p class="muted">Nothing handed in for this subgraph yet.</p>';
+  }
+  el.querySelectorAll('[data-open]').forEach(b => b.onclick = () => { S.view=b.dataset.open; vsel=b.dataset.c||null; render(); });
+}
+/* every scheme as an indented node-link tree, side by side, with the mapping links drawn across them */
+function layerMaps(layer){ const mine = S.maps.map(x => Object.assign({by:myName()||'you'}, x)); return layer==='mine' ? mine : layer==='class' ? classMaps() : layer==='none' ? [] : mine.concat(classMaps()); }
+function allGraph(list, q){
+  const n=list.length, cols=Math.min(4,n), W=1140, bw=W/cols, rowH=23, head=56, pad=14, ind=17;
+  const pos=new Map(); let y0=0, blocks='', hier='', nodes='';
+  const hasSel = gsel && list.some(m => m.id===gsel.src);
+  const maps = layerMaps(S.glayer);
+  const partners = new Set(); if(hasSel) maps.forEach(x => { if(x.a===gsel.iri && x.aSrc===gsel.src) partners.add(x.bSrc+'|'+x.b); if(x.b===gsel.iri && x.bSrc===gsel.src) partners.add(x.aSrc+'|'+x.a); });
+  for(let r=0;r<n;r+=cols){
+    const row=list.slice(r,r+cols), h=Math.max(...row.map(m=>m.flat.length))*rowH+head+pad;
+    row.forEach((m,ci) => { const bx=ci*bw, c=G(m.group).c, tmax=Math.floor((bw-40)/7.4);
+      blocks += `<rect class="blk" x="${bx+6}" y="${y0+4}" width="${bw-12}" height="${h-8}" rx="12" stroke="${c}"/><rect x="${bx+6}" y="${y0+4}" width="6" height="${h-8}" rx="3" fill="${c}"/><text class="bt" x="${bx+24}" y="${y0+26}">${esc(G(m.group).name.length>tmax?G(m.group).name.slice(0,tmax-1)+'…':G(m.group).name)}<title>${esc(m.title)}</title></text><text class="bb" x="${bx+24}" y="${y0+42}">${esc((whoOf(m).length>24?whoOf(m).slice(0,23)+'…':whoOf(m)))} · ${m.concepts.size} concepts</text>`;
+      const last=[];
+      m.flat.forEach((nd,i) => { const x=bx+30+nd.d*ind, y=y0+head+i*rowH+6, cpt=m.concepts.get(nd.iri), lab=label(cpt);
+        const room=Math.max(6,Math.floor((bx+bw-16-(x+10))/6.6)), t=lab.length>room?lab.slice(0,room-1)+'…':lab, tw=t.length*6.6+6;
+        pos.set(m.id+'|'+nd.iri,{x,y,ci,tw,end:x+10+tw});
+        const par = nd.d>0 ? last[nd.d-1] : null; last[nd.d]={x,y,iri:nd.iri}; last.length=nd.d+1;
+        if(par) hier += `<path class="h" d="M${par.x},${par.y+5} V${y} H${x-5}"/>`;
+        for(const b of cpt.broader) if(!par || b!==par.iri){ const pp=pos.get(m.id+'|'+b); if(pp) hier += `<path class="h poly" d="M${x-5},${y} C${x-26},${y} ${pp.x-26},${pp.y} ${pp.x-5},${pp.y}"/>`; }
+        const key=m.id+'|'+nd.iri, isSel=hasSel&&gsel.src===m.id&&gsel.iri===nd.iri, hit=q&&cpt.pref.concat(cpt.alt,cpt.hidden).some(l=>l.v.toLowerCase().includes(q));
+        const dim = (q&&!hit) || (hasSel&&!isSel&&!partners.has(key)&&!q);
+        nodes += `<g class="gn${cpt.top?' top':''}${isSel?' sel':''}${hit?' hit':''}${dim?' dim':''}" data-src="${esc(m.id)}" data-iri="${esc(nd.iri)}" tabindex="0" role="button"><rect x="${x+5}" y="${y-10}" width="${tw+6}" height="20" rx="6"/><circle cx="${x}" cy="${y}" r="4.5" stroke="${c}"${cpt.top?` style="fill:${c}"`:''}/><text x="${x+10}" y="${y+4}">${esc(t)}</text><title>${esc(lab)} — ${esc((cpt.def[0]||{}).v||'no definition')}</title></g>`; });
+    });
+    y0 += h;
+  }
+  const style = {exactMatch:['#2456A6','',2.6], closeMatch:['#2456A6','6 5',2], broadMatch:['#B98A12','',2], narrowMatch:['#B98A12','',2], relatedMatch:['#6B3FA0','2 5',2]};
+  let edges='', drawn=0;
+  maps.forEach(x => { let A=pos.get(x.aSrc+'|'+x.a), B=pos.get(x.bSrc+'|'+x.b); if(!A||!B||A===B) return; drawn++;
+    const touches = hasSel && ((x.a===gsel.iri&&x.aSrc===gsel.src)||(x.b===gsel.iri&&x.bSrc===gsel.src));
+    let arrow=false; if(x.p==='narrowMatch'){ [A,B]=[B,A]; arrow=true; } else if(x.p==='broadMatch') arrow=true;       // runs narrower → broader
+    const [c,dash,w]=style[x.p]; let d;
+    if(A.ci===B.ci){ const bend=Math.min(A.x,B.x)-22; d=`M${A.x-6},${A.y} C${bend},${A.y} ${bend},${B.y} ${B.x-(arrow?12:6)},${B.y}`; }
+    else if(A.ci<B.ci){ const x1=A.end+4, x2=B.x-(arrow?12:6), k=Math.max(40,(x2-x1)/2); d=`M${x1},${A.y} C${x1+k},${A.y} ${x2-k},${B.y} ${x2},${B.y}`; }
+    else { const x1=A.x-6, x2=B.end+(arrow?10:4), k=Math.max(40,(x1-x2)/2); d=`M${x1},${A.y} C${x1-k},${A.y} ${x2+k},${B.y} ${x2},${B.y}`; }
+    edges += `<path class="me${touches?' hl':hasSel||q?' dim':''}" d="${d}" stroke="${c}" stroke-width="${w}"${dash?` stroke-dasharray="${dash}"`:''}${arrow?' marker-end="url(#arr2)"':''}><title>${esc(nameOf(x.a,x.aSrc))} skos:${x.p} ${esc(nameOf(x.b,x.bSrc))} · ${esc(x.by||'')}</title></path>`; });
+  return {drawn, svg:`<div class="graphwrap"><svg class="allg" viewBox="0 0 ${W} ${y0+4}" role="img" aria-label="Every scheme's hierarchy, with the mappings between them"><defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#B98A12"/></marker></defs>${blocks}${hier}${edges}${nodes}</svg></div>`};
+}
+function drawAllGraph(list, q){
+  const el=$('#blist'); if(!list.length){ el.innerHTML='<p class="muted">Nothing handed in for this subgraph yet.</p>'; return; }
+  if(gsel && !list.some(m => m.id===gsel.src && m.concepts.has(gsel.iri))) gsel=null;
+  const g = allGraph(list, q), nm = layerMaps('both').length;
+  const hits = q ? list.reduce((k,m) => k+[...m.concepts.values()].filter(c => c.pref.concat(c.alt,c.hidden).some(l=>l.v.toLowerCase().includes(q))).length, 0) : 0;
+  const sm = gsel && srcById(gsel.src);
+  el.innerHTML = `<div class="filters"><span class="mono" style="color:var(--ink-soft)">MAPPING LINKS</span>${[['both','Mine and the class'],['mine','Mine'],['class','The class'],['none','Off']].map(([k,t]) => `<button class="chip${S.glayer===k?' sel':''}" data-gl="${k}">${t}</button>`).join('')}<span class="small muted">${g.drawn} drawn${nm&&!g.drawn&&S.glayer!=='none'?' (the mapped schemes are filtered out)':''}</span></div>
+    ${q?`<p class="small muted" style="margin:0 0 4px">${hits} concept${hits===1?'':'s'} carry “${esc(q)}” in a preferred, alternative or hidden label. The same string in two schemes is a lead, not a match.</p>`:''}
+    ${g.svg}
+    <div class="legend"><span><svg width="14" height="14"><circle cx="7" cy="7" r="4.5" fill="#5A6478" stroke="#5A6478"/></svg>top concept</span><span><svg width="14" height="14"><circle cx="7" cy="7" r="4.5" fill="#fff" stroke="#5A6478" stroke-width="1.6"/></svg>concept</span><span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="#2456A6" stroke-width="2.6"/></svg>exactMatch</span><span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="#2456A6" stroke-width="2" stroke-dasharray="6 5"/></svg>closeMatch</span><span><svg width="30" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="#B98A12" stroke-width="2"/><path d="M22,1 L30,5 L22,9 z" fill="#B98A12"/></svg>broad / narrow, arrow at the broader</span><span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="#6B3FA0" stroke-width="2" stroke-dasharray="2 5"/></svg>relatedMatch</span></div>
+    <div id="gdetail">${sm ? conceptDetail(sm.concepts.get(gsel.iri), sm, true) : '<p class="small muted">Tap a concept to read its labels, definition and mappings. Its mapped partners stay lit and everything else fades.</p>'}</div>`;
+  el.querySelectorAll('[data-gl]').forEach(b => b.onclick = () => { S.glayer=b.dataset.gl; save(); drawAllGraph(list,q); });
+  const choose = (src,iri) => { gsel = (gsel && gsel.src===src && gsel.iri===iri) ? null : {src,iri}; drawAllGraph(list,q); };
+  el.querySelectorAll('.gn').forEach(nd => { nd.onclick = () => choose(nd.dataset.src, nd.dataset.iri); nd.onkeydown = e => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); choose(nd.dataset.src, nd.dataset.iri); } }; });
+  if(sm){ el.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { if(sm.concepts.has(b.dataset.go)) { gsel={src:sm.id, iri:b.dataset.go}; drawAllGraph(list,q); } });
+    $('#mapthis').onclick = () => { S.mapL=sm.id; if(S.mapR===sm.id) S.mapR=''; pick={L:gsel.iri,R:null,p:null}; S.step='map'; render(); window.scrollTo({top:0,behavior:'smooth'}); }; }
+}
+function conceptDetail(c, m, withMapBtn){
+  const pills = (arr,cls) => arr.map(x => `<span class="pill ${cls||''}">${esc(x.v)}${x.l?`<sup>${esc(x.l)}</sup>`:''}</span>`).join('');
+  const links = iris => iris.map(i => `<button class="ghost small" data-go="${esc(i)}" style="margin:0 4px 4px 0">${esc(nameOf(i,m.id))}</button>`).join('') || '<span class="muted">—</span>';
+  const touching = S.maps.map(x=>Object.assign({by:'you'},x)).concat(classMaps()).filter(x => x.a===c.iri || x.b===c.iri);
+  return `<div class="detail"><h4>${esc(label(c))}</h4><div class="iri">${esc(c.iri)}</div>
+    <dl><dt>Preferred</dt><dd>${pills(c.pref)||'<span class="muted">none</span>'}</dd>
+    ${c.alt.length?`<dt>Alternative</dt><dd>${pills(c.alt)}</dd>`:''}${c.hidden.length?`<dt>Hidden</dt><dd>${pills(c.hidden,'hid')}</dd>`:''}
+    <dt>Definition</dt><dd>${c.def.map(d=>esc(d.v)).join('<br>')||'<span class="muted">No definition given.</span>'}</dd>
+    ${c.scope.length?`<dt>Scope note</dt><dd>${c.scope.map(d=>esc(d.v)).join('<br>')}</dd>`:''}${c.example.length?`<dt>Example</dt><dd>${c.example.map(d=>esc(d.v)).join('<br>')}</dd>`:''}${c.notation.length?`<dt>Notation</dt><dd>${c.notation.map(d=>esc(d.v)).join(', ')}</dd>`:''}${c.notes.length?`<dt>Notes</dt><dd>${c.notes.map(d=>esc(d.v)).join('<br>')}</dd>`:''}
+    <dt>Broader</dt><dd>${links([...c.broader])}</dd><dt>Narrower</dt><dd>${links(m.kids.get(c.iri)||[])}</dd>${c.related.size?`<dt>Related</dt><dd>${links([...c.related])}</dd>`:''}
+    ${touching.length?`<dt>Mapped</dt><dd>${touching.map(x => `<span class="relname">${x.p}</span> ${esc(x.a===c.iri?nameOf(x.b,x.bSrc):nameOf(x.a,x.aSrc))} <span class="muted small">(${x.a===c.iri?'':'from there, '}by ${esc(x.by)})</span>`).join('<br>')}</dd>`:''}</dl>
+    ${withMapBtn?`<div class="btns"><button class="next" id="mapthis">Map this concept</button></div>`:''}</div>`;
+}
+let vfilter='';
+function renderViewer(m){
+  if(!vsel || !m.concepts.has(vsel)) vsel = m.flat[0].iri;
+  const s = m.schemes[0]||{};
+  $('#card').innerHTML = `
+    <div class="btns" style="margin:0 0 10px"><button class="ghost small" id="back">← All schemes</button></div>
+    <span class="tag" style="color:${G(m.group).c}">${esc(G(m.group).name)}</span>
+    <h2 style="margin-top:6px">${esc(m.title)}</h2>
+    <p class="muted">by ${esc(m.by)} · ${m.concepts.size} concepts · ${m.depth} levels${m.origin==='mine'?' · on this device only':''}</p>
+    ${s.desc?`<p>${esc(s.desc)}</p>`:''}
+    <p class="small"><span class="mono" style="color:var(--ink-soft)">NAMESPACE</span> <span class="iri">${namespaceOf(m).map(esc).join(' · ')}</span></p>
+    <div class="viewer"><div><div class="filters" style="margin-top:0"><input id="vq" placeholder="Filter by label…" value="${esc(vfilter)}"></div><div class="tree" id="vtree"></div></div><div id="vdetail"></div></div>
+    <details><summary>The Turtle as submitted</summary><pre class="ttl">${esc(m.ttl)}</pre></details>`;
+  $('#back').onclick = () => { S.view=''; vsel=null; vfilter=''; render(); };
+  const draw = () => {
+    $('#vtree').innerHTML = treeHtml(m, {sel:vsel, filter:vfilter, count:mappingCount});
+    $('#vtree').querySelectorAll('.cn').forEach(b => b.onclick = () => { vsel=b.dataset.iri; draw(); });
+    $('#vdetail').innerHTML = conceptDetail(m.concepts.get(vsel), m, true);
+    $('#vdetail').querySelectorAll('[data-go]').forEach(b => b.onclick = () => { if(m.concepts.has(b.dataset.go)){ vsel=b.dataset.go; draw(); } });
+    $('#mapthis').onclick = () => { S.mapL=m.id; if(S.mapR===m.id) S.mapR=''; pick={L:vsel,R:null,p:null}; S.step='map'; render(); window.scrollTo({top:0,behavior:'smooth'}); };
+  };
+  const vq=$('#vq'); vq.oninput = () => { vfilter=vq.value; draw(); };
+  draw();
+}
+
+/* ───────── step 3 · the class graph: bubbles and lines ───────── */
+const NET = {pos:new Map(), key:'', vb:null, full:null, sel:null, q:'', drag:null};
+function netLayout(list){
+  const cells = list.map(m => {
+    const ch=new Map([['',[]]]), last=[]; m.flat.forEach(n => { const p=n.d>0?last[n.d-1]:''; if(!ch.has(p)) ch.set(p,[]); ch.get(p).push(n.iri); last[n.d]=n.iri; last.length=n.d+1; });
+    const memo=new Map(), leaves = id => { if(memo.has(id)) return memo.get(id); const c=ch.get(id)||[]; const v=c.length?c.reduce((t,k)=>t+leaves(k),0):1; memo.set(id,v); return v; };
+    const gap=Math.max(92, leaves('')*46/(2*Math.PI)), local=new Map();
+    const place = (id,a0,a1,d) => { let a=a0; (ch.get(id)||[]).forEach(k => { const span=(a1-a0)*leaves(k)/leaves(id), mid=a+span/2; local.set(k,{x:Math.cos(mid)*d*gap, y:Math.sin(mid)*d*gap, ang:mid}); place(k,a,a+span,d+1); a+=span; }); };
+    place('', -Math.PI/2, Math.PI*1.5, 1);
+    return {m, local, R:m.depth*gap+70};
+  });
+  const n=cells.length, cols = n<=2?n : n<=4?2 : 3, cell = 2*Math.max(...cells.map(c=>c.R))+90;
+  NET.pos = new Map();
+  cells.forEach((c,i) => { const cx=(i%cols)*cell+cell/2, cy=Math.floor(i/cols)*cell+cell/2;
+    NET.pos.set(c.m.id+'|', {x:cx, y:cy, vx:0, vy:0, r:24, scheme:true, src:c.m.id, iri:''});
+    for(const [iri,p] of c.local){ const cpt=c.m.concepts.get(iri); NET.pos.set(c.m.id+'|'+iri, {x:cx+p.x, y:cy+p.y, vx:0, vy:0, r:cpt.top?13:9, src:c.m.id, iri}); } });
+  NET.full = {x:0, y:0, w:cols*cell, h:Math.ceil(n/cols)*cell}; NET.vb = Object.assign({}, NET.full); NET.autofit = true;
+}
+/* force simulation, same recipe as the SKOS editor's graph: repulsion between bubbles, springs along lines, a light pull to the centre */
+function netLinks(list){
+  const L=[]; for(const m of list) for(const c of m.concepts.values()){ const k=m.id+'|'+c.iri; if(c.broader.size) c.broader.forEach(b => L.push({a:m.id+'|'+b, b:k, ld:88, kl:0.04})); else L.push({a:m.id+'|', b:k, ld:128, kl:0.04}); c.related.forEach(r => { if(c.iri<r) L.push({a:k, b:m.id+'|'+r, ld:130, kl:0.006}); }); }
+  layerMaps(S.glayer).forEach(x => L.push({a:x.aSrc+'|'+x.a, b:x.bSrc+'|'+x.b, ld:230, kl:0.012}));
+  return L.filter(l => NET.pos.has(l.a) && NET.pos.has(l.b) && l.a!==l.b);
+}
+function netTick(){
+  const N=[...NET.pos.values()], kRep=3400, cen=0.010, clamp=v=>Math.max(-40,Math.min(40,v));
+  for(let i=0;i<N.length;i++){ const a=N[i]; for(let j=i+1;j<N.length;j++){ const b=N[j]; let dx=a.x-b.x, dy=a.y-b.y, d2=dx*dx+dy*dy; if(d2<1){ dx=(i%2?1:-1)*0.5; dy=0.5; d2=1; } const d=Math.sqrt(d2), f=kRep*(a.src===b.src?1:1.6)*(a.scheme||b.scheme?2.4:1)/d2, fx=dx/d*f, fy=dy/d*f; a.vx+=fx; a.vy+=fy; b.vx-=fx; b.vy-=fy; } }
+  for(const l of NET.links){ const a=NET.pos.get(l.a), b=NET.pos.get(l.b); const dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy)||1, f=(d-l.ld)*l.kl, fx=dx/d*f, fy=dy/d*f; a.vx+=fx; a.vy+=fy; b.vx-=fx; b.vy-=fy; }
+  const cx=NET.full.w/2, cy=NET.full.h/2, held=NET.drag&&NET.drag.moved&&NET.drag.k?NET.pos.get(NET.drag.k):null;
+  for(const n of N){ n.vx+=(cx-n.x)*cen; n.vy+=(cy-n.y)*cen; if(n===held){ n.vx=n.vy=0; continue; } n.vx=clamp(n.vx*0.82); n.vy=clamp(n.vy*0.82); n.x+=n.vx*NET.alpha; n.y+=n.vy*NET.alpha; }
+  NET.alpha*=0.965;
+}
+function netBounds(){ let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9; for(const n of NET.pos.values()){ x0=Math.min(x0,n.x-n.r-70); y0=Math.min(y0,n.y-n.r-16); x1=Math.max(x1,n.x+n.r+70); y1=Math.max(y1,n.y+n.r+30); } return {x:x0, y:y0, w:Math.max(200,x1-x0), h:Math.max(200,y1-y0)}; }
+function netLoop(){ NET.raf=0; if(S.step!=='graph' || !document.getElementById('net') || !NET.paint) return; if(NET.alpha>0.02){ netTick(); if(NET.autofit) NET.vb=netBounds(); NET.paint(); NET.raf=requestAnimationFrame(netLoop); } else NET.paint(); }
+function netReheat(a){ NET.alpha=Math.max(NET.alpha||0, a||0.85); if(!NET.raf) NET.raf=requestAnimationFrame(netLoop); }
+function netNeighbours(list, maps){
+  const nb=new Set(); if(!NET.sel) return nb; const [src,iri]=[NET.sel.src,NET.sel.iri], m=list.find(x=>x.id===src); if(!m) return nb;
+  nb.add(src+'|'+iri);
+  if(!iri){ for(const c of m.concepts.values()) nb.add(src+'|'+c.iri); return nb; }
+  const c=m.concepts.get(iri); c.broader.forEach(b=>nb.add(src+'|'+b)); (m.kids.get(iri)||[]).forEach(k=>nb.add(src+'|'+k)); c.related.forEach(r=>nb.add(src+'|'+r)); if(c.top||!c.broader.size) nb.add(src+'|');
+  maps.forEach(x => { if(x.a===iri&&x.aSrc===src) nb.add(x.bSrc+'|'+x.b); if(x.b===iri&&x.bSrc===src) nb.add(x.aSrc+'|'+x.a); });
+  return nb;
+}
+function netSvgInner(list){
+  const maps=layerMaps(S.glayer), q=NET.q.trim().toLowerCase(), nb=netNeighbours(list,maps), focus=nb.size>0;
+  const P = k => NET.pos.get(k);
+  const seg = (A,B,padB) => { const dx=B.x-A.x, dy=B.y-A.y, L=Math.hypot(dx,dy)||1; return {x1:A.x+dx/L*A.r, y1:A.y+dy/L*A.r, x2:B.x-dx/L*(B.r+(padB||0)), y2:B.y-dy/L*(B.r+(padB||0))}; };
+  let hier='', rel='', edges='', nodes='';
+  for(const m of list){ const drawnRel=new Set();
+    for(const c of m.concepts.values()){ const me=P(m.id+'|'+c.iri); if(!me) continue;
+      const ups=[...c.broader].map(b=>m.id+'|'+b); if(!ups.length) ups.push(m.id+'|');
+      ups.forEach((u,i) => { const A=P(u); if(!A) return; const s=seg(A,me), lit=!focus||(nb.has(u)&&nb.has(m.id+'|'+c.iri)&&(NET.sel.iri===c.iri||u===NET.sel.src+'|'+NET.sel.iri)); hier+=`<line class="hl${i>0?' poly':''}${lit?'':' dim'}" x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}"/>`; });
+      c.related.forEach(r => { const k=[c.iri,r].sort().join(' '); const B=P(m.id+'|'+r); if(!B||drawnRel.has(k)) return; drawnRel.add(k); const s=seg(me,B), lit=!focus||(NET.sel.src===m.id&&(NET.sel.iri===c.iri||NET.sel.iri===r)); rel+=`<line class="hl rel${lit?'':' dim'}" x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}"><title>${esc(label(c))} skos:related ${esc(nameOf(r,m.id))}</title></line>`; });
+    } }
+  const style={exactMatch:['#2456A6','',3.2], closeMatch:['#2456A6','7 6',2.4], broadMatch:['#B98A12','',2.4], narrowMatch:['#B98A12','',2.4], relatedMatch:['#6B3FA0','2 6',2.4]};
+  let drawn=0;
+  maps.forEach(x => { let A=P(x.aSrc+'|'+x.a), B=P(x.bSrc+'|'+x.b); if(!A||!B||A===B) return; drawn++;
+    let arrow=false; if(x.p==='narrowMatch'){ [A,B]=[B,A]; arrow=true; } else if(x.p==='broadMatch') arrow=true;
+    const s=seg(A,B,arrow?5:0), mx=(s.x1+s.x2)/2, my=(s.y1+s.y2)/2, dx=s.x2-s.x1, dy=s.y2-s.y1, L=Math.hypot(dx,dy)||1, bend=Math.min(60,L*0.12), [c,dash,w]=style[x.p];
+    const lit = focus && NET.sel.iri && ((x.a===NET.sel.iri&&x.aSrc===NET.sel.src)||(x.b===NET.sel.iri&&x.bSrc===NET.sel.src));
+    edges+=`<path class="ml${lit?' lit':focus||q?' dim':''}" d="M${s.x1},${s.y1} Q${mx-dy/L*bend},${my+dx/L*bend} ${s.x2},${s.y2}" stroke="${c}" stroke-width="${w}"${dash?` stroke-dasharray="${dash}"`:''} stroke-linecap="round"${arrow?' marker-end="url(#narr)"':''}><title>${esc(nameOf(x.a,x.aSrc))} skos:${x.p} ${esc(nameOf(x.b,x.bSrc))} · ${esc(x.by||'')}</title></path>`; });
+  NET.drawn=drawn; NET.hits=0;
+  for(const m of list){ const col=G(m.group).c;
+    const S0=P(m.id+'|'); if(S0){ const t=G(m.group).name, dim=(focus&&!nb.has(m.id+'|'))||q; nodes+=`<g class="nb sch${NET.sel&&NET.sel.src===m.id&&!NET.sel.iri?' sel':''}${dim?' dim':''}" data-k="${esc(m.id+'|')}" tabindex="0" role="button"><circle cx="${S0.x}" cy="${S0.y}" r="${S0.r}" stroke="${col}" style="fill:${col}"/><text x="${S0.x}" y="${S0.y+S0.r+17}" text-anchor="middle">${esc(t)}</text><title>${esc(m.title)} · ${esc(whoOf(m))} · ${m.concepts.size} concepts</title></g>`; }
+    for(const c of m.concepts.values()){ const k=m.id+'|'+c.iri, p=P(k); if(!p) continue; const lab=label(c), t=lab.length>24?lab.slice(0,23)+'…':lab;
+      const hit=q&&c.pref.concat(c.alt,c.hidden).some(l=>l.v.toLowerCase().includes(q)); if(hit) NET.hits++;
+      const dim=(q&&!hit)||(!q&&focus&&!nb.has(k)), sel=NET.sel&&NET.sel.src===m.id&&NET.sel.iri===c.iri;
+      const tx=p.x, ty=p.y+p.r+13, anchor='middle';
+      nodes+=`<g class="nb${c.top?' top':''}${sel?' sel':''}${hit?' hit':''}${dim?' dim':''}" data-k="${esc(k)}" tabindex="0" role="button"><circle cx="${p.x}" cy="${p.y}" r="${p.r}" stroke="${col}"${c.top?` style="fill:${col}"`:''}/><text x="${tx}" y="${ty}" text-anchor="${anchor}">${esc(t)}</text><title>${esc(lab)} — ${esc((c.def[0]||{}).v||'no definition')}</title></g>`; } }
+  return `<defs><marker id="narr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#B98A12"/></marker></defs>${hier}${rel}${edges}${nodes}`;
+}
+function renderGraph(){
+  const listAll=schemesOnly(), list=listAll.filter(m => S.bgroup==='all'||m.group===S.bgroup);
+  if(!list.length){ $('#card').innerHTML=`<h2>The class graph</h2><p class="muted">${listAll.length?'Nothing handed in for this subgraph yet.':(loadNote?esc(loadNote):'No schemes to draw yet.')}</p>${samplesBanner()}${listAll.length?'<div class="btns"><button class="ghost" id="gall">Show all subgraphs</button></div>':''}`; const b=$('#gall'); if(b) b.onclick=()=>{S.bgroup='all';render();}; return; }
+  const key=list.map(m=>m.id+':'+m.concepts.size).join(','); let fresh=false; if(NET.key!==key){ NET.key=key; NET.sel=null; netLayout(list); fresh=true; }
+  if(NET.sel && !list.some(m=>m.id===NET.sel.src)) NET.sel=null;
+  $('#card').innerHTML = `
+    <h2>The class graph</h2>
+    <p>Every concept is a bubble, every relationship a line. Each scheme grows out from its own centre: the filled bubbles are top concepts, grey lines run from broader to narrower, and the coloured lines are the mappings that tie the four vocabularies together. Tap a bubble to focus it, drag a bubble and the rest follows, drag the background to pan. Zoom with the + and − buttons, a pinch, or Ctrl/Cmd + scroll.</p>
+    ${samplesBanner()}
+    <div class="filters"><button class="chip${S.bgroup==='all'?' sel':''}" data-g="all">All</button>${GROUPS.slice(0,4).map(g=>`<button class="chip${S.bgroup===g.id?' sel':''}" data-g="${g.id}"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${g.c};margin-right:5px"></span>${esc(g.name)}</button>`).join('')}<input id="nq" placeholder="Highlight a label…" value="${esc(NET.q)}"></div>
+    <div class="filters"><span class="mono" style="color:var(--ink-soft)">MAPPING LINES</span>${[['both','Mine and the class'],['mine','Mine'],['class','The class'],['none','Off']].map(([k,t]) => `<button class="chip${S.glayer===k?' sel':''}" data-gl="${k}">${t}</button>`).join('')}<span class="small muted" id="ninfo"></span></div>
+    <div class="netwrap"><svg class="net" id="net" role="img" aria-label="Every scheme as bubbles and lines, with the mappings between them"></svg><div class="netbtns"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button><button id="zfit" class="w">Fit</button><button id="ztidy" class="w">Tidy</button></div></div>
+    <div class="legend"><span><svg width="16" height="16"><circle cx="8" cy="8" r="6" fill="#5A6478"/></svg>scheme and top concepts</span><span><svg width="16" height="16"><circle cx="8" cy="8" r="5" fill="#fff" stroke="#5A6478" stroke-width="2"/></svg>concept</span><span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="#C4C7CE" stroke-width="1.6"/></svg>broader / narrower</span><span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="#6B3FA0" stroke-width="1.4" stroke-dasharray="1 5" stroke-linecap="round"/></svg>related</span><span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="#2456A6" stroke-width="3"/></svg>exactMatch</span><span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="#2456A6" stroke-width="2.4" stroke-dasharray="7 6"/></svg>closeMatch</span><span><svg width="30" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="#B98A12" stroke-width="2.4"/><path d="M22,1 L30,5 L22,9 z" fill="#B98A12"/></svg>broad / narrow, arrow at the broader</span><span><svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="#6B3FA0" stroke-width="2.4" stroke-dasharray="2 6" stroke-linecap="round"/></svg>relatedMatch</span></div>
+    <div id="ndetail"></div>`;
+  const svg=$('#net');
+  const setVb = () => svg.setAttribute('viewBox', `${NET.vb.x} ${NET.vb.y} ${NET.vb.w} ${NET.vb.h}`);
+  const draw = () => { svg.innerHTML = netSvgInner(list); $('#ninfo').textContent = NET.drawn+' drawn'+(NET.q.trim()?' · '+NET.hits+' concept'+(NET.hits===1?'':'s')+' carry that label':''); };
+  const detail = () => { const el=$('#ndetail'), m=NET.sel&&list.find(x=>x.id===NET.sel.src);
+    if(!m){ el.innerHTML='<p class="small muted">Tap a bubble to read its labels, definition and mappings. Its neighbours stay lit and everything else fades.</p>'; return; }
+    if(!NET.sel.iri){ const s0=m.schemes[0]||{}; el.innerHTML=`<div class="detail"><h4>${esc(m.title)}</h4><div class="small muted">${esc(G(m.group).name)} · by ${esc(m.by)} · ${m.concepts.size} concepts · ${m.depth} levels</div>${s0.desc?`<p style="margin-top:8px">${esc(s0.desc)}</p>`:''}<div class="btns"><button class="ghost" id="openscheme">Open this scheme</button></div></div>`; $('#openscheme').onclick=()=>{ S.view=m.id; vsel=null; S.step='browse'; render(); }; return; }
+    el.innerHTML = conceptDetail(m.concepts.get(NET.sel.iri), m, true);
+    el.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { if(m.concepts.has(b.dataset.go)){ NET.sel={src:m.id, iri:b.dataset.go}; draw(); detail(); } });
+    $('#mapthis').onclick = () => { S.mapL=m.id; if(S.mapR===m.id) S.mapR=''; pick={L:NET.sel.iri,R:null,p:null}; S.step='map'; render(); window.scrollTo({top:0,behavior:'smooth'}); }; };
+  const choose = k => { const p=NET.pos.get(k); if(!p) return; NET.sel = (NET.sel&&NET.sel.src===p.src&&NET.sel.iri===p.iri) ? null : {src:p.src, iri:p.iri}; draw(); detail(); };
+  const toSvg = e => { const r=svg.getBoundingClientRect(), sc=Math.max(NET.vb.w/r.width, NET.vb.h/r.height), ox=(r.width*sc-NET.vb.w)/2, oy=(r.height*sc-NET.vb.h)/2; return {x:NET.vb.x-ox+(e.clientX-r.left)*sc, y:NET.vb.y-oy+(e.clientY-r.top)*sc, sc}; };
+  svg.onpointerdown = e => { const g=e.target.closest('.nb'), pt=toSvg(e); NET.drag={k:g?g.dataset.k:null, sx:e.clientX, sy:e.clientY, px:pt.x, py:pt.y, vx:NET.vb.x, vy:NET.vb.y, moved:false}; svg.setPointerCapture(e.pointerId); if(!g) svg.classList.add('panning'); };
+  svg.onpointermove = e => { const d=NET.drag; if(!d) return; if(!d.moved && Math.hypot(e.clientX-d.sx, e.clientY-d.sy)<5) return; d.moved=true;
+    if(d.k){ const pt=toSvg(e), p=NET.pos.get(d.k), dx=pt.x-d.px, dy=pt.y-d.py; d.px=pt.x; d.py=pt.y;
+      p.x+=dx; p.y+=dy; NET.autofit=false; netReheat(0.18); }
+    else { const sc=toSvg(e).sc; NET.autofit=false; NET.vb.x=d.vx-(e.clientX-d.sx)*sc; NET.vb.y=d.vy-(e.clientY-d.sy)*sc; setVb(); } };
+  svg.onpointerup = svg.onpointercancel = e => { const d=NET.drag; NET.drag=null; svg.classList.remove('panning'); if(d && !d.moved && d.k) choose(d.k); else if(d && !d.moved && NET.sel){ NET.sel=null; draw(); detail(); } };
+  svg.onkeydown = e => { const g=e.target.closest&&e.target.closest('.nb'); if(g && (e.key==='Enter'||e.key===' ')){ e.preventDefault(); choose(g.dataset.k); } };
+  const zoom = (f, at) => { NET.autofit=false; const cx=at?at.x:NET.vb.x+NET.vb.w/2, cy=at?at.y:NET.vb.y+NET.vb.h/2, w=Math.min(NET.full.w*3, Math.max(240, NET.vb.w*f)), k=w/NET.vb.w; NET.vb.x=cx-(cx-NET.vb.x)*k; NET.vb.y=cy-(cy-NET.vb.y)*k; NET.vb.w=w; NET.vb.h*=k; setVb(); };
+  svg.onwheel = e => { if(!(e.ctrlKey||e.metaKey)) return;   // plain scrolling belongs to the page
+    e.preventDefault(); zoom(e.deltaY>0?1.12:1/1.12, toSvg(e)); };
+  $('#zin').onclick=()=>zoom(0.75); $('#zout').onclick=()=>zoom(1/0.75); $('#zfit').onclick=()=>{ NET.vb=netBounds(); NET.autofit=true; setVb(); };
+  $('#ztidy').onclick=()=>{ netLayout(list); NET.links=netLinks(list); netReheat(0.85); };
+  document.querySelectorAll('#card [data-g]').forEach(b => b.onclick = () => { S.bgroup=b.dataset.g; render(); });
+  document.querySelectorAll('#card [data-gl]').forEach(b => b.onclick = () => { S.glayer=b.dataset.gl; render(); });
+  const nq=$('#nq'); nq.oninput = () => { NET.q=nq.value; draw(); };
+  NET.paint = () => { setVb(); draw(); }; NET.links = netLinks(list);
+  NET.paint(); detail(); netReheat(fresh?0.85:0.25);
+}
+
+/* ───────── step 4 · map ───────── */
+const pairKey = (a,b) => a<b ? a+' '+b : b+' '+a;
+function classMaps(){ const out=[], me=myName().toLowerCase(); for(const m of shared()) if(m.ok && !(S.maps.length && me && m.by.toLowerCase()===me)) for(const x of m.mappings){   // my own submitted mappings are already shown as mine
+  const A=findConcept(x.a), B=findConcept(x.b); out.push({a:x.a, p:x.p, b:x.b, by:x.by, aSrc:A?A.src:'', bSrc:B?B.src:''}); } return out; }
+const norm = s => s.toLowerCase().replace(/[^a-z0-9]+/g,'').replace(/s$/,'');
+function suggestions(L,R){
+  const idx = new Map(); for(const c of R.concepts.values()) for(const [k,arr] of [['preferred',c.pref],['alternative',c.alt],['hidden',c.hidden]]) for(const x of arr){ const n=norm(x.v); if(n.length<2) continue; if(!idx.has(n)) idx.set(n,[]); idx.get(n).push({c,k,v:x.v}); }
+  const out=[], seen=new Set(), mapped=new Set(S.maps.map(x=>pairKey(x.a,x.b)));
+  for(const c of L.concepts.values()) for(const [k,arr] of [['preferred',c.pref],['alternative',c.alt],['hidden',c.hidden]]) for(const x of arr) for(const h of (idx.get(norm(x.v))||[])){ const pk=pairKey(c.iri,h.c.iri); if(c.iri===h.c.iri || seen.has(pk) || mapped.has(pk)) continue; seen.add(pk); out.push({a:c, b:h.c, v:x.v, ka:k, kb:h.k}); }
+  return out;
+}
+let paneFilter = {L:'', R:''};
+function renderMap(){
+  const list = schemesOnly();
+  if(list.length < 2){ $('#card').innerHTML = `<h2>Map across schemes</h2><p>Mapping needs at least two schemes. ${loadNote?esc(loadNote):'Check back once your classmates have handed theirs in.'}</p>${samplesBanner()}`; return; }
+  if(!srcById(S.mapL)) S.mapL = (MINE.find(m=>m.ok&&m.concepts.size) || list.find(m=>m.group===S.me.group) || list[0]).id;
+  if(!srcById(S.mapR) || S.mapR===S.mapL) S.mapR = (list.find(m => m.id!==S.mapL && m.group!==srcById(S.mapL).group) || list.find(m => m.id!==S.mapL)).id;
+  const order = list.slice().sort((a,b) => GROUPS.findIndex(g=>g.id===a.group)-GROUPS.findIndex(g=>g.id===b.group));
+  const opts = (side,sel) => `<div class="pickscheme">${order.map(m => `<button class="sch${m.id===sel?' sel':''}" data-side="${side}" data-id="${esc(m.id)}" style="--c:${G(m.group).c}"><b>${esc(G(m.group).name)}</b><span>${esc(whoOf(m))}${m.origin==='mine'?' · this device':''}</span></button>`).join('')}</div>`;
+  $('#card').innerHTML = `
+    <h2>Map across schemes</h2>
+    <p>Four groups built four vocabularies, and the knowledge graph needs them to meet. Pick a concept on the left, pick one on the right, then say how they relate. Read both definitions first: a shared label is a lead, not a match.</p>
+    ${samplesBanner()}
+    <div class="meters" id="goal"></div>
+    <div class="bench">
+      <div class="pane"><h3>From</h3>${opts('L',S.mapL)}<div class="filters"><input id="fL" placeholder="Filter…" value="${esc(paneFilter.L)}"></div><div class="tree" id="tL"></div></div>
+      <div class="pane"><h3>To</h3>${opts('R',S.mapR)}<div class="filters"><input id="fR" placeholder="Filter…" value="${esc(paneFilter.R)}"></div><div class="tree" id="tR"></div></div>
+    </div>
+    <div id="pick"></div>
+    <div id="sugg"></div>
+    <div id="mine"></div>`;
+  document.querySelectorAll('.pickscheme .sch').forEach(b => b.onclick = () => { const id=b.dataset.id, L=b.dataset.side==='L';
+    if(id===(L?S.mapR:S.mapL)){ [S.mapL,S.mapR]=[S.mapR,S.mapL]; pick={L:pick.R,R:pick.L,p:null}; }      // picking the other side's scheme swaps the two
+    else if(L){ S.mapL=id; pick={L:null,R:pick.R,p:null}; } else { S.mapR=id; pick={L:pick.L,R:null,p:null}; }
+    render(); });
+  ['L','R'].forEach(side => { const f=$('#f'+side); f.oninput = () => { paneFilter[side]=f.value; drawPane(side); }; drawPane(side); });
+  drawGoal(); drawPick(); drawSugg(); drawMine();
+}
+function drawGoal(){
+  const rels = new Set(S.maps.map(x=>x.p)).size, others = new Set();
+  S.maps.forEach(x => { [x.aSrc,x.bSrc].forEach(id => { const m=srcById(id); if(m) others.add(m.group); }); });
+  const reach = Math.max(0, others.size-1);
+  const el=$('#goal'); if(!el) return;
+  el.innerHTML = [[S.maps.length,GOAL.maps,'mappings made'],[rels,GOAL.rels,'different relations used'],[reach,GOAL.schemes,'other subgraphs reached']].map(([n,g,t]) => `<div class="meter${n>=g?' done':''}"><b>${n}<span style="font-size:15px;color:var(--ink-soft)"> / ${g}</span></b><span>${t}</span></div>`).join('');
+}
+function drawPane(side){
+  const m = srcById(side==='L'?S.mapL:S.mapR), el=$('#t'+side); if(!m||!el) return;
+  el.innerHTML = treeHtml(m, {sel:pick[side], filter:paneFilter[side], count:iri => S.maps.filter(x=>x.a===iri||x.b===iri).length});
+  el.querySelectorAll('.cn').forEach(b => b.onclick = () => { pick[side] = pick[side]===b.dataset.iri ? null : b.dataset.iri; pick.p=null; drawPane(side); drawPick(); });
+}
+function sideHtml(c, m){ if(!c) return '<span class="muted">Nothing picked yet.</span>'; return `<b>${esc(label(c))}</b><span class="small muted">${esc(m.title)}</span><div style="margin-top:4px">${esc((c.def[0]||{}).v||'No definition given. Ask the group what they meant before you map to it.')}</div>${c.scope.length?`<div class="small" style="margin-top:4px"><i>Scope:</i> ${esc(c.scope[0].v)}</div>`:''}${c.alt.length?`<div class="small muted" style="margin-top:4px">Also: ${esc(c.alt.map(x=>x.v).join(', '))}</div>`:''}${c.broader.size?`<div class="small muted">Under: ${esc([...c.broader].map(i=>nameOf(i,m.id)).join(', '))}</div>`:''}`; }
+function drawPick(){
+  const el=$('#pick'); if(!el) return;
+  const Lm=srcById(S.mapL), Rm=srcById(S.mapR), a=pick.L&&Lm.concepts.get(pick.L), b=pick.R&&Rm.concepts.get(pick.R);
+  if(!a && !b){ el.innerHTML = ''; return; }
+  const existing = a&&b ? S.maps.find(x => pairKey(x.a,x.b)===pairKey(a.iri,b.iri)) : null;
+  const theirs = a&&b ? classMaps().filter(x => pairKey(x.a,x.b)===pairKey(a.iri,b.iri)) : [];
+  el.innerHTML = `<div class="pick"><div class="pair"><div class="side">${sideHtml(a,Lm)}</div><div class="side">${sideHtml(b,Rm)}</div></div>
+    ${a&&b ? (a.iri===b.iri ? `<ul class="flags"><li class="bad">✕ These two have the same IRI, so to a machine they are already one resource. There is nothing to map, and one of the two groups needs its own namespace.</li></ul>` : `
+      <div class="rels">${RELS.map(r => `<button class="rel${pick.p===r.p?' sel':''}" data-p="${r.p}" title="${esc(r.tip)}"><b>skos:${r.p}</b>${esc(r.short)}</button>`).join('')}</div>
+      ${pick.p ? `<div class="say">${esc(REL(pick.p).say('“'+label(a)+'”','“'+label(b)+'”'))}<div class="small muted" style="font-weight:400;margin-top:3px">${esc(REL(pick.p).tip)}</div></div>${warnFor(a,b,pick.p)}
+        <div class="field"><label for="why">Why? One line for your classmates (optional)</label><input id="why" placeholder="e.g. same definition, different wording" autocomplete="off" value="${esc(existing&&existing.p===pick.p?existing.note||'':'')}"></div>` : `<p class="small muted" style="margin:6px 0 0">Choose the relation that holds between these two.</p>`}
+      ${existing?`<p class="small" style="margin:6px 0 0">You mapped this pair as <span class="relname">skos:${existing.a===a.iri?existing.p:INV[existing.p]}</span>. Adding again replaces it.</p>`:''}
+      ${theirs.length?`<p class="small" style="margin:6px 0 0">Classmates on this pair: ${theirs.map(x=>`<span class="relname">skos:${x.a===a.iri?x.p:INV[x.p]}</span> <span class="muted">(${esc(x.by)})</span>`).join(', ')}</p>`:''}
+      <div class="btns"><button class="next" id="addmap" ${pick.p?'':'disabled'}>${existing?'Replace mapping':'Add mapping'}</button><button class="ghost small" id="clearpick">Clear</button></div>`) : `<p class="small muted" style="margin:10px 0 0">Now pick a concept ${a?'on the right':'on the left'}.</p>`}</div>`;
+  el.querySelectorAll('.rel').forEach(r => r.onclick = () => { pick.p=r.dataset.p; drawPick(); });
+  const add=$('#addmap'); if(add) add.onclick = () => {
+    const note = ($('#why')||{}).value||''; S.maps = S.maps.filter(x => pairKey(x.a,x.b)!==pairKey(a.iri,b.iri));
+    S.maps.push({a:a.iri, aSrc:Lm.id, p:pick.p, b:b.iri, bSrc:Rm.id, note:note.trim()});
+    toast(`${label(a)} skos:${pick.p} ${label(b)}`); pick={L:null,R:null,p:null}; save(); render();
+  };
+  const cl=$('#clearpick'); if(cl) cl.onclick = () => { pick={L:null,R:null,p:null}; drawPane('L'); drawPane('R'); drawPick(); };
+}
+function warnFor(a,b,p){
+  const w=[];
+  if(p==='exactMatch'){
+    if(!a.def.length || !b.def.length) w.push('One of these has no definition. An exact match made on the label alone is a guess.');
+    const chain = exactComponent(a.iri).concat(exactComponent(b.iri)).filter(i => i!==a.iri && i!==b.iri);
+    if(chain.length) w.push('exactMatch chains. This also makes '+[...new Set(chain)].map(i=>'“'+nameOf(i)+'”').join(', ')+' the same concept as both of these.');
+  }
+  if((p==='broadMatch'||p==='narrowMatch') && a.def.length && b.def.length && norm(label(a))===norm(label(b))) w.push('Same label on both sides, yet you say one is broader. Check that the definitions really differ in scope.');
+  return w.length ? `<ul class="flags">${w.map(t=>`<li class="warn">! ${esc(t)}</li>`).join('')}</ul>` : '';
+}
+function exactComponent(iri){ const adj=new Map(); S.maps.filter(x=>x.p==='exactMatch').forEach(x => { (adj.get(x.a)||adj.set(x.a,[]).get(x.a)).push(x.b); (adj.get(x.b)||adj.set(x.b,[]).get(x.b)).push(x.a); }); const seen=new Set([iri]), st=[iri]; while(st.length){ for(const n of (adj.get(st.pop())||[])) if(!seen.has(n)){ seen.add(n); st.push(n); } } return [...seen]; }
+function drawSugg(){
+  const el=$('#sugg'); if(!el) return; const sg = suggestions(srcById(S.mapL), srcById(S.mapR));
+  el.innerHTML = sg.length ? `<h3>Leads: labels that appear in both schemes</h3><p class="small muted">The same string on both sides. Some are the same concept, some are false friends. Open each and read the definitions.</p><div class="sugg">${sg.slice(0,12).map((s,i) => `<button class="sg" data-i="${i}"><b>${esc(label(s.a))}</b> <span class="muted">↔</span> <b>${esc(label(s.b))}</b> <span class="mono">· "${esc(s.v)}" is ${s.ka} here, ${s.kb} there</span></button>`).join('')}</div>` : '';
+  el.querySelectorAll('.sg').forEach(b => b.onclick = () => { const s=sg[+b.dataset.i]; pick={L:s.a.iri, R:s.b.iri, p:null}; drawPane('L'); drawPane('R'); drawPick(); $('#pick').scrollIntoView({behavior:'smooth',block:'center'}); });
+}
+function mapsTable(list, mine){
+  return `<table class="tbl"><thead><tr><th>Concept</th><th>Relation</th><th>Concept</th><th>${mine?'Why':'By'}</th>${mine?'<th></th>':''}</tr></thead><tbody>${list.map((x,i) => { const A=srcById(x.aSrc), B=srcById(x.bSrc); return `<tr><td><b>${esc(nameOf(x.a,x.aSrc))}</b><div class="small muted">${esc(A?A.title:'not in the class folder')}</div></td><td><span class="relname">skos:${x.p}</span></td><td><b>${esc(nameOf(x.b,x.bSrc))}</b><div class="small muted">${esc(B?B.title:'not in the class folder')}</div></td><td class="small">${esc(mine?(x.note||'—'):x.by)}</td>${mine?`<td><button class="ghost small danger" data-del="${i}">Remove</button></td>`:''}</tr>`; }).join('')}</tbody></table>`;
+}
+function drawMine(){
+  const el=$('#mine'); if(!el) return;
+  el.innerHTML = `<h3>Your mappings (${S.maps.length})</h3>${S.maps.length ? mapsTable(S.maps,true)+`<div class="btns"><button class="next" id="toreview">Review &amp; export →</button></div>` : '<p class="muted small">None yet.</p>'}`;
+  el.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { S.maps.splice(+b.dataset.del,1); save(); render(); });
+  const t=$('#toreview'); if(t) t.onclick = () => { S.step='review'; render(); window.scrollTo({top:0,behavior:'smooth'}); };
+}
+
+/* ───────── step 5 · review & export ───────── */
+function canon(x){ return x.a < x.b ? {k:x.a+' '+x.b, a:x.a, b:x.b, p:x.p} : {k:x.b+' '+x.a, a:x.b, b:x.a, p:INV[x.p]}; }
+function reviewFlags(){
+  const F=[]; const mine=S.maps;
+  if(!mine.length) return F;
+  const seenComp=new Set();
+  for(const x of mine.filter(x=>x.p==='exactMatch')){ const comp=exactComponent(x.a).sort(); const id=comp.join(' '); if(seenComp.has(id)) continue; seenComp.add(id);
+    const bySrc=new Map(); comp.forEach(i => { const c=findConcept(i); if(c){ if(!bySrc.has(c.src)) bySrc.set(c.src,[]); bySrc.get(c.src).push(label(c)); } });
+    for(const [src,labs] of bySrc) if(labs.length>1) F.push({lvl:'bad', t:`Your exact matches chain together ${labs.map(l=>'“'+l+'”').join(' and ')}, two concepts from the same scheme (${srcById(src).title}). exactMatch is transitive, so you have declared them one concept.`, d:['Downgrade one link in the chain to closeMatch.']});
+    if(comp.length>2) F.push({lvl:'info', t:`Entailed by transitivity: ${comp.map(i=>'“'+nameOf(i)+'”').join(' = ')}.`, d:['You asserted some of these pairs; a reasoner adds the rest.']});
+  }
+  const blind = mine.filter(x => x.p==='exactMatch' && (!(findConcept(x.a,x.aSrc)||{def:[]}).def.length || !(findConcept(x.b,x.bSrc)||{def:[]}).def.length));
+  if(blind.length) F.push({lvl:'warn', t:`${blind.length} exact match${blind.length===1?'':'es'} made where one side has no definition.`, d:blind.map(x=>`${nameOf(x.a,x.aSrc)} = ${nameOf(x.b,x.bSrc)}`)});
+  const share = mine.filter(x=>x.p==='exactMatch').length / mine.length;
+  if(mine.length>=5 && share>0.7) F.push({lvl:'warn', t:'Most of your mappings are exactMatch.', d:['Four groups rarely draw the same boundary around a concept. Look again for close, broader and related matches.']});
+  const cm = classMaps(), dis=[];
+  for(const x of mine){ const c=canon(x); const other = cm.map(canon).filter(y => y.k===c.k && y.p!==c.p); if(other.length) dis.push(`${nameOf(c.a)} / ${nameOf(c.b)}: you say ${c.p}, a classmate says ${[...new Set(other.map(o=>o.p))].join(', ')}`); }
+  if(dis.length) F.push({lvl:'info', t:'You and a classmate mapped the same pair differently. Worth a conversation.', d:dis});
+  const rels=new Set(mine.map(x=>x.p)).size;
+  if(mine.length>=GOAL.maps && rels>=GOAL.rels && !F.some(f=>f.lvl==='bad')) F.unshift({lvl:'good', t:'Target met: enough mappings, a range of relations, and no contradictions.', d:[]});
+  return F;
+}
+function mapGraph(list){
+  const cols=[]; list.forEach(x => [x.aSrc,x.bSrc].forEach(id => { if(id && srcById(id) && !cols.includes(id)) cols.push(id); }));
+  cols.sort((p,q) => GROUPS.findIndex(g=>g.id===srcById(p).group)-GROUPS.findIndex(g=>g.id===srcById(q).group));
+  if(cols.length<2) return '';
+  const W=1140, colW=W/cols.length, nw=Math.min(210,colW-46), nh=28, gap=40, top=64;
+  const nodes=new Map(); const colNodes=cols.map(()=>[]);
+  list.forEach(x => [[x.a,x.aSrc],[x.b,x.bSrc]].forEach(([iri,src]) => { const ci=cols.indexOf(src); if(ci<0||nodes.has(iri)) return; const n={iri, ci, lab:nameOf(iri,src)}; nodes.set(iri,n); colNodes[ci].push(n); }));
+  colNodes.forEach((arr,ci) => { arr.sort((a,b)=>a.lab.localeCompare(b.lab)); arr.forEach((n,i) => { n.x=colW*ci+colW/2; n.y=top+i*gap+nh/2; }); });
+  let H = top + Math.max(...colNodes.map(a=>a.length))*gap + 14;
+  const style = {exactMatch:['#2456A6','',3], closeMatch:['#2456A6','6 5',2], broadMatch:['#B98A12','',2], narrowMatch:['#B98A12','',2], relatedMatch:['#6B3FA0','2 5',2]};
+  const maxCh = Math.floor((nw-18)/6.4);
+  let edges='', lanes=0;
+  list.forEach(x => { let n1=nodes.get(x.a), n2=nodes.get(x.b); if(!n1||!n2||n1.ci===n2.ci) return;
+    let arrow=false; if(x.p==='narrowMatch'){ [n1,n2]=[n2,n1]; arrow=true; } else if(x.p==='broadMatch') arrow=true;      // path runs narrower → broader
+    const dir = n1.ci<n2.ci ? 1 : -1, x1=n1.x+dir*nw/2, x2=n2.x-dir*(nw/2+(arrow?7:0)); const [c,dash,w]=style[x.p];
+    let d;
+    if(Math.abs(n1.ci-n2.ci)===1){ const mx=(x1+x2)/2; d=`M${x1},${n1.y} C${mx},${n1.y} ${mx},${n2.y} ${x2},${n2.y}`; }
+    else {   // skips a column: run in a lane underneath the columns in between, never behind their concepts
+      const between = colNodes.slice(Math.min(n1.ci,n2.ci)+1, Math.max(n1.ci,n2.ci));
+      const lane = top + Math.max(...between.map(a=>a.length))*gap + 4 + (lanes++)*11;
+      const xa = n1.x+dir*(colW/2+6), xb = n2.x-dir*(colW/2+6), m1=(x1+xa)/2, m2=(xb+x2)/2;
+      d=`M${x1},${n1.y} C${m1},${n1.y} ${m1},${lane} ${xa},${lane} L${xb},${lane} C${m2},${lane} ${m2},${n2.y} ${x2},${n2.y}`;
+      H = Math.max(H, lane+18);
+    }
+    edges += `<path class="e" d="${d}" stroke="${c}" stroke-width="${w}"${dash?` stroke-dasharray="${dash}"`:''}${arrow?' marker-end="url(#arr)"':''}><title>${esc(nameOf(x.a,x.aSrc))} skos:${x.p} ${esc(nameOf(x.b,x.bSrc))}${x.by?' · '+esc(x.by):''}</title></path>`; });
+  const heads = cols.map((id,ci) => { const m=srcById(id); const t=G(m.group).name; return `<text class="col" x="${colW*ci+colW/2}" y="22" text-anchor="middle">${esc(t)}<title>${esc(m.title)}</title></text><text class="colby" x="${colW*ci+colW/2}" y="40" text-anchor="middle">${esc(whoOf(m).length>28?whoOf(m).slice(0,27)+'…':whoOf(m))}</text>`; }).join('');
+  const ns = [...nodes.values()].map(n => { const m=srcById(cols[n.ci]); const t=n.lab.length>maxCh?n.lab.slice(0,maxCh-1)+'…':n.lab; return `<g class="n"><rect x="${n.x-nw/2}" y="${n.y-nh/2}" width="${nw}" height="${nh}" rx="14" stroke="${G(m.group).c}"/><text x="${n.x}" y="${n.y+4}" text-anchor="middle">${esc(t)}</text><title>${esc(n.lab)} — ${esc(((findConcept(n.iri,cols[n.ci])||{def:[]}).def[0]||{}).v||'no definition')}</title></g>`; }).join('');
+  return `<div class="graphwrap"><svg class="graph" viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapping graph"><defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#B98A12"/></marker></defs>${heads}${edges}${ns}</svg></div>
+    <div class="legend"><span><svg width="34" height="8"><line x1="0" y1="4" x2="34" y2="4" stroke="#2456A6" stroke-width="3"/></svg>exactMatch</span><span><svg width="34" height="8"><line x1="0" y1="4" x2="34" y2="4" stroke="#2456A6" stroke-width="2" stroke-dasharray="6 5"/></svg>closeMatch</span><span><svg width="34" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="#B98A12" stroke-width="2"/><path d="M26,1 L34,5 L26,9 z" fill="#B98A12"/></svg>broad / narrow (arrow points at the broader concept)</span><span><svg width="34" height="8"><line x1="0" y1="4" x2="34" y2="4" stroke="#6B3FA0" stroke-width="2" stroke-dasharray="2 5"/></svg>relatedMatch</span></div>`;
+}
+function mappingTtl(){
+  const by = myName()||'Unnamed';
+  const lines = ['@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .','@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .','@prefix skos: <http://www.w3.org/2004/02/skos/core#> .','@prefix dct:  <http://purl.org/dc/terms/> .','', `# SKOS Crosswalk · mappings by ${by.replace(/[\r\n]/g,' ')} · ${today()}`, '# One direction is stated for each pair; the inverse (narrowMatch for broadMatch, and so on) is entailed.',''];
+  const iri = i => '<'+i.replace(/[<>"{}|^`\\\s]/g, ch => '%'+ch.charCodeAt(0).toString(16).toUpperCase().padStart(2,'0'))+'>';
+  for(const x of S.maps){ lines.push(`# ${nameOf(x.a,x.aSrc)} (${(srcById(x.aSrc)||{title:'?'}).title})  ${x.p}  ${nameOf(x.b,x.bSrc)} (${(srcById(x.bSrc)||{title:'?'}).title})`.replace(/[\r\n]/g,' ')); if(x.note) lines.push('# why: '+x.note.replace(/[\r\n]/g,' ')); lines.push(`${iri(x.a)} skos:${x.p} ${iri(x.b)} .`, ''); }
+  return lines.join('\n');
+}
+function mappingCsv(){ const q = v => '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; return [['source label','source scheme','source IRI','relation','target label','target scheme','target IRI','why','mapped by']].concat(S.maps.map(x => [nameOf(x.a,x.aSrc),(srcById(x.aSrc)||{}).title,x.a,'skos:'+x.p,nameOf(x.b,x.bSrc),(srcById(x.bSrc)||{}).title,x.b,x.note,myName()])).map(r => r.map(q).join(',')).join('\r\n'); }
+function renderReview(){
+  const cm = classMaps(); if(S.layer!=='mine' && !cm.length) S.layer='mine';
+  const mine = S.maps.map(x => Object.assign({by:myName()||'you'}, x));
+  const shown = S.layer==='mine' ? mine : S.layer==='class' ? cm : mine.concat(cm);
+  const F = reviewFlags(); const fname = 'mapping--'+slug(myName()||'unnamed')+'.ttl';
+  // where the class disagrees
+  const byPair = new Map(); mine.concat(cm).forEach(x => { const c=canon(x); if(!byPair.has(c.k)) byPair.set(c.k,[]); byPair.get(c.k).push(Object.assign({by:x.by},c)); });
+  const split = [...byPair.values()].filter(a => new Set(a.map(y=>y.p)).size>1);
+  $('#card').innerHTML = `
+    <h2>Review &amp; export</h2>
+    <p>Your crosswalk as a graph, checked for the mistakes mapping invites. Export it as Turtle and hand it in the same way as your scheme, so the class can see where the four vocabularies meet, and where people disagree.</p>
+    <div class="filters"><span class="mono" style="color:var(--ink-soft)">SHOW</span><button class="chip${S.layer==='mine'?' sel':''}" data-layer="mine">Mine (${mine.length})</button><button class="chip${S.layer==='class'?' sel':''}" data-layer="class"${cm.length?'':' disabled'}>The class (${cm.length})</button><button class="chip${S.layer==='both'?' sel':''}" data-layer="both"${cm.length?'':' disabled'}>Both</button></div>
+    ${shown.length ? (mapGraph(shown) || '<p class="muted">The mapped concepts are not in the schemes loaded here, so there is nothing to draw.</p>') : '<p class="muted">No mappings yet. Make some under <b>Map across schemes</b>.</p>'}
+    ${F.length?`<h3>Checks on your mappings</h3>${flagsHtml(F)}`:''}
+    ${split.length?`<h3>Where the class disagrees</h3><table class="tbl"><thead><tr><th>Pair</th><th>Relations asserted</th></tr></thead><tbody>${split.map(a => `<tr><td><b>${esc(nameOf(a[0].a))}</b> / <b>${esc(nameOf(a[0].b))}</b></td><td>${a.map(y => `<span class="relname">skos:${y.p}</span> <span class="muted small">(${esc(y.by)})</span>`).join(', ')}</td></tr>`).join('')}</tbody></table>`:''}
+    ${mine.length?`<h3>Your mappings</h3>${mapsTable(S.maps,true)}
+      <h3>Export</h3><div class="exports"><button id="x-ttl">Mapping file<span class="fmt">.ttl</span></button><button id="x-csv">Spreadsheet<span class="fmt">.csv</span></button><button id="x-copy">Copy the Turtle</button></div>
+      <details><summary>Preview the Turtle</summary><pre class="ttl">${esc(mappingTtl())}</pre></details>
+      ${CONFIG.api ? `<div class="note"><span class="lab">Hand it in</span>Submit your mappings to the class graph store. They appear for everyone under "The class", and resubmitting replaces your earlier set.</div>${submitBox('sendmaps','my mappings')}` : `<div class="note"><span class="lab">Hand it in</span>Download <b>${esc(fname)}</b> and submit it the same way as your scheme. Once it is in the class folder, your mappings appear here for everyone under "The class".</div>`}
+      <div class="btns"><button class="ghost small danger" id="wipe">Clear all my mappings</button></div>`:''}
+    ${cm.length?`<details${S.layer==='class'?' open':''}><summary>Mappings handed in by the class (${cm.length})</summary>${mapsTable(cm,false)}</details>`:''}`;
+  document.querySelectorAll('[data-layer]').forEach(b => b.onclick = () => { S.layer=b.dataset.layer; render(); });
+  document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { S.maps.splice(+b.dataset.del,1); render(); });
+  const need = () => { if(!myName()){ toast('Add your own name under Check & submit first, so the file is named after you.'); return false; } return true; };
+  const sm=$('#sendmaps'); if(sm) sm.onclick = () => submitToClass('mapping', mappingTtl(), sm);
+  if($('#x-ttl')){ $('#x-ttl').onclick = () => { if(need()){ download(fname, mappingTtl(), 'text/turtle'); S.done.mapFile = fname; save(); toast('Downloaded '+fname+'. Now upload it to Classroom.'); render(); } };
+    $('#x-csv').onclick = () => download('skos-crosswalk-mappings-'+slug(myName()||'unnamed')+'-'+today()+'.csv', mappingCsv(), 'text/csv');
+    $('#x-copy').onclick = () => navigator.clipboard.writeText(mappingTtl()).then(()=>toast('Turtle copied.'));
+    $('#wipe').onclick = () => { if(confirm('Remove all '+S.maps.length+' of your mappings?')){ S.maps=[]; render(); } }; }
+}
+
+/* ───────── go ───────── */
+(async function(){ await loadClass(); loadMine(); render(); })();
+</script>
+</body>
+</html>

@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SKOS in the Wild</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --paper:#F7F7F2; --grid:rgba(36,86,166,.07); --surface:#FFFFFF; --ink:#20283A; --ink-soft:#5A6478;
+    --accent:#2456A6; --accent-ink:#FFFFFF; --line:#DDDDD3; --ok:#2F7D4F; --ok-bg:#EAF3ED; --miss:#B23B26; --miss-bg:#F7ECE8;
+    --warn:#B98A12; --warn-bg:#FBF3DC; --gold:#B98A12; --chip:#EEEEE6; --extract-bg:#F1F3F8; --shadow:0 2px 10px rgba(32,40,58,.08); --purple:#6B3FA0;
+  }
+  *{box-sizing:border-box}
+  button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:inherit}
+  .w,.slot .drop,.blank,.ln .drop,.opts button{user-select:none;-webkit-user-select:none}
+  body{margin:0;color:var(--ink);font:400 16.5px/1.5 "Source Sans 3",system-ui,sans-serif;background:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;min-height:100vh}
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 20px 80px;min-width:0}
+  header{margin-bottom:14px;position:relative;padding-right:106px}
+  .kgg-logo{position:absolute;top:0;right:0;height:88px;width:auto;background:#fff;border-radius:12px;padding:4px 8px;box-shadow:var(--shadow)}
+  @media (max-width:520px){header{padding-right:76px}.kgg-logo{height:62px}}
+  .eyebrow{font:600 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font:800 clamp(30px,6vw,44px)/1.05 "Bricolage Grotesque","Source Sans 3",sans-serif;margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-soft);margin:0}
+  /* progress bar */
+  .hud{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 14px;box-shadow:var(--shadow)}
+  .hud .score{font:800 22px "Bricolage Grotesque",sans-serif;color:var(--accent)} .hud .score small{font:600 12px "IBM Plex Mono",monospace;color:var(--ink-soft);margin-left:4px}
+  .hud .bar{flex:1;min-width:140px;height:10px;background:var(--chip);border-radius:999px;overflow:hidden} .hud .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));width:0;transition:width .4s}
+  .hud .badges{display:flex;gap:4px;flex-wrap:wrap} .badge{width:34px;height:34px;border-radius:50%;background:var(--chip);display:flex;align-items:center;justify-content:center;font-size:17px;border:2px solid transparent;filter:grayscale(1);opacity:.45;transition:all .3s;cursor:default}
+  .badge.on{filter:none;opacity:1;border-color:var(--gold);background:var(--warn-bg);transform:scale(1.06)}
+  .levels{display:flex;gap:6px;margin:0 0 14px;flex-wrap:wrap}
+  .levels button{flex:1;min-width:112px;font:700 13px "Bricolage Grotesque",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:10px;padding:9px 10px;cursor:pointer;text-align:left}
+  .levels button .n{font:600 10.5px "IBM Plex Mono",monospace;color:var(--accent);display:block;letter-spacing:.1em;margin-bottom:2px}
+  .levels button .c{font:600 10.5px "IBM Plex Mono",monospace;color:var(--ink-soft);display:block;margin-top:2px;min-height:13px}
+  .levels button.on{background:var(--surface);border-color:var(--accent);box-shadow:var(--shadow)} .levels button.done .n{color:var(--ok)}
+  button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:24px;overflow-wrap:anywhere;min-width:0}
+  .card h2{font:800 26px "Bricolage Grotesque",sans-serif;margin:0 0 6px} .card h3{font:800 17px "Bricolage Grotesque",sans-serif;margin:22px 0 8px}
+  .card p{margin:0 0 10px} .muted{color:var(--ink-soft)} .small{font-size:14px}
+  .mono{font:600 12px "IBM Plex Mono",monospace;letter-spacing:.06em}
+  code,.code{font:600 13.5px "IBM Plex Mono",monospace;color:var(--accent);background:var(--extract-bg);border-radius:5px;padding:1px 5px}
+  .lvl{display:inline-block;font:600 11px/1 "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:6px 12px;margin-bottom:10px}
+  .note{background:var(--extract-bg);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:11px 15px;font-size:15px;margin:10px 0}
+  .note .lab{display:block;margin-bottom:5px;color:var(--accent);font:600 12px "IBM Plex Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+  .story{border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0;background:var(--paper)}
+  .story b.t{font:800 17px "Bricolage Grotesque",sans-serif;display:block;margin-bottom:4px}
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}
+  .fact{background:var(--extract-bg);border-radius:10px;padding:10px 12px} .fact b{display:block;font:800 24px/1 "Bricolage Grotesque",sans-serif;color:var(--accent)} .fact span{font-size:13px;color:var(--ink-soft)}
+  a{color:var(--accent);font-weight:600}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
+  button.next{font:700 15px "Bricolage Grotesque",sans-serif;color:var(--accent-ink);background:var(--accent);border:none;border-radius:10px;padding:10px 18px;cursor:pointer}
+  button.ghost{font:700 14px "Bricolage Grotesque",sans-serif;color:var(--accent);background:transparent;border:1.5px solid var(--accent);border-radius:10px;padding:8px 14px;cursor:pointer}
+  button.ghost.small{font-size:13px;padding:6px 11px} button.ghost.danger{color:var(--miss);border-color:var(--miss)}
+  /* tap-to-place */
+  .cloud{display:flex;gap:8px;flex-wrap:wrap;background:var(--paper);border:1.5px dashed var(--line);border-radius:12px;padding:12px;margin:10px 0;min-height:56px;align-items:center}
+  .cloud .empty{color:var(--ink-soft);font-size:14px;font-style:italic}
+  .w{font:600 14.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer;transition:transform .12s,border-color .12s}
+  .w.code{font:600 13px "IBM Plex Mono",monospace;color:var(--accent);background:var(--surface)}
+  .w:hover{border-color:var(--accent)} .w.sel{background:var(--accent);color:#fff;border-color:var(--accent);transform:scale(1.05)} .w.sel.code{color:#fff}
+  .w.shake{animation:shake .4s} @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  .slots{display:grid;gap:8px;margin:10px 0}
+  .slot{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,220px);gap:10px;align-items:center;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}
+  @media (max-width:600px){.slot{grid-template-columns:1fr}}
+  .slot .q{font-size:15px} .slot .q b{font:800 15px "Bricolage Grotesque",sans-serif;display:block} .slot .q .yr{font:600 12px "IBM Plex Mono",monospace;color:var(--accent);margin-right:6px}
+  .slot .drop{min-height:40px;border:2px dashed var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--accent);cursor:pointer;background:#F6F9FE;padding:6px 10px;text-align:center}
+  .slot .drop:hover{background:#E6EDF8} .slot.ok .drop{border-style:solid;border-color:var(--ok);background:var(--ok-bg);color:var(--ok);font-weight:700;cursor:default}
+  .slot.ok{border-color:#BFDCCB} .slot .drop.hot{background:#E6EDF8;box-shadow:0 0 0 3px #C9D8F0}
+  .why{font-size:14px;color:var(--miss);background:var(--miss-bg);border-radius:8px;padding:7px 10px;margin:6px 0} .why.good{color:var(--ok);background:var(--ok-bg)}
+  /* turtle fill */
+  pre.ttl{background:var(--extract-bg);border-radius:12px;padding:14px 16px;font:400 13.5px/1.75 "IBM Plex Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin:10px 0;color:var(--ink)}
+  pre.ttl .blank{display:inline-block;min-width:120px;border:2px dashed var(--accent);border-radius:8px;padding:0 8px;color:var(--accent);cursor:pointer;background:#F6F9FE;text-align:center;vertical-align:middle;line-height:1.5}
+  pre.ttl .blank:hover,pre.ttl .blank.hot{background:#E6EDF8} pre.ttl .blank.ok{border-style:solid;border-color:var(--ok);background:var(--ok-bg);color:var(--ok);font-weight:600;cursor:default}
+  pre.ttl .c{color:var(--ink-soft)}
+  /* choose */
+  .qs{display:grid;gap:10px;margin:10px 0}
+  .qq{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--paper)}
+  .qq .t{font-size:15.5px;margin-bottom:8px} .qq .t b{font:800 15px "Bricolage Grotesque",sans-serif}
+  .opts{display:flex;gap:6px;flex-wrap:wrap}
+  .opts button{font:600 14px "Source Sans 3",sans-serif;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer}
+  .opts button.code{font:600 13px "IBM Plex Mono",monospace;color:var(--accent)}
+  .opts button:hover{border-color:var(--accent)} .opts button.ok{background:var(--ok);border-color:var(--ok);color:#fff} .opts button.bad{background:var(--miss-bg);border-color:var(--miss);color:var(--miss)} .opts button:disabled{cursor:default;opacity:.85}
+  /* expansion demo */
+  .demo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start} @media (max-width:720px){.demo{grid-template-columns:1fr}}
+  .tree{border:1.5px solid var(--line);border-radius:12px;background:var(--paper);padding:10px 12px;font-size:15px}
+  .tree div{padding:3px 0} .tree .d1{padding-left:18px} .tree .d2{padding-left:36px} .tree .hit{background:var(--warn-bg);border-radius:6px;font-weight:700} .tree .alt{color:var(--ink-soft);font-size:13px}
+  .docs{display:grid;gap:6px} .doc{border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;font-size:14.5px;background:var(--surface);display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .doc .tag{font:600 11px "IBM Plex Mono",monospace;color:var(--ink-soft);white-space:nowrap} .doc.hit{border-color:var(--ok);background:var(--ok-bg)} .doc.hit .tag{color:var(--ok)}
+  .search{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+  .search input{flex:1;min-width:160px;font:400 15px "Source Sans 3",sans-serif;border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;background:var(--surface);color:var(--ink)}
+  .toggle{display:flex;border:1.5px solid var(--accent);border-radius:999px;overflow:hidden} .toggle button{font:700 13px "Bricolage Grotesque",sans-serif;background:transparent;color:var(--accent);border:none;padding:7px 12px;cursor:pointer} .toggle button.on{background:var(--accent);color:#fff}
+  .count{font:800 26px "Bricolage Grotesque",sans-serif;color:var(--accent)}
+  /* fix game */
+  .lines{display:grid;gap:5px;margin:10px 0}
+  .ln{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(140px,200px);gap:8px;align-items:center;font:400 13.5px/1.5 "IBM Plex Mono",monospace;background:var(--extract-bg);border-radius:8px;padding:6px 10px}
+  @media (max-width:600px){.ln{grid-template-columns:28px 1fr} .ln .drop{grid-column:1/-1}}
+  .ln .no{font-size:11px;color:var(--ink-soft)} .ln .drop{min-height:34px;border:2px dashed var(--accent);border-radius:8px;font:600 13px "Source Sans 3",sans-serif;color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;background:#F6F9FE;padding:4px 8px;text-align:center}
+  .ln .drop.hot{background:#E6EDF8} .ln.ok{background:var(--ok-bg)} .ln.ok .drop{border-style:solid;border-color:var(--ok);color:var(--ok);cursor:default} .ln.fine .drop{visibility:hidden}
+  .ln.fine .drop{visibility:visible;border-color:var(--line);color:var(--ink-soft);background:transparent}
+  .reveal{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:14px 0}
+  .bcard{border:1.5px solid var(--line);border-radius:14px;padding:14px;background:var(--paper);text-align:center} .bcard .ic{font-size:36px} .bcard b{display:block;font:800 16px "Bricolage Grotesque",sans-serif;margin-top:4px} .bcard span{font-size:13px;color:var(--ink-soft)}
+  .bcard.on{border-color:var(--gold);background:var(--warn-bg)} .bcard.off .ic{filter:grayscale(1);opacity:.4}
+  .tbl{width:100%;border-collapse:collapse;font-size:14.5px;margin:8px 0} .tbl th{font:700 12px "Bricolage Grotesque",sans-serif;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)} .tbl td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  @media (max-width:640px){ .tbl thead{display:none} .tbl tr{display:block;border-bottom:1px solid var(--line);padding:6px 0} .tbl td{display:block;border:none;padding:2px 0} }
+  .exports{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px} .exports button{font:600 13.5px "Source Sans 3",sans-serif;color:var(--ink);background:var(--chip);border:1.5px solid transparent;border-radius:10px;padding:8px 12px;cursor:pointer} .exports button:hover{border-color:var(--accent)} .exports .fmt{font:600 11px "IBM Plex Mono",monospace;color:var(--accent);margin-left:5px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--paper);font:600 14px "Source Sans 3",sans-serif;padding:10px 16px;border-radius:999px;box-shadow:var(--shadow);opacity:0;transition:opacity .2s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
+  .toast.show{opacity:1}
+  .conf{position:fixed;inset:0;pointer-events:none;z-index:30;overflow:hidden} .conf i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:fall 2.4s linear forwards} @keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:.2}}
+  details{margin:8px 0} summary{cursor:pointer;font:700 15px "Bricolage Grotesque",sans-serif;color:var(--accent)}
+  @media print{ body{background:none} .levels,.btns,.exports,.kgg-logo,button,.toast,.hud{display:none!important} .card{box-shadow:none;border:none;padding:0} }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../index.html">Knowledge Checks</a></li><li aria-current="page">SKOS in the Wild</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="kgg-logo" src="../assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Knowledge Graph Academy · Module 3 · SKOS</div>
+    <h1>SKOS in the Wild</h1>
+    <p class="sub">Where SKOS came from, who runs on it, and what they had to bend to make it work. Seven levels, seven badges, one field guide.</p>
+  </header>
+  <div class="hud"><span class="score"><span id="score">0</span><small>/ <span id="total">0</span> PTS</small></span><div class="bar"><i id="bar"></i></div><div class="badges" id="badges"></div><button class="ghost small danger" id="reset">Start over</button></div>
+  <div class="levels" id="levels"></div>
+  <div class="card" id="card"></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="conf" id="conf"></div>
+
+<script>
+/* ───────── state ───────── */
+const KEY='kga.skoswild.v1';
+const LEVELS=[
+  {id:'origins',  n:'1', title:'Origins',          badge:'🕰️', bname:'Historian'},
+  {id:'model',    n:'2', title:'The instrument case', badge:'🎻', bname:'Cataloguer'},
+  {id:'world',    n:'3', title:'World tour',       badge:'🌍', bname:'Field agent'},
+  {id:'align',    n:'4', title:'SKOS vs OWL',      badge:'⚖️', bname:'Aligner'},
+  {id:'xl',       n:'5', title:'Labels with a life', badge:'🏷️', bname:'Label wrangler'},
+  {id:'search',   n:'6', title:'Query expansion',  badge:'🔎', bname:'Search engineer'},
+  {id:'quality',  n:'7', title:'Quality patrol',   badge:'🛡️', bname:'Inspector'},
+  {id:'end',      n:'★', title:'Field badge',      badge:'', bname:''}
+];
+let S={level:'origins', pts:{}, misses:{}, done:{}, badges:{}, name:''};
+try{ const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j) S=Object.assign(S,j); }catch(e){}
+const save=()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('show'),2400); }
+function confetti(){ const c=$('#conf'); c.innerHTML=''; const cols=['#2456A6','#B98A12','#2F7D4F','#6B3FA0','#B23B26']; for(let i=0;i<90;i++){ const s=document.createElement('i'); s.style.left=Math.random()*100+'vw'; s.style.background=cols[i%cols.length]; s.style.animationDelay=(Math.random()*.8)+'s'; s.style.animationDuration=(1.8+Math.random()*1.4)+'s'; c.appendChild(s);} setTimeout(()=>c.innerHTML='',3600); }
+// re-render a game's markup without the page jumping: keep the container's height while it swaps, and restore the scroll position
+function repaint(el, html){ const y=window.scrollY, h=el.offsetHeight; el.style.minHeight=h+'px'; el.innerHTML=html; window.scrollTo(0,y); requestAnimationFrame(()=>{ el.style.minHeight=''; window.scrollTo(0,y); }); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const MAX={};   // points available per level, filled as games register
+function award(level, key, n){ S.pts[level]=S.pts[level]||{}; if(S.pts[level][key]) return; S.pts[level][key]=n||1; save(); hud(); }
+function miss(level){ S.misses[level]=(S.misses[level]||0)+1; save(); }
+const levelPts=l=>Object.values(S.pts[l]||{}).reduce((a,b)=>a+b,0);
+const totalPts=()=>Object.keys(S.pts).reduce((a,l)=>a+levelPts(l),0);
+const totalMax=()=>Object.values(MAX).reduce((a,b)=>a+b,0);
+function checkDone(level){ if(S.done[level]) return; if(levelPts(level)>=MAX[level]){ S.done[level]=true; if((S.misses[level]||0)<=3) S.badges[level]=true; save(); hud(); confetti(); toast(S.badges[level]?'Level complete. Badge earned: '+LEVELS.find(x=>x.id===level).bname+'.':'Level complete. Under four misses next time earns the badge.'); } }
+
+/* ───────── HUD ───────── */
+function hud(){
+  $('#score').textContent=totalPts(); $('#total').textContent=totalMax(); $('#bar').style.width=(totalMax()?100*totalPts()/totalMax():0)+'%';
+  $('#badges').innerHTML=LEVELS.filter(l=>l.badge).map(l=>`<span class="badge${S.badges[l.id]?' on':''}" title="${esc(l.bname)}${S.badges[l.id]?' · earned':''}">${l.badge}</span>`).join('');
+  $('#levels').innerHTML=LEVELS.map(l=>`<button data-l="${l.id}" class="${S.level===l.id?'on':''}${S.done[l.id]?' done':''}"><span class="n">${S.done[l.id]?'✓ ':''}LEVEL ${l.n}</span>${esc(l.title)}<span class="c">${l.badge?(levelPts(l.id)+' / '+(MAX[l.id]||0)+' pts'):(Object.keys(S.badges).length+' badges')}</span></button>`).join('');
+  document.querySelectorAll('#levels button').forEach(b=>b.onclick=()=>{ S.level=b.dataset.l; save(); render(); window.scrollTo({top:0,behavior:'smooth'}); });
+}
+$('#reset').onclick=()=>{ if(confirm('Start over? Points, badges and progress on this device are removed.')){ localStorage.removeItem(KEY); S={level:'origins',pts:{},misses:{},done:{},badges:{},name:''}; render(); } };
+
+/* ───────── generic tap-to-place: chips in a cloud, slots that accept one chip each ───────── */
+// spec: {level, key, chips:[{id,text,code?}], slots:[{id, html, accept:[ids], why:{chipId:reason}}], onDone}
+function placeGame(el, spec){
+  const placed={}; let sel=null; const state=(S.pts[spec.level]||{});
+  spec.slots.forEach(s=>{ if(state[spec.key+':'+s.id]) placed[s.id]=s.accept[0]; });
+  const draw=()=>{
+    const used=new Set(Object.values(placed));
+    const free=spec.chips.filter(c=>!used.has(c.id));
+    repaint(el, `<div class="cloud">${free.length?free.map(c=>`<button class="w${c.code?' code':''}${sel===c.id?' sel':''}" data-c="${c.id}">${esc(c.text)}</button>`).join(''):'<span class="empty">All placed.</span>'}</div>
+      <div class="slots">${spec.slots.map(s=>`<div class="slot${placed[s.id]?' ok':''}" data-s="${s.id}"><div class="q">${s.html}</div><div class="drop${sel&&!placed[s.id]?' hot':''}">${placed[s.id]?esc(spec.chips.find(c=>c.id===placed[s.id]).text):(sel?'Place here':'—')}</div></div>`).join('')}</div><div class="why" id="why-${spec.key}" hidden></div>`);
+    const select=id=>{ sel=id; el.querySelectorAll('[data-c]').forEach(b=>b.classList.toggle('sel', b.dataset.c===sel)); el.querySelectorAll('.slot').forEach(sl=>{ const d=sl.querySelector('.drop'); if(sl.classList.contains('ok')) return; d.classList.toggle('hot', !!sel); d.textContent = sel ? 'Place here' : '—'; }); };
+    el.querySelectorAll('[data-c]').forEach(b=>b.onclick=e=>{ e.preventDefault(); select(sel===b.dataset.c?null:b.dataset.c); });
+    el.querySelectorAll('.slot').forEach(sl=>sl.onclick=()=>{ const s=spec.slots.find(x=>x.id===sl.dataset.s); if(!sel||placed[s.id]) return;
+      const why=el.querySelector('#why-'+spec.key);
+      if(s.accept.includes(sel)){ placed[s.id]=sel; award(spec.level, spec.key+':'+s.id, 1); sel=null; why.hidden=true; draw(); if(Object.keys(placed).length===spec.slots.length){ if(spec.onDone) spec.onDone(); checkDone(spec.level); } }
+      else { miss(spec.level); const chip=spec.chips.find(c=>c.id===sel); why.hidden=false; why.className='why'; why.textContent=(s.why&&s.why[sel])||chip.why||'Not that one. Read the clue again.'; const b=el.querySelector('[data-c="'+sel+'"]'); if(b){ b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); } } });
+  };
+  draw();
+}
+// Turtle with blanks: {level,key, lines:[string with {{id}} markers], chips:[{id,text}], why:{blankId:{chipId:reason}}}
+function fillGame(el, spec){
+  const placed={}; let sel=null; const state=(S.pts[spec.level]||{});
+  const blanks=[]; spec.lines.join('\n').replace(/\{\{(\w+)\}\}/g,(m,id)=>{ blanks.push(id); return m; });
+  blanks.forEach(id=>{ if(state[spec.key+':'+id]) placed[id]=spec.answer[id]; });
+  const draw=()=>{
+    const used=new Set(Object.values(placed)); const free=spec.chips.filter(c=>!used.has(c.id));
+    const code=spec.lines.map(l=>esc(l).replace(/\{\{(\w+)\}\}/g,(m,id)=>`<span class="blank${placed[id]?' ok':''}${sel&&!placed[id]?' hot':''}" data-b="${id}">${placed[id]?esc(spec.chips.find(c=>c.id===placed[id]).text):'…'}</span>`).replace(/(#[^\n]*)/g,'<span class="c">$1</span>')).join('\n');
+    repaint(el, `<div class="cloud">${free.length?free.map(c=>`<button class="w code${sel===c.id?' sel':''}" data-c="${c.id}">${esc(c.text)}</button>`).join(''):'<span class="empty">All placed.</span>'}</div><pre class="ttl">${code}</pre><div class="why" hidden></div>`);
+    const select=id=>{ sel=id; el.querySelectorAll('[data-c]').forEach(b=>b.classList.toggle('sel', b.dataset.c===sel)); el.querySelectorAll('.blank:not(.ok)').forEach(bl=>bl.classList.toggle('hot', !!sel)); };
+    el.querySelectorAll('[data-c]').forEach(b=>b.onclick=e=>{ e.preventDefault(); select(sel===b.dataset.c?null:b.dataset.c); });
+    el.querySelectorAll('.blank').forEach(bl=>bl.onclick=()=>{ const id=bl.dataset.b; if(!sel||placed[id]) return; const why=el.querySelector('.why');
+      if(spec.answer[id]===sel || (spec.alsoOk&&spec.alsoOk[id]&&spec.alsoOk[id].includes(sel))){ placed[id]=sel; award(spec.level, spec.key+':'+id, 1); sel=null; why.hidden=true; draw(); if(Object.keys(placed).length===blanks.length){ if(spec.onDone) spec.onDone(); checkDone(spec.level); } }
+      else { miss(spec.level); why.hidden=false; why.textContent=(spec.why&&spec.why[id]&&spec.why[id][sel])||(spec.chips.find(c=>c.id===sel).why)||'That does not belong there.'; const b=el.querySelector('[data-c="'+sel+'"]'); if(b){ b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); } } });
+  };
+  draw();
+}
+// multiple choice: {level,key, qs:[{id, html, opts:[{t,ok,why,code?}]}]}
+function quiz(el, spec){
+  const state=(S.pts[spec.level]||{});
+  el.innerHTML=`<div class="qs">${spec.qs.map(q=>`<div class="qq" data-q="${q.id}"><div class="t">${q.html}</div><div class="opts">${q.opts.map((o,i)=>`<button data-i="${i}" class="${o.code?'code':''}${state[spec.key+':'+q.id]&&o.ok?' ok':''}" ${state[spec.key+':'+q.id]?'disabled':''}>${esc(o.t)}</button>`).join('')}</div><div class="why" hidden></div></div>`).join('')}</div>`;
+  el.querySelectorAll('.qq').forEach(qq=>{ const q=spec.qs.find(x=>x.id===qq.dataset.q); qq.querySelectorAll('button').forEach(b=>b.onclick=()=>{ const o=q.opts[+b.dataset.i]; const why=qq.querySelector('.why'); why.hidden=false;
+    if(o.ok){ b.classList.add('ok'); qq.querySelectorAll('button').forEach(x=>x.disabled=true); why.className='why good'; why.textContent=o.why; award(spec.level, spec.key+':'+q.id, 1); if(spec.qs.every(x=>(S.pts[spec.level]||{})[spec.key+':'+x.id])) checkDone(spec.level); }
+    else { b.classList.add('bad'); b.disabled=true; miss(spec.level); why.className='why'; why.textContent=o.why; } }); });
+}
+function nextBtn(cur){ const i=LEVELS.findIndex(l=>l.id===cur); const n=LEVELS[i+1]; return n?`<div class="btns"><button class="next" id="nextlvl">${n.id==='end'?'See your field badge →':'Next level: '+esc(n.title)+' →'}</button></div>`:''; }
+function wireNext(){ const b=$('#nextlvl'); if(b) b.onclick=()=>{ const i=LEVELS.findIndex(l=>l.id===S.level); S.level=LEVELS[i+1].id; save(); render(); window.scrollTo({top:0,behavior:'smooth'}); }; }
+
+/* ───────── LEVEL 1 · origins ───────── */
+MAX.origins=6+3;
+function renderOrigins(){
+  $('#card').innerHTML=`<span class="lvl">Level 1 · Origins</span><h2>Where SKOS came from</h2>
+    <p>SKOS is the W3C standard that carries the old craft of knowledge organisation, thesauri, taxonomies, classification schemes and controlled vocabularies, onto the Semantic Web. It sits on RDF, gives every concept a URI, and keeps that concept apart from the words used to name it. That one separation is the reason a search for <i>Fiddle</i> can land on the same place as <i>Violin</i>.</p>
+    <div class="facts"><div class="fact"><b>1997</b><span>the Desire project, an early semantic search effort SKOS grew out of</span></div><div class="fact"><b>2009</b><span>SKOS becomes a W3C Recommendation</span></div><div class="fact"><b>1</b><span>preferred label per language, per concept</span></div><div class="fact"><b>URI</b><span>one machine identifier per concept, labels attached to it</span></div></div>
+    <h3>Put the timeline in order</h3><p class="small muted">Tap an event, then tap the slot it belongs in. Right placements lock; wrong ones bounce back with a reason.</p><div id="g1"></div>
+    <h3>Three quick ones</h3><div id="q1"></div>${nextBtn('origins')}`;
+  placeGame($('#g1'), {level:'origins', key:'timeline',
+    chips:shuffle([{id:'agrovoc-paper',text:'AGROVOC starts life as a paper indexing tool at the FAO'},{id:'desire',text:'The Desire project explores semantic search'},{id:'guide',text:'W3C publishes the SKOS Core Guide working draft'},{id:'rec',text:'SKOS becomes a W3C Recommendation'},{id:'iso',text:'ISO 25964 replaces ISO 2788 and ISO 5964 for thesauri'},{id:'mesh',text:'The US National Library of Medicine publishes MeSH as RDF'}]),
+    slots:[{id:'s1',html:'<span class="yr">1980s</span>first',accept:['agrovoc-paper'],why:{desire:'Desire came later, in the late 1990s.',rec:'The Recommendation is 2009.'}},
+           {id:'s2',html:'<span class="yr">1997–2000</span>second',accept:['desire'],why:{guide:'The Core Guide draft is 2004.',rec:'Not yet a standard: that is 2009.'}},
+           {id:'s3',html:'<span class="yr">2004</span>third',accept:['guide'],why:{rec:'The draft guide came before the Recommendation.',iso:'ISO 25964 is a 2010s standard.'}},
+           {id:'s4',html:'<span class="yr">2009</span>fourth',accept:['rec'],why:{guide:'The working draft was five years earlier.',mesh:'MeSH in RDF came after SKOS was a standard.'}},
+           {id:'s5',html:'<span class="yr">2011–2013</span>fifth',accept:['iso'],why:{mesh:'MeSH RDF came after ISO 25964 Part 1.'}},
+           {id:'s6',html:'<span class="yr">mid-2010s</span>sixth',accept:['mesh']}]});
+  quiz($('#q1'), {level:'origins', key:'q', qs:[
+    {id:'a',html:'<b>What does a SKOS concept stand for?</b> Pick the best description.',opts:shuffle([{t:'A unit of thought with its own URI, separate from any word for it',ok:true,why:'Right. The concept is the idea; labels are attached to it and can change or multiply without touching the identifier.'},{t:'A preferred label with synonyms listed under it',ok:false,why:'That is the label layer. The concept is the thing the labels name.'},{t:'A row in a database of terms',ok:false,why:'SKOS decouples the concept from any one string, which a term row does not.'}])},
+    {id:'b',html:'<b>SKOS against OWL, in one line.</b>',opts:shuffle([{t:'SKOS is lightweight and pragmatic; OWL is expressive and axiom-heavy',ok:true,why:'Yes. SKOS models human classification; OWL models a domain with logical precision.'},{t:'SKOS replaced OWL in 2009',ok:false,why:'They coexist and complement each other, as Level 4 shows.'},{t:'SKOS is OWL for libraries',ok:false,why:'SKOS is its own vocabulary on RDF, deliberately less expressive than OWL.'}])},
+    {id:'c',html:'<b>How many preferred labels may a concept carry in one language?</b>',opts:shuffle([{t:'One',ok:true,why:'One per language tag, so interfaces render the same way every time.'},{t:'As many as you like',ok:false,why:'That is altLabel. prefLabel is one per language.'},{t:'None, labels live in SKOS-XL',ok:false,why:'Plain SKOS carries labels as strings; SKOS-XL is an extension for when labels need their own metadata.'}])}]});
+  wireNext();
+}
+
+/* ───────── LEVEL 2 · the instrument case ───────── */
+MAX.model=9+4;
+function renderModel(){
+  $('#card').innerHTML=`<span class="lvl">Level 2 · The instrument case</span><h2>One vocabulary, read closely</h2>
+    <p>The clearest way to see SKOS is a small vocabulary that does real work. This one classifies musical instruments and the people who play them. Its scheme is <code>mi:musical-instruments</code>, declared with <code>@prefix mi: &lt;http://ilovemusic.com/musical-instruments#&gt;</code>, and <code>mi:string-instrument</code> is one of its top concepts.</p>
+    <div class="story"><b class="t">String instrument, the top of a branch</b>Preferred label "String instrument"; alternative labels "Stringed instrument", "Chordophone", "Strings"; a definition; a scope note that says to use it only where strings are the main sound source, so a snare drum with snares does not wander in; and a <code>skos:exactMatch</code> to Wikidata Q1798603.</div>
+    <h3>Fill in the Violin</h3><p class="small muted">The violin sits under String instrument. "Fiddle" is the folk name, and "First violin" and "Second violin" are orchestral seats, not different instruments. Tap a value, then tap the blank it belongs in. Two chips belong nowhere.</p><div id="g2"></div>
+    <h3>The musicians scheme</h3><p>A parallel taxonomy classifies people: Musicians at the top, Instrumentalists beneath, then Guitarist, Drummer, Pianist, with Composer alongside. Which property carries each of these facts?</p><div id="g2b"></div>${nextBtn('model')}`;
+  fillGame($('#g2'), {level:'model', key:'violin',
+    lines:['mi:violin rdf:type {{t}} ;','    skos:inScheme mi:musical-instruments ;','    {{pl}} "Violin"@en ;','    {{al}} "Fiddle"@en , "First violin"@en , "Second violin"@en ;','    {{br}} {{parent}} ;','    {{sn}} "Fiddle is for folk and traditional contexts. First violin and Second violin are orchestral seating, not separate instruments."@en ;','    {{em}} <http://www.wikidata.org/entity/{{q}}> .'],
+    answer:{t:'concept',pl:'pref',al:'alt',br:'broader',parent:'string',sn:'scope',em:'exact',q:'q8355'},
+    chips:shuffle([{id:'concept',text:'skos:Concept'},{id:'pref',text:'skos:prefLabel'},{id:'alt',text:'skos:altLabel'},{id:'broader',text:'skos:broader'},{id:'string',text:'mi:string-instrument'},{id:'scope',text:'skos:scopeNote'},{id:'exact',text:'skos:exactMatch'},{id:'q8355',text:'Q8355'},
+      {id:'narrower',text:'skos:narrower',why:'Violin is the narrower one. The link from violin points up: skos:broader.'},{id:'sameas',text:'owl:sameAs',why:'owl:sameAs merges the two resources logically. Across vocabularies SKOS uses exactMatch, which Level 4 explains.'},{id:'hidden',text:'skos:hiddenLabel',why:'Hidden labels are for strings you never show, such as misspellings. Fiddle is a real name people use.'},{id:'q1798603',text:'Q1798603',why:'That is the Wikidata item for String instrument, the parent.'}]),
+    why:{al:{pref:'Only one preferred label per language, and it is already "Violin".'},pl:{alt:'"Violin" is the display name, the preferred label.'},parent:{concept:'The broader concept is another mi: concept, not a class.'}}});
+  placeGame($('#g2b'), {level:'model', key:'musicians',
+    chips:shuffle([{id:'hidden',text:'skos:hiddenLabel',code:true},{id:'alt',text:'skos:altLabel',code:true},{id:'related',text:'skos:related',code:true},{id:'scope',text:'skos:scopeNote',code:true},{id:'broader',text:'skos:broader',code:true}]),
+    slots:[{id:'a',html:'<b>"Guitarrist"</b>a misspelling that search should catch but the interface must never show',accept:['hidden'],why:{alt:'An altLabel may be displayed. A misspelling should be found, never shown: hiddenLabel.'}},
+           {id:'b',html:'<b>"Guitar Player", "Session Guitarist"</b>other names people use for the same concept',accept:['alt'],why:{hidden:'These are real names, fit to display. Hidden labels are for strings you hide.'}},
+           {id:'c',html:'<b>Drummer ↔ Guitarist</b>roles that belong together but neither is a kind of the other',accept:['related'],why:{broader:'A drummer is not a kind of guitarist. Sideways links are skos:related.'}},
+           {id:'d',html:'<b>"Use for performers, not instrument makers (luthiers)"</b>',accept:['scope'],why:{alt:'That is an instruction to the indexer, a scope note, not a name.'}},
+           {id:'e',html:'<b>Pianist → Instrumentalists</b>a pianist is a kind of instrumentalist',accept:['broader'],why:{related:'A pianist is a kind of instrumentalist: that is hierarchy, skos:broader.'}}]});
+  wireNext();
+}
+
+/* ───────── LEVEL 3 · world tour ───────── */
+const TOUR=[
+  {t:'UNESCO Thesaurus',who:'UNESCO, Paris',f:'The first major global vocabulary published in SKOS. It is the classification backbone of UNESDOC, a digital library of more than 400,000 publications, in English, Spanish, French, Russian and Arabic. Runs on GraphDB, edited in VocBench, browsed in Skosmos. SKOS has no inverse of skos:inScheme, so UNESCO defined uneskos:contains to walk from a scheme or micro-thesaurus down to its members.'},
+  {t:'National libraries',who:'Libris, DNB, BnF',f:'Sweden\'s Libris publishes its subject headings in SKOS aligned to the Library of Congress Subject Headings. The German National Library publishes its authority files as SKOS linked to LCSH, VIAF and DBpedia. France\'s RAMEAU headings have a SKOS prototype, so subject vocabularies line up across borders.'},
+  {t:'STW and TheSoz',who:'ZBW and GESIS, Germany',f:'Two academic thesauri, for economics and the social sciences. TheSoz uses SKOS-XL plus custom extensions to express compound equivalence, and maps its concepts to AGROVOC and DBpedia.'},
+  {t:'AGROVOC',who:'FAO, Rome',f:'One of the largest knowledge organisation systems in the world: more than 36,000 concepts in up to 33 languages, started on paper in the 1980s and moved to SKOS in 2009 for the AGRIS database. A crop can have dozens of regional names, so AGROVOC leans on SKOS-XL to treat labels as resources of their own, and it keeps concepts such as "climate" in step with EuroVoc and the UNESCO Thesaurus.'},
+  {t:'EuroVoc and ADMS',who:'European Union',f:'The EU\'s multilingual thesaurus indexes EUR-Lex and national parliaments. The Interoperable Europe initiative requires SKOS for the controlled vocabularies of ADMS, and uses skos:notation to tie a concept to its regulatory code.'},
+  {t:'ESCO',who:'European Commission',f:'Skills, Competences, Qualifications and Occupations, built to match CVs to vacancies across the continent. It extends the ILO\'s ISCO-08 occupation classification, with skos:narrowMatch carrying ESCO\'s fine-grained job profiles to the broader ISCO groups. Gender-neutral terms are the preferred labels; gender-specific ones are alternative labels.'},
+  {t:'XKOS',who:'DDI Alliance, statistical agencies',f:'Statistical classifications outgrew plain SKOS. XKOS adds xkos:Correspondence, a table of xkos:ConceptAssociation links that says how a 1992 industry code maps to its 2010 successor, and xkos:maxLength, so the French NAF classification can keep a 40-character SKOS-XL label for a mainframe field next to the full one.'},
+  {t:'MeSH',who:'US National Library of Medicine',f:'Medical Subject Headings index MEDLINE and PubMed. MeSH has three tiers, Descriptors, Concepts and Terms, and pairs Descriptors with Qualifiers such as "administration & dosage". Concept-centred SKOS could not say which pairs are allowed, so NLM added meshv:AllowedDescriptorQualifierPair and its Disallowed twin as nodes in the graph. Hosted on BioPortal, MeSH now joins SNOMED and others in federated SPARQL.'}
+];
+MAX.world=9+2;
+function renderWorld(){
+  $('#card').innerHTML=`<span class="lvl">Level 3 · World tour</span><h2>Who runs on SKOS, and what they had to add</h2>
+    <p>Eight stops. Read the cards, because the game after them asks what each institution needed and which construct answered it. In nearly every case plain SKOS got them most of the way and a small extension did the rest.</p>
+    ${TOUR.map((s,i)=>`<details ${i<2?'open':''}><summary>${esc(s.t)} <span class="muted small" style="font-weight:400">· ${esc(s.who)}</span></summary><div class="story" style="margin-top:6px">${esc(s.f)}</div></details>`).join('')}
+    <h3>Match the need to the construct</h3><p class="small muted">Tap a construct, then the problem it solved. One construct is used twice; one is a decoy.</p><div id="g3"></div>
+    <h3>Two facts to keep</h3><div id="q3"></div>${nextBtn('world')}`;
+  placeGame($('#g3'), {level:'world', key:'tour',
+    chips:shuffle([{id:'contains',text:'uneskos:contains',code:true},{id:'xl',text:'SKOS-XL labels',code:true},{id:'xl2',text:'SKOS-XL labels',code:true},{id:'notation',text:'skos:notation',code:true},{id:'narrowmatch',text:'skos:narrowMatch',code:true},{id:'alt',text:'skos:altLabel',code:true},{id:'corr',text:'xkos:Correspondence',code:true},{id:'maxlen',text:'xkos:maxLength',code:true},{id:'pair',text:'meshv:AllowedDescriptorQualifierPair',code:true},{id:'lang',text:'language tags (@ar, @en)',code:true},{id:'sameas',text:'owl:sameAs',code:true,why:'Nobody on the tour used owl:sameAs for this. It is the decoy, and Level 4 says why.'}]),
+    slots:[{id:'a',html:'<b>UNESCO</b> needs to walk from a micro-thesaurus down to its members, but SKOS only points from concept to scheme',accept:['contains']},
+           {id:'b',html:'<b>UNESCO</b> must hand its SPARQL endpoint the Arabic sub-graph when an Arabic reader asks',accept:['lang']},
+           {id:'c',html:'<b>AGROVOC</b> has crops with dozens of regional names and needs metadata on each name, not just the concept',accept:['xl','xl2']},
+           {id:'d',html:'<b>ADMS vocabularies</b> must tie each concept to its regulatory code',accept:['notation']},
+           {id:'e',html:'<b>ESCO</b> maps its fine-grained job profiles up to the broader ISCO-08 groups',accept:['narrowmatch'],why:{alt:'That is a mapping between two classifications, not a label.'}},
+           {id:'f',html:'<b>ESCO</b> keeps gender-neutral terms as the display name and gender-specific ones findable',accept:['alt']},
+           {id:'g',html:'<b>Eurostat and friends</b> must record how a 1992 classification maps to its 2010 successor',accept:['corr']},
+           {id:'h',html:'<b>NAF (France)</b> needs a label that fits a 40-character mainframe field beside the full one',accept:['maxlen','xl','xl2'],why:{corr:'A correspondence links versions of a classification. This is about the length of one label.'}},
+           {id:'i',html:'<b>MeSH</b> must say which Descriptor and Qualifier combinations indexers may use',accept:['pair']}]});
+  quiz($('#q3'), {level:'world', key:'q', qs:[
+    {id:'a',html:'<b>Which was the first major global vocabulary published in SKOS?</b>',opts:shuffle([{t:'The UNESCO Thesaurus',ok:true,why:'Yes. It became the backbone of UNESDOC and a model for the rest.'},{t:'AGROVOC',ok:false,why:'AGROVOC moved to SKOS in 2009, and is the largest; UNESCO was first.'},{t:'MeSH',ok:false,why:'MeSH came to RDF in the mid-2010s.'}])},
+    {id:'b',html:'<b>Why did statistical agencies write XKOS instead of using plain SKOS?</b>',opts:shuffle([{t:'They must track how classifications change across versions and respect fixed-length legacy fields',ok:true,why:'Right: correspondence tables between versions, and constraints such as maxLength.'},{t:'SKOS cannot hold numbers',ok:false,why:'skos:notation holds codes fine. The gap was versions and field constraints.'},{t:'SKOS is not multilingual',ok:false,why:'Language tags make SKOS multilingual out of the box, as UNESCO and AGROVOC show.'}])}]});
+  wireNext();
+}
+
+/* ───────── LEVEL 4 · SKOS vs OWL ───────── */
+MAX.align=6+5;
+function renderAlign(){
+  $('#card').innerHTML=`<span class="lvl">Level 4 · SKOS vs OWL</span><h2>Two standards, two jobs</h2>
+    <p>OWL models a domain as it is, with axioms a reasoner can check: disjoint classes, necessary and sufficient conditions, property restrictions. SKOS models how people have organised knowledge, which is loose, overlapping and context-bound. Put a thesaurus into <code>owl:subClassOf</code> and a reasoner will draw conclusions nobody meant. The two are complementary: teams often build the SKOS vocabulary first, to agree on the concepts, and axiomatise in OWL afterwards. Punning lets one URI serve as an OWL class and as the subject of <code>skos:broader</code> at the same time.</p>
+    <h3>Which tool for which job?</h3><p class="small muted">Tap a tool, then the statement.</p><div id="g4"></div>
+    <h3>Mapping strength</h3><p>When two vocabularies meet, the property you choose is a promise about how much they share.</p>
+    <table class="tbl"><thead><tr><th>Property</th><th>Strength</th><th>What it commits you to</th></tr></thead><tbody>
+      <tr><td><code>owl:sameAs</code></td><td>Absolute identity</td><td>Every property of A now applies to B, by inference. Fine for two URIs of one real thing. Dangerous for vocabulary mapping.</td></tr>
+      <tr><td><code>skos:exactMatch</code></td><td>Interchangeable for retrieval</td><td>Search may treat them as one, but no axioms travel and each side keeps governing its own model.</td></tr>
+      <tr><td><code>skos:closeMatch</code></td><td>Overlapping</td><td>Close enough for some applications, not all. Not transitive.</td></tr></tbody></table>
+    <div id="q4"></div>${nextBtn('align')}`;
+  placeGame($('#g4'), {level:'align', key:'tool',
+    chips:shuffle([{id:'skos1',text:'SKOS'},{id:'skos2',text:'SKOS'},{id:'skos3',text:'SKOS'},{id:'owl1',text:'OWL'},{id:'owl2',text:'OWL'},{id:'owl3',text:'OWL'}]),
+    slots:[{id:'a',html:'"Every MachineTool has exactly one spindle and is disjoint from HandTool."',accept:['owl1','owl2','owl3'],why:{skos1:'Disjointness and cardinality are axioms. That is OWL.',skos2:'Disjointness and cardinality are axioms. That is OWL.',skos3:'Disjointness and cardinality are axioms. That is OWL.'}},
+           {id:'b',html:'"File Machine tools loosely under Manufacturing systems for browsing."',accept:['skos1','skos2','skos3'],why:{owl1:'A loose filing relation is skos:broader. As a subclass axiom it would mislead a reasoner.',owl2:'A loose filing relation is skos:broader. As a subclass axiom it would mislead a reasoner.',owl3:'A loose filing relation is skos:broader. As a subclass axiom it would mislead a reasoner.'}},
+           {id:'c',html:'"Fiddle and Violin are two names for one idea; show Violin."',accept:['skos1','skos2','skos3'],why:{owl1:'Preferred and alternative labels are SKOS\'s job.',owl2:'Preferred and alternative labels are SKOS\'s job.',owl3:'Preferred and alternative labels are SKOS\'s job.'}},
+           {id:'d',html:'"A reasoner must be able to prove which class an individual belongs to."',accept:['owl1','owl2','owl3'],why:{skos1:'Classification by proof needs OWL\'s necessary and sufficient conditions.',skos2:'Classification by proof needs OWL\'s necessary and sufficient conditions.',skos3:'Classification by proof needs OWL\'s necessary and sufficient conditions.'}},
+           {id:'e',html:'"Agree the list of domain concepts before anyone writes an axiom."',accept:['skos1','skos2','skos3'],why:{owl1:'That preliminary vocabulary is the SKOS phase of ontology engineering.',owl2:'That preliminary vocabulary is the SKOS phase of ontology engineering.',owl3:'That preliminary vocabulary is the SKOS phase of ontology engineering.'}},
+           {id:'f',html:'"A property that holds of a thing and itself (local reflexivity)."',accept:['owl1','owl2','owl3'],why:{skos1:'ObjectHasSelf is OWL 2. SKOS has nothing like it.',skos2:'ObjectHasSelf is OWL 2. SKOS has nothing like it.',skos3:'ObjectHasSelf is OWL 2. SKOS has nothing like it.'}}]});
+  quiz($('#q4'), {level:'align', key:'map', qs:[
+    {id:'a',html:'<b>EuroVoc\'s "climate" and AGROVOC\'s "climate"</b> should be interchangeable in search, with each thesaurus keeping its own rules.',opts:shuffle([{t:'skos:exactMatch',code:true,ok:true,why:'Interchangeable for retrieval, no logical merge. This is the everyday cross-thesaurus link.'},{t:'owl:sameAs',code:true,ok:false,why:'That would pour every axiom of one into the other. Widely called an anti-pattern for vocabulary mapping.'},{t:'skos:closeMatch',code:true,ok:false,why:'Close is for overlap. These two are interchangeable.'}])},
+    {id:'b',html:'<b>"Apple" in one taxonomy and "Red Delicious" in another</b> overlap heavily but are not the same.',opts:shuffle([{t:'skos:closeMatch',code:true,ok:true,why:'Partial or contextual similarity: closeMatch.'},{t:'skos:exactMatch',code:true,ok:false,why:'A variety is not interchangeable with the fruit in general.'},{t:'owl:sameAs',code:true,ok:false,why:'They are not the same resource at all.'}])},
+    {id:'c',html:'<b>A national environmental agency</b> links its internal "Phytoplankton" to a global ontology. Six months later the global ontology adds restrictive axioms, and the agency\'s own search breaks. Which property did they use?',opts:shuffle([{t:'owl:sameAs',code:true,ok:true,why:'Yes. sameAs let the global axioms propagate straight into the local database. exactMatch would have kept the agency in charge of its own model.'},{t:'skos:exactMatch',code:true,ok:false,why:'exactMatch carries no axioms, so nothing would have propagated. The culprit is sameAs.'},{t:'skos:relatedMatch',code:true,ok:false,why:'relatedMatch is harmless; nothing propagates. The culprit is sameAs.'}])},
+    {id:'d',html:'<b>Two URIs for one and the same real-world entity</b>, minted by two systems, where every fact about one should hold of the other.',opts:shuffle([{t:'owl:sameAs',code:true,ok:true,why:'This is the one case for sameAs: real identity, and you want the inference.'},{t:'skos:exactMatch',code:true,ok:false,why:'exactMatch is for concepts in vocabularies. For an entity that is truly one thing, and where you want the facts to merge, sameAs is right.'}])},
+    {id:'e',html:'<b>ISO 25964 distinguishes generic-specific, whole-part and generic-instance hierarchy.</b> Plain SKOS has only skos:broader. What do architects do to keep ISO compliance?',opts:shuffle([{t:'Define custom sub-properties of skos:broader for each ISO role',ok:true,why:'Right. The ISO 25964 to SKOS mapping does it with sub-properties; ThesaurusArray becomes a skos:Collection.'},{t:'Use owl:subClassOf for the generic-specific ones',ok:false,why:'That imports OWL precision into a thesaurus. Sub-properties of broader keep it SKOS.'},{t:'Drop the distinction',ok:false,why:'Then ISO compliance is lost. Sub-properties keep it.'}])}]});
+  wireNext();
+}
+
+/* ───────── LEVEL 5 · SKOS-XL ───────── */
+MAX.xl=8+2;
+function renderXL(){
+  $('#card').innerHTML=`<span class="lvl">Level 5 · Labels with a life of their own</span><h2>SKOS-XL</h2>
+    <p>In plain SKOS a label is a string: <code>skos:prefLabel "Violin"@en</code>. Cheap and fast, but you cannot say anything <i>about</i> the string, when it was added, whether it is a trademark, whether it has been retired as offensive. SKOS-XL makes the label a resource of its own, a <code>skosxl:Label</code>, and puts the text inside it as <code>skosxl:literalForm</code>. AGROVOC does this for its thousands of vernacular crop names; TheSoz does it for compound terms; NAF does it to keep a short mainframe label beside the long one.</p>
+    <h3>The author with two names</h3><p class="small muted">One concept, two reified labels, and a fact hung on each label rather than on the concept. Tap a chip, then a blank. One chip belongs nowhere.</p><div id="g5"></div>
+    <div id="q5"></div>${nextBtn('xl')}`;
+  fillGame($('#g5'), {level:'xl', key:'king',
+    lines:['ex:stephen-king rdf:type skos:Concept ;','    {{p}} ex:label-king ;','    {{a}} ex:label-bachman .','','ex:label-king rdf:type {{lc}} ;','    {{lf}} {{k}} ;','    ex:authorOf {{shining}} .','','ex:label-bachman rdf:type skosxl:Label ;','    skosxl:literalForm {{b}} ;','    ex:authorOf {{running}} .'],
+    answer:{p:'xlpref',a:'xlalt',lc:'label',lf:'literal',k:'king',shining:'shining',b:'bachman',running:'running'},
+    chips:shuffle([{id:'xlpref',text:'skosxl:prefLabel'},{id:'xlalt',text:'skosxl:altLabel'},{id:'label',text:'skosxl:Label'},{id:'literal',text:'skosxl:literalForm'},{id:'king',text:'"Stephen King"@en'},{id:'bachman',text:'"Richard Bachman"@en'},{id:'shining',text:'"The Shining"'},{id:'running',text:'"The Running Man"'},{id:'plainpref',text:'skos:prefLabel',why:'skos:prefLabel takes a string. Here the object is a label resource, so it must be the skosxl: property.'}]),
+    why:{p:{xlalt:'The concept is known as Stephen King; Bachman is the pseudonym, the alternative.'},a:{xlpref:'One preferred label. Bachman is the alternative.'},k:{bachman:'This is the label resource for King.',shining:'The literal form is the name, not the book.'},shining:{running:'Bachman wrote The Running Man; The Shining is King\'s.'},running:{shining:'The Shining goes on the King label.'}}});
+  quiz($('#q5'), {level:'xl', key:'q', qs:[
+    {id:'a',html:'<b>What can you record once a label is a resource?</b>',opts:shuffle([{t:'When it was changed, whether it is a trademark, whether it is deprecated, who owns it',ok:true,why:'Yes: metadata about the term itself, without touching the concept.'},{t:'Nothing new; SKOS-XL is only a different syntax',ok:false,why:'The point is properties on the label. Strings cannot carry them.'},{t:'The concept\'s definition',ok:false,why:'Definitions stay on the concept. SKOS-XL is about the label.'}])},
+    {id:'b',html:'<b>Why does AGROVOC lean on SKOS-XL?</b>',opts:shuffle([{t:'A crop can have dozens of regional names, each needing its own provenance',ok:true,why:'Right. Thirty-three languages and local vernaculars: the labels themselves need governing.'},{t:'It has too many concepts for plain SKOS',ok:false,why:'Concept count is not the issue; labels as resources is.'},{t:'GraphDB requires it',ok:false,why:'No triple store requires SKOS-XL.'}])}]});
+  wireNext();
+}
+
+/* ───────── LEVEL 6 · query expansion ───────── */
+const TREE={id:'string',lab:'String instrument',kids:[{id:'violin',lab:'Violin',alt:'Fiddle',kids:[]},{id:'cello',lab:'Cello',kids:[]},{id:'guitar',lab:'Guitar',kids:[{id:'eguitar',lab:'Electric guitar',kids:[]}]}]};
+const OTHER=[{id:'drums',lab:'Drum kit'},{id:'piano',lab:'Piano'}];
+const DOCS=[{t:'Fiddle tunes of Appalachia',tag:'violin'},{t:'Bach\'s six cello suites',tag:'cello'},{t:'Choosing an amp for an electric guitar',tag:'eguitar'},{t:'Caring for strings in humid weather',tag:'string'},{t:'Tuning a drum kit',tag:'drums'},{t:'Grand piano regulation',tag:'piano'},{t:'Flamenco guitar technique',tag:'guitar'}];
+MAX.search=1+3;
+function renderSearch(){
+  $('#card').innerHTML=`<span class="lvl">Level 6 · Query expansion</span><h2>Why a hierarchy makes search smarter</h2>
+    <p>Keyword search suffers from vocabulary mismatch: the reader asks for a broad term, the documents are tagged with narrow ones, and nothing comes back. SKOS fixes this with transitive reasoning. <code>skos:broader</code> and <code>skos:narrower</code> are not transitive on their own, so the standard adds <code>skos:broaderTransitive</code> and <code>skos:narrowerTransitive</code>, declared as <code>owl:TransitiveProperty</code>. A SPARQL property path such as <code>skos:narrowerTransitive*</code> walks the whole branch, so a search for String instruments also finds the fiddle tunes and the electric guitar amps.</p>
+    <h3>Try it</h3><p class="small muted">Search the library for a concept, then switch expansion on. Documents are tagged with one concept each.</p>
+    <div class="search"><input id="sq" placeholder="Search a concept, e.g. String instrument, Guitar, Fiddle" value="String instrument"><div class="toggle"><button id="mode-kw" class="on">Keyword only</button><button id="mode-x">narrowerTransitive*</button></div></div>
+    <div class="demo"><div><div class="mono muted" style="margin-bottom:6px">THE SCHEME</div><div class="tree" id="tree"></div></div><div><div class="mono muted" style="margin-bottom:6px">MATCHES <span class="count" id="cnt">0</span></div><div class="docs" id="docs"></div></div></div>
+    <div class="why good" id="xpwhy" hidden></div>
+    <h3>Check</h3><div id="q6"></div>${nextBtn('search')}`;
+  let mode='kw';
+  const allC=[]; (function walk(n,d){ allC.push(Object.assign({d},n)); n.kids.forEach(k=>walk(k,d+1)); })(TREE,0); OTHER.forEach(o=>allC.push(Object.assign({d:0,kids:[]},o)));
+  const find=q=>{ q=q.trim().toLowerCase(); if(!q) return null; return allC.find(c=>c.lab.toLowerCase()===q||(c.alt&&c.alt.toLowerCase()===q)) || allC.find(c=>c.lab.toLowerCase().startsWith(q)||(c.alt&&c.alt.toLowerCase().startsWith(q))); };
+  const desc=c=>{ const out=[c.id]; (function w(n){ n.kids.forEach(k=>{ out.push(k.id); w(k); }); })(c); return out; };
+  const draw=()=>{ const c=find($('#sq').value); const hits=c?(mode==='x'?desc(c):[c.id]):[];
+    $('#tree').innerHTML=allC.map(x=>`<div class="d${x.d}${hits.includes(x.id)?' hit':''}">${esc(x.lab)}${x.alt?`<span class="alt"> · alt "${esc(x.alt)}"</span>`:''}</div>`).join('');
+    const hd=DOCS.filter(d=>hits.includes(d.tag)); $('#cnt').textContent=hd.length;
+    $('#docs').innerHTML=DOCS.map(d=>`<div class="doc${hits.includes(d.tag)?' hit':''}"><span>${esc(d.t)}</span><span class="tag">${esc(allC.find(x=>x.id===d.tag).lab)}</span></div>`).join('');
+    const w=$('#xpwhy'); if(c&&c.id==='string'&&mode==='x'){ w.hidden=false; w.textContent='One query, five documents, and the phrase "String instrument" appears in only one of them. That is query expansion.'; award('search','demo',1); checkDone('search'); } else if(c&&c.id==='string'){ w.hidden=false; w.className='why'; w.textContent='Keyword only: one document, the one tagged with the broad term itself. Now switch expansion on.'; } else w.hidden=true; };
+  $('#sq').oninput=draw; $('#mode-kw').onclick=()=>{ mode='kw'; $('#mode-kw').classList.add('on'); $('#mode-x').classList.remove('on'); draw(); }; $('#mode-x').onclick=()=>{ mode='x'; $('#mode-x').classList.add('on'); $('#mode-kw').classList.remove('on'); draw(); };
+  draw();
+  quiz($('#q6'), {level:'search', key:'q', qs:[
+    {id:'a',html:'<b>Which property path walks down a branch from a broad concept?</b>',opts:shuffle([{t:'skos:narrowerTransitive*',code:true,ok:true,why:'Downward, any depth, including the start concept.'},{t:'skos:broaderTransitive*',code:true,ok:false,why:'That walks up, towards the top concept.'},{t:'skos:related+',code:true,ok:false,why:'Associative links are sideways and not hierarchical.'}])},
+    {id:'b',html:'<b>Why does the standard add broaderTransitive rather than making broader transitive?</b>',opts:shuffle([{t:'So a direct parent stays distinguishable from an ancestor',ok:true,why:'Yes. broader records the direct step; the transitive super-property is there for reasoning.'},{t:'For backwards compatibility with ISO 2788',ok:false,why:'The reason is modelling: keeping direct links apart from inferred ones.'},{t:'Because OWL forbids transitive properties',ok:false,why:'OWL has owl:TransitiveProperty; SKOS uses it for the transitive pair.'}])},
+    {id:'c',html:'<b>A reader searches "Fiddle" and gets the Violin documents.</b> Which SKOS feature made that work?',opts:shuffle([{t:'An alternative label on the Violin concept',ok:true,why:'Fiddle is skos:altLabel of the same URI, so it resolves to the same concept.'},{t:'A separate Fiddle concept mapped with exactMatch',ok:false,why:'No second concept is needed; a label does it.'},{t:'A hidden label',ok:false,why:'Fiddle is a real name, shown in interfaces, so altLabel, not hiddenLabel.'}])}]});
+  wireNext();
+}
+
+/* ───────── LEVEL 7 · quality patrol ───────── */
+MAX.quality=4+2;
+function renderQuality(){
+  $('#card').innerHTML=`<span class="lvl">Level 7 · Quality patrol</span><h2>Four ways a vocabulary goes wrong</h2>
+    <p>Vocabularies are built by many hands over years, and structure drifts. The qSKOS framework defines 26 computable quality issues; tools such as Skosify, VocBench and PoolParty check them, and rsine watches live vocabularies and raises an alert when structure degrades. Four issues account for most of the damage:</p>
+    <table class="tbl"><thead><tr><th>Issue</th><th>What it does</th></tr></thead><tbody>
+      <tr><td><b>Omitted top concepts</b></td><td>No skos:hasTopConcept, so nothing can draw the root of the tree. Critical.</td></tr>
+      <tr><td><b>Cyclic hierarchy</b></td><td>A concept is its own ancestor. Transitive reasoning loops forever.</td></tr>
+      <tr><td><b>Disjoint label violation</b></td><td>The same string as prefLabel and altLabel in one language. Breaks a SKOS integrity condition.</td></tr>
+      <tr><td><b>Orphan concept</b></td><td>In the scheme, but no broader, narrower or related link. Invisible to graph traversal.</td></tr></tbody></table>
+    <h3>Inspect this scheme</h3><p class="small muted">Four lines carry an issue. Tap an issue, then the line that has it.</p><div id="g7"></div>
+    <div id="q7"></div>${nextBtn('quality')}`;
+  const lines=[
+    {id:'l1',t:'ex:brass-scheme rdf:type skos:ConceptScheme ; dct:title "Brass instruments"@en .',issue:'top'},
+    {id:'l2',t:'ex:brass rdf:type skos:Concept ; skos:inScheme ex:brass-scheme ;',fine:true},
+    {id:'l3',t:'    skos:prefLabel "Brass instrument"@en ; skos:altLabel "Brass instrument"@en ;',issue:'label'},
+    {id:'l4',t:'    skos:broader ex:trumpet .',issue:'cycle'},
+    {id:'l5',t:'ex:trumpet rdf:type skos:Concept ; skos:inScheme ex:brass-scheme ; skos:prefLabel "Trumpet"@en ; skos:broader ex:brass .',fine:true},
+    {id:'l6',t:'ex:kazoo rdf:type skos:Concept ; skos:inScheme ex:brass-scheme ; skos:prefLabel "Kazoo"@en .',issue:'orphan'}
+  ];
+  const ISS=[{id:'top',t:'Omitted top concepts'},{id:'cycle',t:'Cyclic hierarchy'},{id:'label',t:'Disjoint label violation'},{id:'orphan',t:'Orphan concept'}];
+  const FIX={top:'Add  ex:brass-scheme skos:hasTopConcept ex:brass .  so the tree has a root.',cycle:'Brass is the parent of trumpet, so trumpet cannot also be the parent of brass. Delete this skos:broader.',label:'A string may sit in one label slot only. Drop the altLabel, or make it "Brass"@en.',orphan:'Give the kazoo a place: skos:broader ex:brass, or if it is not brass at all, move it out of this scheme.'};
+  const el=$('#g7'); const placed={}; let sel=null; const st=S.pts.quality||{}; ISS.forEach(i=>{ if(st['fix:'+i.id]) placed[i.id]=lines.find(l=>l.issue===i.id).id; });
+  const draw=()=>{ const used=new Set(Object.keys(placed)); const free=ISS.filter(i=>!used.has(i.id));
+    repaint(el, `<div class="cloud">${free.length?free.map(i=>`<button class="w${sel===i.id?' sel':''}" data-c="${i.id}">${esc(i.t)}</button>`).join(''):'<span class="empty">All four found.</span>'}</div><div class="lines">${lines.map((l,i)=>{ const got=Object.entries(placed).find(([k,v])=>v===l.id); return `<div class="ln${got?' ok':''}${l.fine?' fine':''}" data-l="${l.id}"><span class="no">${i+1}</span><span>${esc(l.t)}</span><span class="drop${sel&&!got?' hot':''}">${got?esc(ISS.find(x=>x.id===got[0]).t):(l.fine?'':'?')}</span></div>${got?`<div class="why good">${esc(FIX[got[0]])}</div>`:''}`; }).join('')}</div><div class="why" id="w7" hidden></div>`);
+    const select=id=>{ sel=id; el.querySelectorAll('[data-c]').forEach(b=>b.classList.toggle('sel', b.dataset.c===sel)); el.querySelectorAll('.ln:not(.ok) .drop').forEach(d=>d.classList.toggle('hot', !!sel)); };
+    el.querySelectorAll('[data-c]').forEach(b=>b.onclick=e=>{ e.preventDefault(); select(sel===b.dataset.c?null:b.dataset.c); });
+    el.querySelectorAll('.ln').forEach(ln=>ln.onclick=()=>{ if(!sel) return; const l=lines.find(x=>x.id===ln.dataset.l); if(Object.values(placed).includes(l.id)) return; const w=el.querySelector('#w7');
+      if(l.issue===sel){ placed[sel]=l.id; award('quality','fix:'+sel,1); sel=null; w.hidden=true; draw(); checkDone('quality'); }
+      else { miss('quality'); w.hidden=false; w.textContent = l.fine ? 'That line is sound. Look for the line that '+({top:'declares the scheme without an entry point.',cycle:'points the hierarchy back on itself.',label:'uses one string in two label slots.',orphan:'has no relationship to any other concept.'})[sel] : 'That line has a different problem. Read it once more.'; } }); };
+  draw();
+  quiz($('#q7'), {level:'quality', key:'q', qs:[
+    {id:'a',html:'<b>Which check would a SPARQL SinglePrefLabelChecker script run?</b>',opts:shuffle([{t:'More than one prefLabel per language on a concept',ok:true,why:'Yes: the one-per-language rule, S14 in the SKOS Reference.'},{t:'Concepts with no definition',ok:false,why:'Useful, but not what that script is named for.'},{t:'Cycles in broader',ok:false,why:'Cycle detection is a separate traversal check.'}])},
+    {id:'b',html:'<b>Where should validation sit in a vocabulary workflow?</b>',opts:shuffle([{t:'Before the vocabulary is committed to the production triple store, with monitoring afterwards',ok:true,why:'Right: SHACL and qSKOS checks in the editor, and a service such as rsine watching the live graph.'},{t:'Only when a user reports a problem',ok:false,why:'By then reasoning and search have been degrading for a while.'},{t:'Never; SKOS has no constraints',ok:false,why:'The Reference defines integrity conditions, and qSKOS lists 26 checkable issues.'}])}]});
+  wireNext();
+}
+
+/* ───────── END · field badge ───────── */
+function renderEnd(){
+  const earned=LEVELS.filter(l=>l.badge&&S.badges[l.id]), done=LEVELS.filter(l=>l.badge&&S.done[l.id]);
+  const rank=earned.length>=7?'Field Cartographer':earned.length>=5?'Senior Field Agent':earned.length>=3?'Field Agent':done.length>=1?'Trainee':'New recruit';
+  $('#card').innerHTML=`<span class="lvl">Field badge</span><h2>${esc(rank)}</h2>
+    <p>${totalPts()} of ${totalMax()} points · ${done.length} of 7 levels complete · ${earned.length} badge${earned.length===1?'':'s'} earned (a badge needs the level complete with three misses or fewer).</p>
+    <div class="reveal">${LEVELS.filter(l=>l.badge).map(l=>`<div class="bcard ${S.badges[l.id]?'on':'off'}"><div class="ic">${l.badge}</div><b>${esc(l.bname)}</b><span>${esc(l.title)} · ${levelPts(l.id)} / ${MAX[l.id]} pts${S.misses[l.id]?' · '+S.misses[l.id]+' miss'+(S.misses[l.id]===1?'':'es'):''}</span></div>`).join('')}</div>
+    <h3>What you can now say about SKOS</h3><ul class="small">
+      <li>It is the W3C's lightweight standard for knowledge organisation systems, a Recommendation since 2009, and it separates the concept from its labels.</li>
+      <li>UNESCO, AGROVOC, EuroVoc, ESCO, MeSH and national libraries publish their vocabularies in it, and each stretched it a little: uneskos, SKOS-XL, XKOS, meshv.</li>
+      <li>SKOS models how people classify; OWL models what is true. Map between vocabularies with exactMatch and closeMatch, and keep owl:sameAs for real identity.</li>
+      <li>SKOS-XL turns a label into a resource you can govern. Transitive properties turn a hierarchy into query expansion. qSKOS-style checks keep the graph sound.</li></ul>
+    <div class="field" style="max-width:320px"><label for="nm" style="display:block;font:600 13.5px 'Source Sans 3',sans-serif;margin-bottom:3px">Your name, for the score card</label><input id="nm" value="${esc(S.name)}" placeholder="e.g. Dana K" style="width:100%;font:400 14.5px 'Source Sans 3',sans-serif;border:1.5px solid var(--line);border-radius:8px;padding:7px 9px"></div>
+    <div class="exports"><button id="x-md">Score card<span class="fmt">.md</span></button><button id="x-csv">Scores<span class="fmt">.csv</span></button><button id="x-print">Print</button></div>
+    <p class="small muted" style="margin-top:12px">Source for the levels: <i>The Semantic Web in Practice: Real-World Applications and Architectural Paradigms of SKOS</i>, and the <a href="https://www.w3.org/TR/skos-reference/" target="_blank" rel="noopener">W3C SKOS Reference</a>.</p>`;
+  $('#nm').oninput=e=>{ S.name=e.target.value; save(); };
+  const rows=LEVELS.filter(l=>l.badge).map(l=>[l.n,l.title,levelPts(l.id),MAX[l.id],S.misses[l.id]||0,S.done[l.id]?'complete':'in progress',S.badges[l.id]?l.bname:'']);
+  const dl=(name,text,type)=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500); };
+  const stamp=()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+  $('#x-md').onclick=()=>dl('skos-in-the-wild-'+(S.name||'score').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+stamp()+'.md', `# SKOS in the Wild · score card\n\n${S.name?'**'+S.name+'** · ':''}${stamp()} · **${rank}** · ${totalPts()} / ${totalMax()} points · ${earned.length} badges\n\n| Level | Points | Misses | Status | Badge |\n|---|---|---|---|---|\n${rows.map(r=>`| ${r[0]} · ${r[1]} | ${r[2]} / ${r[3]} | ${r[4]} | ${r[5]} | ${r[6]} |`).join('\n')}\n`, 'text/markdown');
+  $('#x-csv').onclick=()=>dl('skos-in-the-wild-scores-'+stamp()+'.csv', [['name','level','title','points','max','misses','status','badge']].concat(rows.map(r=>[S.name].concat(r))).map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n'), 'text/csv');
+  $('#x-print').onclick=()=>window.print();
+}
+
+/* ───────── router ───────── */
+function render(){ hud(); ({origins:renderOrigins, model:renderModel, world:renderWorld, align:renderAlign, xl:renderXL, search:renderSearch, quality:renderQuality, end:renderEnd}[S.level]||renderOrigins)(); }
+render();
+</script>
+</body>
+</html>

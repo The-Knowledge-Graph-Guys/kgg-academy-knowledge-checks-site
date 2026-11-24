@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask the Graph</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #F7F7F2; --paper: #FFFFFF; --ink: #20283A; --ink-2: #5A6478; --ink-3: #8C94A6;
+    --line: #DDDDD3; --line-strong: #C5C8BE;
+    --accent: #2456A6; --accent-ink: #FFFFFF; --accent-soft: #E6EDF8;
+    --tbox: #2456A6; --tbox-soft: #E6EDF8;
+    --abox: #7C3F73; --abox-soft: #F0DFEE;
+    --cbox: #B98A12; --cbox-soft: #F7EFD6;
+    --both: #1F7A6D; --both-soft: #DCEFEA;
+    --bad: #B23B26; --bad-soft: #F7ECE8;
+    --grid: rgba(36,86,166,0.07);
+    --shadow: 0 2px 10px rgba(32,40,58,0.08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+    font-family: "Source Sans 3", "Helvetica Neue", Arial, sans-serif; font-size: 16px; line-height: 1.5;
+  }
+  h1, h2, h3 { font-family: "Bricolage Grotesque", sans-serif; margin: 0; text-wrap: balance; }
+  button, textarea, select, input { font: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  code, .mono, textarea.q { font-family: "IBM Plex Mono", Menlo, monospace; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 20px 64px; }
+  header { position: relative; padding-right: 110px; margin-bottom: 18px; }
+  .logo { position: absolute; top: 0; right: 0; height: 72px; width: auto; background: #fff; border-radius: 12px; padding: 4px 8px; box-shadow: var(--shadow); }
+  .eyebrow { font: 600 12px/1 "IBM Plex Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 800; letter-spacing: -.01em; line-height: 1.05; margin: .25em 0 .1em; }
+  h1 span { color: var(--accent); }
+  .lede { color: var(--ink-2); max-width: 66ch; margin: 0; }
+
+  .layout { display: grid; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); gap: 18px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 18px; }
+  .sticky { position: sticky; top: 12px; }
+  @media (max-width: 900px) { .sticky { position: static; } }
+  .card h2 { font-size: 20px; font-weight: 800; }
+  .sub { color: var(--ink-2); font-size: 14px; margin: 4px 0 0; }
+  .btn { padding: 8px 13px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink); font-weight: 600; font-size: 14px; transition: transform .08s, background .15s, border-color .15s; }
+  .btn:hover { border-color: var(--ink-3); }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.primary:hover { filter: brightness(1.06); }
+  .btn.small { padding: 5px 9px; font-size: 13px; }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btn.busy { position: relative; padding-left: 30px; }
+  .btn.busy::before { content: ""; position: absolute; left: 10px; top: 50%; width: 12px; height: 12px; margin-top: -7px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+  textarea.ttl { width: 100%; min-height: 260px; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 10px; font: 12.5px/1.5 "IBM Plex Mono", Menlo, monospace; color: var(--ink); background: var(--bg); resize: vertical; }
+  textarea.ttl.dirty { border-color: var(--cbox); }
+  .status { margin-top: 10px; font-size: 14px; padding: 8px 10px; border-radius: 8px; background: var(--accent-soft); color: var(--ink); transition: background .2s; }
+  .status.bad { background: var(--bad-soft); color: var(--bad); }
+  .status.wait { background: var(--cbox-soft); }
+  .status.ok { background: var(--both-soft); }
+  .bar { height: 4px; border-radius: 2px; background: var(--line); margin-top: 8px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 30%; background: var(--accent); border-radius: 2px; animation: slide 1.1s ease-in-out infinite; }
+  @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }
+  .bar.hidden { display: none; }
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 6px; margin-top: 10px; }
+  .tile { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; animation: fadeUp .35s ease both; }
+  .tile b { display: block; font: 800 20px/1 "Bricolage Grotesque", sans-serif; }
+  .tile span { font-size: 11.5px; color: var(--ink-3); letter-spacing: .04em; text-transform: uppercase; }
+  .tile.a b { color: var(--abox); } .tile.t b { color: var(--tbox); } .tile.c b { color: var(--cbox); }
+  .std { margin-top: 14px; font-size: 13px; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 12px; }
+  .std b { color: var(--ink); }
+  .vendor { margin: 8px 0 0; padding-left: 18px; font-size: 13.5px; color: var(--ink-2); }
+
+  .group { margin-bottom: 18px; }
+  .group-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .group-head h2 { font-size: 19px; }
+  .pill { font: 600 11px/1 "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; padding: 5px 9px; border-radius: 999px; }
+  .pill.a { background: var(--abox-soft); color: var(--abox); } .pill.t { background: var(--tbox-soft); color: var(--tbox); }
+  .pill.c { background: var(--cbox-soft); color: var(--cbox); } .pill.b { background: var(--both-soft); color: var(--both); }
+  .group-head p { margin: 0; color: var(--ink-2); font-size: 14px; flex-basis: 100%; }
+  .qs { display: grid; gap: 10px; }
+  .q { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; border-left: 4px solid var(--accent); transition: box-shadow .25s, border-color .25s; }
+  .q.a { border-left-color: var(--abox); } .q.t { border-left-color: var(--tbox); } .q.c { border-left-color: var(--cbox); } .q.b { border-left-color: var(--both); }
+  .q.flash { box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow); }
+  .q.running .res { opacity: .45; }
+  .q-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+  .q-head h3 { font-size: 16px; font-weight: 700; font-family: "Source Sans 3", sans-serif; display: flex; align-items: center; gap: 8px; }
+  .badge { display: inline-block; min-width: 22px; text-align: center; font: 700 12px/1 "IBM Plex Mono", monospace; padding: 4px 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); transition: transform .2s; }
+  .badge.pop { animation: pop .35s ease; }
+  .badge.zero { background: var(--bg); color: var(--ink-3); }
+  .badge.yes { background: var(--bad-soft); color: var(--bad); } .badge.no { background: var(--both-soft); color: var(--both); }
+  @keyframes pop { 0% { transform: scale(.6); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+  .q-head .tools { display: flex; gap: 6px; align-items: center; }
+  .q select { padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--paper); font-size: 13px; max-width: 220px; }
+  textarea.q { display: none; width: 100%; margin-top: 8px; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; font-size: 12.5px; line-height: 1.5; background: var(--bg); color: var(--ink); resize: vertical; min-height: 120px; }
+  .q.show-sparql textarea.q { display: block; }
+  .live { font-size: 11.5px; color: var(--ink-3); margin-top: 4px; display: none; }
+  .q.show-sparql .live { display: block; }
+  .why { font-size: 13.5px; color: var(--ink-2); margin: 6px 0 0; }
+  .res { margin-top: 8px; transition: opacity .15s; }
+  .res .n { font-size: 12.5px; color: var(--ink-3); margin-bottom: 4px; display: flex; gap: 10px; }
+  .tbl { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th { text-align: left; font: 600 11px/1 "IBM Plex Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; font-variant-numeric: tabular-nums; }
+  tbody tr { animation: fadeUp .3s ease both; }
+  tbody tr:hover { background: var(--bg); }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .thing { color: var(--accent); cursor: pointer; border-bottom: 1px dotted var(--accent); }
+  .thing:hover { background: var(--accent-soft); }
+  td .lit { color: var(--ink); }
+  td .dt { color: var(--ink-3); font-size: 11.5px; margin-left: 4px; font-family: "IBM Plex Mono", monospace; }
+  .ask-res { font: 800 22px "Bricolage Grotesque", sans-serif; padding: 6px 0; }
+  .ask-res.yes { color: var(--bad); } .ask-res.no { color: var(--both); }
+  .ask-res small { display: block; font: 400 13.5px "Source Sans 3", sans-serif; color: var(--ink-2); }
+  .err { color: var(--bad); background: var(--bad-soft); padding: 6px 10px; border-radius: 8px; font-size: 13.5px; animation: fadeUp .25s ease; }
+  .empty { color: var(--ink-3); font-size: 13.5px; animation: fadeUp .25s ease; }
+  .free textarea.q { display: block; min-height: 150px; }
+
+  .about { margin-top: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 10px 12px; animation: fadeUp .25s ease; }
+  .about-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 700; }
+  .about-head small { font-weight: 400; color: var(--ink-3); font-family: "IBM Plex Mono", monospace; font-size: 11.5px; }
+  .about table { margin-top: 6px; }
+  .hidden { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+  @media print { .btn, textarea.ttl, .bar { display: none; } .q { break-inside: avoid; } }
+</style>
+<style id="breadcrumb-css">.crumbs{font:600 13px/1.3 'Source Sans 3',system-ui,sans-serif;color:#5A6478;margin:0 0 14px}.crumbs ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}.crumbs li+li::before{content:'/';margin:0 8px;color:#8C94A6;font-weight:400}.crumbs a{color:var(--accent,#2456A6);text-decoration:none}.crumbs a:hover,.crumbs a:focus-visible{text-decoration:underline}.crumbs [aria-current]{color:#20283A}.crumbs.bar{flex:none;margin:0;padding:7px 16px;background:#fff;border-bottom:1px solid #DDDDD3}body:has(>.crumbs.bar){display:flex;flex-direction:column}body:has(>.crumbs.bar)>.app,body:has(>.crumbs.bar)>.slide{flex:1 1 0;min-height:0;height:auto}@media print{.crumbs{display:none}}</style>
+</head>
+<body>
+<div class="wrap">
+<!-- breadcrumb:start -->
+<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="../../index.html">Knowledge Checks</a></li><li aria-current="page">Ask the Graph</li></ol></nav>
+<!-- breadcrumb:end -->
+
+  <header>
+    <img class="logo" src="../../assets/kgg-logo.webp" alt="The Knowledge Graph Guys">
+    <div class="eyebrow">Business course · Exercise 3</div>
+    <h1>Ask the <span>Graph</span></h1>
+    <p class="lede">One question language for the data and for the blueprint. Load a graph, ask it what it knows, then ask it what it is. Every question here is standard SPARQL, running in your browser on an open-source engine, and would run unchanged on any standards-based triple store.</p>
+  </header>
+
+  <div class="layout">
+    <section class="card sticky">
+      <h2>The graph</h2>
+      <p class="sub">Turtle, the W3C text format for RDF. Paste your export from the Ontology Builder, open a .ttl file, or use the sample.</p>
+      <div class="row">
+        <button class="btn primary" id="loadBtn" type="button">Load graph</button>
+        <button class="btn" id="sampleBtn" type="button">Use the sample</button>
+        <label class="btn" for="fileIn">Open .ttl file</label>
+        <input id="fileIn" type="file" accept=".ttl,.turtle,text/turtle" class="hidden">
+      </div>
+      <textarea class="ttl" id="ttl" spellcheck="false" aria-label="Turtle"></textarea>
+      <div class="status wait" id="status">Starting the query engine…</div>
+      <div class="bar" id="bar"><i></i></div>
+      <div class="summary" id="summary"></div>
+      <div class="std">
+        <b>What is running.</b> SPARQL 1.1 Query (W3C Recommendation, 2013) executed by Oxigraph, an open-source RDF store compiled to WebAssembly. Nothing leaves your browser. The same queries, and the same Turtle file, work on any store that implements the standard.
+        <ul class="vendor">
+          <li>Questions to ask a vendor: does it import and export standard Turtle? Does it answer standard SPARQL? Can we leave with our data and our blueprint intact?</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="ask">
+      <div class="group">
+        <div class="group-head"><h2>Ask the data</h2><span class="pill a">A-Box</span><p>The facts: which things exist and what has been said about them. Click any thing in a result to see everything the graph knows about it.</p></div>
+        <div class="qs" id="qs-a"></div>
+      </div>
+      <div class="group">
+        <div class="group-head"><h2>Ask the blueprint</h2><span class="pill t">T-Box</span><p>The same language, pointed at the ontology itself. Classes and properties are triples too.</p></div>
+        <div class="qs" id="qs-t"></div>
+      </div>
+      <div class="group">
+        <div class="group-head"><h2>Ask the dictionary</h2><span class="pill c">C-Box · SKOS</span><p>Terms that have been collected but not yet modelled, with their preferred and alternative labels.</p></div>
+        <div class="qs" id="qs-c"></div>
+      </div>
+      <div class="group">
+        <div class="group-head"><h2>Ask both at once</h2><span class="pill b">A-Box + T-Box</span><p>The proof that context is a first-class citizen: one query reads a fact and the rule that permitted it.</p></div>
+        <div class="qs" id="qs-b"></div>
+      </div>
+      <div class="group">
+        <div class="group-head"><h2>Your own question</h2><p>Write any SPARQL. It runs as you type. Prefixes from the loaded file are added for you.</p></div>
+        <div class="qs" id="qs-free"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script type="module">
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const STD_PREFIXES = {
+    rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#", rdfs: "http://www.w3.org/2000/01/rdf-schema#",
+    owl: "http://www.w3.org/2002/07/owl#", xsd: "http://www.w3.org/2001/XMLSchema#",
+    skos: "http://www.w3.org/2004/02/skos/core#", dct: "http://purl.org/dc/terms/"
+  };
+
+  // ---------- ready-made questions (generic: they work on any Ontology Builder export) ----------
+  const QUESTIONS = {
+    a: [
+      { title: "What things are there, and what is each one?", why: "Every individual with the class it belongs to. This is the inventory of the data.",
+        q: `SELECT ?thing ?isA WHERE {
+  ?thing a owl:NamedIndividual, ?isA .
+  FILTER(?isA != owl:NamedIndividual)
+} ORDER BY ?isA ?thing` },
+      { title: "Every fact that links two things", why: "Subject, verb, object. Each row is one triple between two individuals.",
+        q: `SELECT ?subject ?verb ?object WHERE {
+  ?subject ?p ?object .
+  ?subject a owl:NamedIndividual .
+  ?object  a owl:NamedIndividual .
+  ?p rdfs:label ?verb .
+} ORDER BY ?subject ?verb` },
+      { title: "Every value that has been recorded", why: "Attributes with their values. Numbers and dates keep their type.",
+        q: `SELECT ?thing ?attribute ?value WHERE {
+  ?thing a owl:NamedIndividual ; ?p ?value .
+  ?p a owl:DatatypeProperty ; rdfs:label ?attribute .
+} ORDER BY ?thing ?attribute` },
+      { title: "Which things are a kind of…, including through the hierarchy?", why: "Inheritance at work: an Enterprise Customer is a Customer without anyone saying so twice. The star after rdfs:subClassOf walks the hierarchy.", param: "class",
+        q: `SELECT ?thing ?directClass WHERE {
+  ?thing a owl:NamedIndividual, ?directClass .
+  ?directClass rdfs:subClassOf* ?CLASS .
+  FILTER(?directClass != owl:NamedIndividual)
+} ORDER BY ?thing` }
+    ],
+    t: [
+      { title: "What kinds of things exist?", why: "The classes. Notice the query looks exactly like the ones above; the ontology is just more triples.",
+        q: `SELECT ?class ?label WHERE {
+  ?class a owl:Class ; rdfs:label ?label .
+} ORDER BY ?label` },
+      { title: "How are the kinds arranged?", why: "The hierarchy: each specialisation and the broader concept it inherits from.",
+        q: `SELECT ?specific ?broader WHERE {
+  ?specific rdfs:subClassOf ?broader .
+} ORDER BY ?broader ?specific` },
+      { title: "What can be said about each kind?", why: "Every property with its domain and range: the sentences the data is allowed to make.",
+        q: `SELECT ?about ?canHave ?pointingTo WHERE {
+  ?p rdfs:domain ?about ; rdfs:range ?pointingTo ; rdfs:label ?canHave .
+} ORDER BY ?about ?canHave` },
+      { title: "What questions can I ask about a…?", why: "What an AI agent would run before answering: everything sayable about a class, including what it inherits. Metadata read like data.", param: "class",
+        q: `SELECT ?canHave ?pointingTo ?definedOn WHERE {
+  ?CLASS rdfs:subClassOf* ?definedOn .
+  ?p rdfs:domain ?definedOn ; rdfs:range ?pointingTo ; rdfs:label ?canHave .
+} ORDER BY ?definedOn ?canHave` }
+    ],
+    c: [
+      { title: "Which terms are waiting to be modelled?", why: "SKOS concepts in the C-Box scheme: collected vocabulary, not yet a class or an instance.",
+        q: `SELECT ?term ?alsoKnownAs WHERE {
+  ?c a skos:Concept ; skos:prefLabel ?term .
+  OPTIONAL { ?c skos:altLabel ?alsoKnownAs }
+} ORDER BY ?term` }
+    ],
+    b: [
+      { title: "For every fact, which rule of the blueprint allowed it?", why: "Left half of each row is data, right half is ontology. One query, one language, both boxes.",
+        q: `SELECT ?subject ?verb ?object ?ruleDomain ?ruleRange WHERE {
+  ?subject ?p ?object .
+  ?subject a owl:NamedIndividual .
+  ?object  a owl:NamedIndividual .
+  ?p rdfs:label ?verb ; rdfs:domain ?ruleDomain ; rdfs:range ?ruleRange .
+} ORDER BY ?subject ?verb` },
+      { title: "Does any fact break the blueprint?", why: "A yes/no check: it asks whether any fact's subject fails to be an instance of the property's domain. Try deleting a class from your Turtle and reloading.", ask: { yes: "Yes: at least one fact uses a relation its subject's class is not allowed to use.", no: "No: every fact respects the blueprint." },
+        q: `ASK {
+  ?s ?p ?o .
+  ?s a owl:NamedIndividual .
+  ?p rdfs:domain ?d .
+  FILTER NOT EXISTS { ?s a ?c . ?c rdfs:subClassOf* ?d }
+}` },
+      { title: "Which kinds of things have no data yet?", why: "Blueprint without data: classes declared but never used. Useful for spotting where the model ran ahead of reality.",
+        q: `SELECT ?class ?label WHERE {
+  ?class a owl:Class ; rdfs:label ?label .
+  FILTER NOT EXISTS { ?x a ?class }
+} ORDER BY ?label` }
+    ]
+  };
+
+  // ---------- engine ----------
+  let ox = null, store = null, prefixes = { ...STD_PREFIXES }, classes = [], labels = new Map();
+  const status = (msg, cls) => { const s = $("status"); s.textContent = msg; s.className = "status" + (cls ? " " + cls : ""); };
+  const bar = on => $("bar").classList.toggle("hidden", !on);
+
+  async function boot() {
+    bar(true);
+    try {
+      // This site's own copy first, then two CDNs as fallbacks.
+      const sources = [
+        new URL("../../assets/vendor/oxigraph/web.js", location.href).href,
+        "https://cdn.jsdelivr.net/npm/oxigraph@0.5.11/web.js",
+        "https://unpkg.com/oxigraph@0.5.11/web.js",
+      ];
+      let mod = null, failures = [];
+      for (const src of sources) {
+        try { mod = await import(src); await mod.default(); break; }
+        catch (e) { mod = null; failures.push(src.replace(/^https?:\/\//, "").split("/")[0] + ": " + (e && e.message ? e.message : e)); }
+      }
+      if (!mod) throw new Error("no source answered. " + failures.join("; "));
+      ox = mod;
+      status("Query engine ready.", "ok"); bar(false);
+      $("loadBtn").disabled = false;
+      if (!$("ttl").value.trim()) await useSample();
+      await loadGraph();
+    } catch (e) {
+      bar(false);
+      status("The query engine could not be loaded (" + (e && e.message ? e.message : e) + "). Check your connection and reload the page.", "bad");
+    }
+  }
+  async function useSample() {
+    try { const r = await fetch("sample.ttl"); $("ttl").value = await r.text(); $("ttl").classList.remove("dirty"); }
+    catch { status("Could not fetch sample.ttl; paste Turtle instead.", "bad"); }
+  }
+  function parsePrefixes(text) {
+    const p = { ...STD_PREFIXES };
+    for (const m of text.matchAll(/@prefix\s+([A-Za-z0-9_-]*):\s*<([^>]+)>\s*\./g)) p[m[1]] = m[2];
+    for (const m of text.matchAll(/PREFIX\s+([A-Za-z0-9_-]*):\s*<([^>]+)>/gi)) p[m[1]] = m[2];
+    return p;
+  }
+  const prefixBlock = () => Object.entries(prefixes).map(([k, v]) => `PREFIX ${k}: <${v}>`).join("\n") + "\n";
+  function count(q) { try { return store.query(prefixBlock() + q).length; } catch { return 0; } }
+
+  async function loadGraph() {
+    if (!ox) return;
+    const text = $("ttl").value;
+    if (!text.trim()) { status("Nothing to load. Paste Turtle or use the sample.", "bad"); return; }
+    const btn = $("loadBtn"); btn.classList.add("busy"); btn.disabled = true; btn.textContent = "Loading";
+    status("Parsing the Turtle…", "wait"); bar(true);
+    $("summary").innerHTML = "";
+    document.querySelectorAll("#ask .res").forEach(r => r.innerHTML = "");
+    await sleep(30); // let the state paint before the parser blocks the thread
+    try {
+      store = new ox.Store();
+      store.load(text, { format: "text/turtle", base_iri: "https://example.org/" });
+      prefixes = parsePrefixes(text);
+      labels = new Map(store.query(prefixBlock() + `SELECT ?s ?l WHERE { ?s rdfs:label ?l }`).map(b => [b.get("s").value, b.get("l").value]));
+      classes = store.query(prefixBlock() + `SELECT ?c ?l WHERE { ?c a owl:Class . OPTIONAL { ?c rdfs:label ?l } } ORDER BY ?l`)
+        .map(b => ({ iri: b.get("c").value, label: b.get("l") ? b.get("l").value : compact(b.get("c").value) }));
+      const n = { triples: store.size, classes: classes.length,
+        props: count(`SELECT ?p WHERE { { ?p a owl:ObjectProperty } UNION { ?p a owl:DatatypeProperty } }`),
+        things: count(`SELECT ?i WHERE { ?i a owl:NamedIndividual }`),
+        terms: count(`SELECT ?c WHERE { ?c a skos:Concept }`) };
+      const tiles = [["triples", n.triples, ""], ["classes", n.classes, "t"], ["properties", n.props, "t"], ["things", n.things, "a"], ["terms", n.terms, "c"]];
+      $("summary").innerHTML = tiles.map(([k, v, c], i) => `<div class="tile ${c}" style="animation-delay:${i * 60}ms"><b>${v}</b><span>${k}</span></div>`).join("");
+      status(`Loaded. ${n.triples} triples, ${n.things} things, ${n.classes} classes. Every question is running now.`, "ok");
+      $("ttl").classList.remove("dirty");
+      renderQuestions();
+    } catch (e) {
+      status("That Turtle did not parse: " + (e && e.message ? e.message : e), "bad");
+      bar(false); btn.classList.remove("busy"); btn.disabled = false; btn.textContent = "Load graph"; return;
+    }
+    try { await runAll(); } catch (e) { status("A question failed: " + (e && e.message ? e.message : e), "bad"); }
+    finally {
+      bar(false); btn.classList.remove("busy"); btn.disabled = false; btn.textContent = "Load graph";
+    }
+  }
+  function compact(iri) {
+    let best = null;
+    for (const [k, v] of Object.entries(prefixes)) if (iri.startsWith(v) && (!best || v.length > best[1].length)) best = [k, v];
+    return best ? `${best[0]}:${iri.slice(best[1].length)}` : `<${iri}>`;
+  }
+  function cell(term) {
+    if (!term) return `<span class="empty">–</span>`;
+    if (term.termType === "NamedNode") {
+      const l = labels.get(term.value), c = compact(term.value);
+      return `<span class="thing" data-iri="${esc(term.value)}" title="Everything about ${esc(l || c)}">${esc(l || c)}</span>${l ? ` <span class="dt">${esc(c)}</span>` : ""}`;
+    }
+    if (term.termType === "Literal") {
+      const dt = term.datatype && term.datatype.value; const tag = term.language ? "@" + term.language : (dt && !dt.endsWith("#string") ? compact(dt) : "");
+      return `<span class="lit">${esc(term.value)}</span>${tag ? `<span class="dt">${esc(tag)}</span>` : ""}`;
+    }
+    return `<span class="lit">${esc(term.value)}</span>`;
+  }
+  function table(vars, rows) {
+    return `<div class="tbl"><table><thead><tr>${vars.map(v => `<th>${esc(v)}</th>`).join("")}</tr></thead><tbody>${rows.map((r, i) => `<tr style="animation-delay:${Math.min(i, 20) * 28}ms">${r}</tr>`).join("")}</tbody></table></div>`;
+  }
+  function badge(el, text, cls) { const b = el.querySelector(".badge"); if (!b) return; b.textContent = text; b.className = "badge pop " + (cls || ""); setTimeout(() => b.classList.remove("pop"), 400); }
+
+  async function run(el, sparql, def) {
+    const into = el.querySelector(".res");
+    if (!store) { into.innerHTML = `<div class="err">Load a graph first.</div>`; return; }
+    el.classList.add("running"); await sleep(0);
+    const t0 = performance.now(); let res;
+    try { res = store.query(prefixBlock() + sparql); }
+    catch (e) { el.classList.remove("running"); badge(el, "!", "yes"); into.innerHTML = `<div class="err">${esc(e && e.message ? e.message : e)}</div>`; return; }
+    const ms = Math.max(1, Math.round(performance.now() - t0));
+    el.classList.remove("running");
+    if (typeof res === "boolean") {
+      const t = def && def.ask ? (res ? def.ask.yes : def.ask.no) : (res ? "Yes." : "No.");
+      badge(el, res ? "YES" : "NO", res ? "yes" : "no");
+      into.innerHTML = `<div class="ask-res ${res ? "yes" : "no"}">${res ? "Yes" : "No"}<small>${esc(t)} · ${ms} ms</small></div>`;
+      return;
+    }
+    if (Array.isArray(res) && res.length && res[0] instanceof Map) {
+      const vars = [...res[0].keys()];
+      badge(el, String(res.length), "");
+      into.innerHTML = `<div class="n"><span>${res.length} row${res.length === 1 ? "" : "s"}</span><span>${ms} ms</span></div>` + table(vars, res.map(b => vars.map(v => `<td>${cell(b.get(v))}</td>`).join("")));
+      return;
+    }
+    if (Array.isArray(res) && !res.length) { badge(el, "0", "zero"); into.innerHTML = `<div class="empty">No results. The graph has nothing that matches this question · ${ms} ms</div>`; return; }
+    badge(el, String(res.length), "");
+    into.innerHTML = `<div class="n"><span>${res.length} triple${res.length === 1 ? "" : "s"}</span><span>${ms} ms</span></div>` + table(["subject", "predicate", "object"], res.map(q => `<td>${cell(q.subject)}</td><td>${cell(q.predicate)}</td><td>${cell(q.object)}</td>`));
+  }
+
+  // click a thing → everything the graph says about it, inline
+  document.addEventListener("click", ev => {
+    const t = ev.target.closest(".thing"); if (!t || !store) return;
+    const card = t.closest(".q"), iri = t.dataset.iri;
+    let about = card.querySelector(".about");
+    if (about && about.dataset.iri === iri) { about.remove(); return; }
+    if (!about) { about = document.createElement("div"); about.className = "about"; card.appendChild(about); }
+    about.dataset.iri = iri;
+    const out = store.query(prefixBlock() + `SELECT ?p ?o WHERE { <${iri}> ?p ?o } ORDER BY ?p`);
+    const inn = store.query(prefixBlock() + `SELECT ?s ?p WHERE { ?s ?p <${iri}> } ORDER BY ?p`);
+    const name = labels.get(iri) || compact(iri);
+    about.innerHTML = `<div class="about-head"><span>About ${esc(name)} <small>${esc(compact(iri))}</small></span><button class="btn small" type="button" data-close>Close</button></div>`
+      + (out.length ? `<div class="n">${out.length} statement${out.length === 1 ? "" : "s"} about it</div>` + table(["predicate", "object"], out.map(b => `<td>${cell(b.get("p"))}</td><td>${cell(b.get("o"))}</td>`)) : "")
+      + (inn.length ? `<div class="n" style="margin-top:6px">${inn.length} statement${inn.length === 1 ? "" : "s"} pointing at it</div>` + table(["subject", "predicate"], inn.map(b => `<td>${cell(b.get("s"))}</td><td>${cell(b.get("p"))}</td>`)) : "");
+    about.querySelector("[data-close]").addEventListener("click", () => about.remove());
+    about.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+
+  // ---------- question cards ----------
+  function card(def, kind, i) {
+    const el = document.createElement("div"); el.className = `q ${kind}`; el.dataset.id = `${kind}${i}`;
+    const sel = def.param === "class" ? `<select data-class aria-label="Choose a class">${classes.map(c => `<option value="${esc(c.iri)}">${esc(c.label)}</option>`).join("")}</select>` : "";
+    el.innerHTML = `<div class="q-head"><h3><span class="badge zero">…</span>${esc(def.title)}</h3><div class="tools">${sel}<button class="btn small" type="button" data-toggle>Show SPARQL</button><button class="btn small primary" type="button" data-run>Run</button></div></div>
+      <p class="why">${esc(def.why)}</p>
+      <textarea class="q" spellcheck="false">${esc(def.q)}</textarea><div class="live">Edits run automatically.</div>
+      <div class="res"></div>`;
+    const ta = el.querySelector("textarea"), toggle = el.querySelector("[data-toggle]");
+    toggle.addEventListener("click", () => { el.classList.toggle("show-sparql"); toggle.textContent = el.classList.contains("show-sparql") ? "Hide SPARQL" : "Show SPARQL"; });
+    const go = async () => { let q = ta.value; const s = el.querySelector("[data-class]"); if (s) q = q.replace(/\?CLASS\b/g, `<${s.value}>`); el.classList.add("flash"); await run(el, q, def); setTimeout(() => el.classList.remove("flash"), 500); };
+    el.querySelector("[data-run]").addEventListener("click", go);
+    el.querySelector("[data-class]")?.addEventListener("change", go);
+    let deb; ta.addEventListener("input", () => { clearTimeout(deb); deb = setTimeout(go, 450); });
+    el._go = go;
+    return el;
+  }
+  function renderQuestions() {
+    for (const kind of ["a", "t", "c", "b"]) { const box = $("qs-" + kind); box.innerHTML = ""; QUESTIONS[kind].forEach((d, i) => box.appendChild(card(d, kind, i))); }
+    const free = $("qs-free"); if (free.children.length) return;
+    const el = document.createElement("div"); el.className = "q free";
+    el.innerHTML = `<div class="q-head"><h3><span class="badge zero">…</span>SPARQL</h3><div class="tools"><button class="btn small primary" type="button" data-run>Run</button></div></div>
+      <textarea class="q" spellcheck="false">SELECT ?s ?p ?o WHERE {\n  ?s ?p ?o .\n} LIMIT 25</textarea><div class="res"></div>`;
+    const ta = el.querySelector("textarea"); const go = () => run(el, ta.value);
+    el.querySelector("[data-run]").addEventListener("click", go);
+    let deb; ta.addEventListener("input", () => { clearTimeout(deb); deb = setTimeout(go, 450); });
+    free.appendChild(el);
+  }
+  async function runAll() {
+    const cards = [...document.querySelectorAll("#ask div.q:not(.free)")];
+    for (const el of cards) { await el._go(); await sleep(70); }   // cascade, so the page visibly fills in
+    const f = document.querySelector("#ask div.q.free"); if (f) run(f, f.querySelector("textarea").value);
+  }
+
+  $("loadBtn").disabled = true;
+  $("loadBtn").addEventListener("click", loadGraph);
+  $("sampleBtn").addEventListener("click", async () => { await useSample(); loadGraph(); });
+  $("fileIn").addEventListener("change", async ev => { const f = ev.target.files[0]; if (!f) return; $("ttl").value = await f.text(); loadGraph(); });
+  $("ttl").addEventListener("input", () => { $("ttl").classList.add("dirty"); if (store) status("Turtle changed. Press Load graph to query the new version.", "wait"); });
+  document.addEventListener("keydown", ev => { if ((ev.metaKey || ev.ctrlKey) && ev.key === "Enter") { const ta = ev.target.closest("textarea"); if (!ta) return; if (ta.id === "ttl") loadGraph(); else { const c = ta.closest(".q"); if (c && c._go) c._go(); else if (c) run(c, ta.value); } } });
+  boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix i: <https://checks.knowledge-graph-academy.com/music/instruments#> .
+
+i:scheme rdf:type skos:ConceptScheme ;
+    dct:title "Instruments"@en ;
+    dct:creator "Example group" ;
+    dct:description "Example scheme for the instruments subgraph."@en ;
+    skos:hasTopConcept i:string, i:percussion, i:keyboard-electronic, i:wind .
+
+i:string rdf:type skos:Concept ;
+    skos:inScheme i:scheme ;
+    skos:topConceptOf i:scheme ;
+    skos:prefLabel "String instrument"@en ;
+    skos:altLabel "Strings"@en ;
+    skos:definition "An instrument that sounds through vibrating strings."@en .
+
+i:guitar rdf:type skos:Concept ;
+    skos:inScheme i:scheme ;
+    skos:prefLabel "Guitar"@en ;
+    skos:broader i:string ;
+    skos:definition "A string instrument with a fretted neck, played by plucking or strumming."@en .
+
+i:electric-guitar rdf:type skos:Concept ;
+    skos:inScheme i:scheme ;
+    skos:prefLabel "Electric guitar"@en ;
+    skos:broader i:guitar ;
+    skos:definition "A guitar that uses pickups and an amplifier to produce its sound."@en .
+
+i:bass-guitar rdf:type skos:Concept ;
+    skos:inScheme i:scheme ;
+    skos:prefLabel "Bass guitar"@en ;
+    skos:altLabel "Bass"@en ;
+    skos:altLabel "Electric bass"@en ;
+    skos:broader i:guitar ;
+    skos:definition "A guitar with four to six low-pitched strings that carries the bass line."@en .
+
+i:percussion rdf:type skos:Concept ;
+    skos:inScheme i:scheme ;
+    skos:topConceptOf i:scheme ;
+    skos:prefLabel "Percussion instrument"@en ;
+    skos:altLabel "Percussion"@en ;
+    skos:definition "An instrument that sounds when it is struck, shaken or scraped."@en .
+
+i:drum-kit rdf:type skos:Concept ;
+    skos:inScheme i:scheme ;
+    skos:prefLabel "Drum kit"@en ;
+    skos:altLabel "Drums"@en ;
+    skos:altLabel "Drum set"@en ;
+    skos:broader i:percussion ;
+    skos:definition "A percussion instrument made of drums and cymbals arranged for one player."@en .
+
+i:keyboard-electronic rdf:type skos:Concept ;
+    skos:inScheme i:scheme ;
+    skos:topConceptOf i:scheme ;
+    skos:prefLabel "Keyboard and electronic instrument"@en ;
+    skos:definition "An instrument played from a keyboard or driven by electronic sound generation."@en .
+
+i:piano rdf:type skos:Concept ;
+    skos:inScheme i:scheme ;
+    skos:prefLabel "Piano"@en ;
+    skos:altLabel "Keys"@en ;
+    skos:broader i:keyboard-electronic ;
+    skos:definition "A keyboard instrument whose keys strike strings with felt hammers."@en .
+
+i:synthesizer rdf:type skos:Concept ;
+    skos:inScheme i:scheme ;
+    skos:prefLabel "Synthesizer"@en ;
+    skos:altLabel "Synth"@en ;
+    skos:broader i:keyboard-electronic ;
+    skos:definition "An electronic instrument that generates sound from oscillators or samples."@en .
+
+i:turntables rdf:type skos:Concept ;
+    skos:inScheme i:scheme ;
+    skos:prefLabel "Turntables"@en ;
+    skos:altLabel "Decks"@en ;
+    skos:broader i:keyboard-electronic ;
+    skos:definition "An electronic instrument made of two record decks and a mixer, played by a DJ."@en .
+
+i:wind rdf:type skos:Concept ;
+    skos:inScheme i:scheme ;
+    skos:topConceptOf i:scheme ;
+    skos:prefLabel "Wind instrument"@en ;
+    skos:definition "An instrument that sounds through a vibrating column of air."@en .
+
+i:saxophone rdf:type skos:Concept ;
+    skos:inScheme i:scheme ;
+    skos:prefLabel "Saxophone"@en ;
+    skos:altLabel "Sax"@en ;
+    skos:broader i:wind ;
+    skos:definition "A wind instrument with a single reed and a conical brass body."@en .
+
